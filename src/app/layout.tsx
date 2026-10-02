@@ -6,6 +6,8 @@ import { theme } from "@/config/theme";
 import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 import { getSiteUrl } from "@/lib/site-settings";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(await getSiteUrl()),

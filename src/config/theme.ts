@@ -1,16 +1,16 @@
-/** Official brand values can be dropped in here once the franchise asset kit is available. */
+/** Colors sampled from the purple-and-gold match kit. */
 export const theme = {
-  "--primary": "#e0aa33",
-  "--secondary": "#171917",
-  "--accent": "#f1c65e",
-  "--background": "#101210",
-  "--surface": "#191b19",
-  "--surface-raised": "#202320",
-  "--text": "#f6f5f0",
-  "--muted": "#9c9e98",
-  "--border": "rgba(255,255,255,.12)",
+  "--primary": "#e8b53a",
+  "--secondary": "#1a0b2e",
+  "--accent": "#f6d56a",
+  "--background": "#12081c",
+  "--surface": "#1e1032",
+  "--surface-raised": "#2c1846",
+  "--text": "#f7f4fb",
+  "--muted": "#b7a6c9",
+  "--border": "rgba(214,176,255,.2)",
   "--success": "#83bd8c",
   "--danger": "#e86d60",
-  "--warning": "#f0bd4c",
+  "--warning": "#e8b53a",
 } as const;
 
