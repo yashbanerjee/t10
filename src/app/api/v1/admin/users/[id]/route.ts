@@ -38,17 +38,26 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 }
 
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await requireSuperAdmin();
+  if (!session) return failure("Super-admin access is required", 403);
+  const { id } = await params;
+  const user = await prisma.user.findUnique({ where: { id }, select: publicFields });
+  if (!user) return failure("Admin account not found", 404);
+  return success(user);
+}
+
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await requireSuperAdmin();
   if (!session) return failure("Super-admin access is required", 403);
   const { id } = await params;
-  if (id === session.sub) return failure("You cannot deactivate your own account", 409);
+  if (id === session.sub) return failure("You cannot delete your own account", 409);
   try {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) return failure("Admin account not found", 404);
-    if (user.role === "SUPER_ADMIN" && user.isActive && await prisma.user.count({ where: { id: { not: id }, role: "SUPER_ADMIN", isActive: true } }) === 0) return failure("Keep at least one active super-admin account", 409);
-    const updated = await prisma.user.update({ where: { id }, data: { isActive: false }, select: publicFields });
-    await recordAudit(session.sub, "DEACTIVATE_ADMIN_USER", "User", id, { isActive: user.isActive }, { isActive: false });
-    return success(updated, "Admin account deactivated");
-  } catch { return failure("Could not deactivate this account", 503); }
+    if (user.role === "SUPER_ADMIN" && await prisma.user.count({ where: { id: { not: id }, role: "SUPER_ADMIN", isActive: true } }) === 0) return failure("Keep at least one active super-admin account", 409);
+    await prisma.user.delete({ where: { id } });
+    await recordAudit(session.sub, "DELETE_ADMIN_USER", "User", id, { email: user.email, role: user.role }, { deleted: true });
+    return success({ id }, "Admin account deleted");
+  } catch { return failure("Could not delete this account", 503); }
 }
