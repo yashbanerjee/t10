@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowRight, ArrowUpRight, MoveDown, Trophy } from "lucide-react";
-import { getCurrentSeason, getMatches, getNews, getPlayers, getPublicSettings, getRecords, getSponsors, getUpdates } from "@/lib/data";
+import { getContests, getCurrentSeason, getMatches, getNews, getPlayers, getPolls, getProducts, getPublicSettings, getRecords, getSponsors, getUpdates } from "@/lib/data";
+import { formatMoney } from "@/lib/money";
 import { PlayerCard } from "@/components/PlayerCard";
 import { NewsCard, UpdateCard } from "@/components/ContentCards";
 import { SectionHeading } from "@/components/SectionHeading";
@@ -15,7 +16,7 @@ import { getLivePollIntervalMs } from "@/lib/site-settings";
 export const metadata: Metadata = { title: "United Tigers | The Tigers Are Ready", description: "The official digital home of United Tigers. Meet the squad and follow the team into the 2026 Abu Dhabi T10 season." };
 
 export default async function HomePage() {
-  const [players, matches, news, updates, sponsors, records, settings, season, pollIntervalMs] = await Promise.all([getPlayers(), getMatches(), getNews(), getUpdates(), getSponsors(), getRecords(), getPublicSettings(), getCurrentSeason(), getLivePollIntervalMs()]);
+  const [players, matches, news, updates, sponsors, records, settings, season, pollIntervalMs, products, polls, contests] = await Promise.all([getPlayers(), getMatches(), getNews(), getUpdates(), getSponsors(), getRecords(), getPublicSettings(), getCurrentSeason(), getLivePollIntervalMs(), getProducts(), getPolls(), getContests()]);
   const homepage = (settings.homepage ?? {}) as Record<string, unknown>;
   const featuredPlayer = players.find((player) => player.isIconPlayer) ?? players[0];
   const upcoming = matches.find((match) => match.status === "UPCOMING" || match.status === "LIVE");
@@ -40,6 +41,11 @@ export default async function HomePage() {
       <div className="hero-index"><i />2026 · ABU DHABI</div><a className="hero-scroll" href="#season"><span>SCROLL TO EXPLORE</span><i /><MoveDown size={13} /></a>
     </section>
     <div className="ticker"><div className="ticker-inner wrap"><span>UNITED TIGERS</span><i /><span>ABU DHABI T10</span><i /><span>THE FASTEST FORMAT</span><i /><span>2026 SEASON</span><i /><span>UNITED TIGERS</span></div></div>
+    <section className="fan-launch"><div className="wrap fan-launch-grid">
+      <Link href="/shop"><span>01 · KIT</span><h2>{products[0]?.name ?? "THE SHOP"}</h2><p>{products[0] ? formatMoney(products[0].price) : "Colours, sizes and a bag that books with your phone."}</p></Link>
+      <Link href={polls[0] ? `/polls/${polls[0].slug}` : "/fan"}><span>02 · POLL</span><h2>{polls[0]?.question ?? "HAVE YOUR SAY"}</h2><p>Vote with your name, email and phone.</p></Link>
+      <Link href={contests[0] ? `/contests/${contests[0].slug}` : "/fan"}><span>03 · CONTEST</span><h2>{contests[0]?.title ?? "WIN WITH THE TIGERS"}</h2><p>{contests[0]?.prize ?? "Club contests open from the fan zone."}</p></Link>
+    </div></section>
 
     <section className="section" id="season"><div className="wrap">
       <SectionHeading overline="MATCH DAY" title={upcoming?.status === "LIVE" ? "LIVE NOW" : "NEXT UP"} href="/fixtures" linkText="ALL FIXTURES" />

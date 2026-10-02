@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Check } from "lucide-react";
 import { RichTextEditor } from "@/components/RichTextEditor";
+import { ContestEntries, OptionEditor, OrderSummary, VariantEditor, type EntryRow, type OptionDraft, type OrderView, type VariantDraft } from "@/components/CatalogFields";
 import { adminSections, type Field } from "@/components/AdminWorkspace";
 
 const inputDate = (value: unknown) => { if (!value) return ""; const date = new Date(String(value)); return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 16); };
@@ -36,6 +37,10 @@ export function AdminRecordForm({ section, recordId }: { section: string; record
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const [variants, setVariants] = useState<VariantDraft[]>([{ color: "", size: "", stock: "10", price: "", image: "" }]);
+  const [options, setOptions] = useState<OptionDraft[]>([{ label: "" }, { label: "" }]);
+  const [entries, setEntries] = useState<EntryRow[]>([]);
+  const [orderView, setOrderView] = useState<OrderView | null>(null);
 
   useEffect(() => {
     if (!definition?.fields) return;
@@ -46,7 +51,14 @@ export function AdminRecordForm({ section, recordId }: { section: string; record
         const response = await fetch(`/api/v1/admin/${section}/${recordId}`, { cache: "no-store" });
         const result = await response.json();
         if (!response.ok) throw new Error(result.message || "Could not load this record.");
-        if (!cancelled) setForm(formFromRecord(section, definition.fields ?? [], result.data ?? {}));
+        if (!cancelled) {
+          const item = result.data ?? {};
+          setForm(formFromRecord(section, definition.fields ?? [], item));
+          if (section === "products" && Array.isArray(item.variants)) setVariants(item.variants.map((variant: VariantDraft & { stock: number; price: number | null }) => ({ color: variant.color, size: variant.size, stock: String(variant.stock ?? 0), price: variant.price == null ? "" : String(variant.price), image: variant.image || "" })));
+          if (section === "polls" && Array.isArray(item.options)) setOptions(item.options.map((option: OptionDraft) => ({ id: option.id, label: option.label })));
+          if (section === "contests" && Array.isArray(item.entries)) setEntries(item.entries);
+          if (section === "orders") setOrderView(item);
+        }
       } catch (reason) {
         if (!cancelled) setError(reason instanceof Error ? reason.message : "Could not load this record.");
       } finally { if (!cancelled) setLoading(false); }
@@ -82,6 +94,8 @@ export function AdminRecordForm({ section, recordId }: { section: string; record
     if (body.slug === null || body.slug === "") delete body.slug;
     if (section === "users" && !isNew && (body.password === "" || body.password == null)) delete body.password;
     if (section === "settings" && typeof body.value === "string") { try { body.value = JSON.parse(body.value); } catch { /* plain-text setting */ } }
+    if (section === "products") body.variants = variants.map((variant) => ({ color: variant.color, size: variant.size, stock: Number(variant.stock || 0), price: variant.price === "" ? null : Number(variant.price), image: variant.image || null }));
+    if (section === "polls") body.options = options.map((option) => ({ id: option.id, label: option.label }));
     try {
       const response = await fetch(`/api/v1/admin/${section}${isNew ? "" : `/${recordId}`}`, { method: isNew ? "POST" : "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
       const result = await response.json();
@@ -95,8 +109,12 @@ export function AdminRecordForm({ section, recordId }: { section: string; record
     {loading ? <div className="admin-table-wrap"><div className="admin-loading-inline"><span className="admin-spinner" /> LOADING RECORD</div></div> : <form className="admin-editor" onSubmit={save}><div className="admin-editor-grid">{definition.fields.filter((field) => field.type !== "checkbox").map((field) => {
       const wide = field.type === "textarea" || field.type === "richtext";
       const note = [field.type === "file" && form[field.key] ? `Attached: ${String(form[field.key])}` : "", field.type === "file" && uploading ? "Uploading…" : "", field.hint ?? ""].filter(Boolean).join(" ");
-      return <label key={field.key} className={`admin-field${wide ? " field-wide" : ""}`}><span className="admin-field-label">{field.label}</span><span className="admin-field-control">{field.type === "richtext" ? <RichTextEditor required={field.required} value={String(form[field.key] ?? "")} onChange={(value) => change(field.key, value)} /> : field.type === "textarea" ? <textarea required={field.required} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)} /> : field.type === "select" ? <select required={field.required} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)}>{field.options?.map((option) => <option value={option} key={option}>{option || "Select"}</option>)}</select> : field.type === "file" ? <input type="file" accept={field.accept} required={field.required && !form[field.key]} onChange={(event) => void uploadFile(field, event.currentTarget.files?.[0])} /> : <input type={field.type === "date" ? "datetime-local" : field.type === "day" ? "date" : field.type === "number" ? "number" : field.type === "url" ? "url" : field.type === "password" ? "password" : "text"} required={field.key === "password" ? isNew : field.required} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)} autoComplete={field.type === "password" ? "new-password" : undefined} />}</span><span className="admin-field-note">{note}</span></label>;
+      return <label key={field.key} className={`admin-field${wide ? " field-wide" : ""}`}><span className="admin-field-label">{field.label}</span><span className="admin-field-control">{field.type === "richtext" ? <RichTextEditor required={field.required} value={String(form[field.key] ?? "")} onChange={(value) => change(field.key, value)} /> : field.type === "textarea" ? <textarea required={field.required} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)} /> : field.type === "select" ? <select required={field.required} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)}>{field.options?.map((option) => <option value={option} key={option}>{option || "Select"}</option>)}</select> : field.type === "file" ? <input type="file" accept={field.accept} required={field.required && !form[field.key]} onChange={(event) => void uploadFile(field, event.currentTarget.files?.[0])} /> : <input type={field.type === "date" ? "datetime-local" : field.type === "day" ? "date" : field.type === "number" ? "number" : field.type === "url" ? "url" : field.type === "password" ? "password" : "text"} step={field.key === "price" ? "0.01" : undefined} required={field.key === "password" ? isNew : field.required} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)} autoComplete={field.type === "password" ? "new-password" : undefined} />}</span><span className="admin-field-note">{note}</span></label>;
     })}</div>
+      {section === "products" && <VariantEditor rows={variants} onChange={setVariants} />}
+      {section === "polls" && <OptionEditor rows={options} onChange={setOptions} />}
+      {section === "contests" && !isNew && <ContestEntries entries={entries} />}
+      {section === "orders" && orderView && <OrderSummary order={orderView} />}
       {definition.fields.some((field) => field.type === "checkbox") && <div className="admin-checks">{definition.fields.filter((field) => field.type === "checkbox").map((field) => <label key={field.key}><input type="checkbox" checked={Boolean(form[field.key])} onChange={(event) => change(field.key, event.target.checked)} /><span>{field.label}</span></label>)}</div>}
       <div className="admin-editor-actions"><Link className="admin-secondary-btn" href={`/admin/${section}`}>Cancel</Link><button className="admin-primary-btn" type="submit" disabled={uploading || saving}>{saving ? "Saving…" : isNew ? "Create record" : "Save changes"}</button></div>
     </form>}

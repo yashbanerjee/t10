@@ -505,6 +505,145 @@ model SiteSetting {
   updatedAt DateTime @updatedAt
 }
 
+enum ProductCategory {
+  JERSEY
+  TRAINING
+  CAP
+  ACCESSORY
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model Product {
+  id          String          @id @default(cuid())
+  name        String
+  slug        String          @unique
+  description String
+  price       Decimal         @db.Decimal(10, 2)
+  image       String?
+  category    ProductCategory @default(JERSEY)
+  isPublished Boolean         @default(true)
+  variants    ProductVariant[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model ProductVariant {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  color     String
+  size      String
+  stock     Int      @default(0)
+  price     Decimal? @db.Decimal(10, 2)
+  image     String?
+
+  @@unique([productId, color, size])
+  @@index([productId])
+}
+
+model Order {
+  id        String      @id @default(cuid())
+  number    String      @unique
+  name      String
+  email     String
+  phone     String
+  address   String
+  city      String
+  country   String
+  notes     String?
+  status    OrderStatus @default(PENDING)
+  total     Decimal     @db.Decimal(10, 2)
+  items     OrderItem[]
+  createdAt DateTime    @default(now())
+
+  @@index([email, createdAt])
+  @@index([status, createdAt])
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productName String
+  color       String
+  size        String
+  quantity    Int
+  unitPrice   Decimal @db.Decimal(10, 2)
+}
+
+model Poll {
+  id          String       @id @default(cuid())
+  title       String
+  slug        String       @unique
+  question    String
+  description String?
+  closesAt    DateTime?
+  isPublished Boolean      @default(true)
+  options     PollOption[]
+  votes       PollVote[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model PollOption {
+  id           String     @id @default(cuid())
+  pollId       String
+  poll         Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  label        String
+  displayOrder Int        @default(0)
+  votes        PollVote[]
+
+  @@index([pollId, displayOrder])
+}
+
+model PollVote {
+  id        String     @id @default(cuid())
+  pollId    String
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionId  String
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  phone     String
+  createdAt DateTime   @default(now())
+
+  @@unique([pollId, email])
+}
+
+model Contest {
+  id          String         @id @default(cuid())
+  title       String
+  slug        String         @unique
+  description String
+  prize       String?
+  prompt      String
+  image       String?
+  closesAt    DateTime?
+  isPublished Boolean        @default(true)
+  entries     ContestEntry[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model ContestEntry {
+  id        String   @id @default(cuid())
+  contestId String
+  contest   Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  phone     String
+  answer    String
+  createdAt DateTime @default(now())
+
+  @@unique([contestId, email])
+  @@index([contestId, createdAt])
+}
+
 model AuditLog {
   id        String   @id @default(cuid())
   userId    String?

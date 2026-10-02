@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
+import { Manrope, Oswald } from "next/font/google";
 import "./globals.css";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
+import { CartProvider } from "@/components/CartProvider";
 import { theme } from "@/config/theme";
 import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 import { getSiteUrl } from "@/lib/site-settings";
+
+const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope" });
+const oswald = Oswald({ subsets: ["latin"], variable: "--font-oswald" });
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +24,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en" style={theme as unknown as React.CSSProperties}><body><a className="skip-link" href="#main">Skip to content</a><AnalyticsProvider /><PublicHeader /><main id="main">{children}</main><PublicFooter /></body></html>;
+  return <html lang="en" className={`${manrope.variable} ${oswald.variable}`} style={theme as unknown as React.CSSProperties}><body><a className="skip-link" href="#main">Skip to content</a><AnalyticsProvider /><CartProvider><PublicHeader /><main id="main">{children}</main><PublicFooter /></CartProvider></body></html>;
 }
 

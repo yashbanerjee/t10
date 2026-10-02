@@ -137,6 +137,46 @@ export async function getPointsTable() {
   } catch { return []; }
 }
 
+const asMoney = (value: { toString(): string } | number | null | undefined) => value == null ? null : Number(value);
+
+export async function getProducts() {
+  try {
+    const rows = await prisma.product.findMany({ where: { isPublished: true }, include: { variants: { orderBy: [{ color: "asc" }, { size: "asc" }] } }, orderBy: { createdAt: "desc" } });
+    return rows.map((product) => ({ ...product, price: Number(product.price), variants: product.variants.map((variant) => ({ ...variant, price: asMoney(variant.price) })) }));
+  } catch { return []; }
+}
+
+export async function getProductBySlug(slug: string) {
+  try {
+    const product = await prisma.product.findFirst({ where: { slug, isPublished: true }, include: { variants: { orderBy: [{ color: "asc" }, { size: "asc" }] } } });
+    return product ? { ...product, price: Number(product.price), variants: product.variants.map((variant) => ({ ...variant, price: asMoney(variant.price) })) } : null;
+  } catch { return null; }
+}
+
+export async function getPolls() {
+  try {
+    const rows = await prisma.poll.findMany({ where: { isPublished: true }, include: { options: { orderBy: { displayOrder: "asc" }, include: { _count: { select: { votes: true } } } } }, orderBy: { createdAt: "desc" } });
+    return rows.map((poll) => ({ id: poll.id, title: poll.title, slug: poll.slug, question: poll.question, description: poll.description, closesAt: poll.closesAt, options: poll.options.map((option) => ({ id: option.id, label: option.label, votes: option._count.votes })) }));
+  } catch { return []; }
+}
+
+export async function getPollBySlug(slug: string) {
+  const polls = await getPolls();
+  return polls.find((poll) => poll.slug === slug) ?? null;
+}
+
+export async function getContests() {
+  try {
+    const rows = await prisma.contest.findMany({ where: { isPublished: true }, include: { _count: { select: { entries: true } } }, orderBy: { createdAt: "desc" } });
+    return rows.map((contest) => ({ ...contest, entries: contest._count.entries }));
+  } catch { return []; }
+}
+
+export async function getContestBySlug(slug: string) {
+  const contests = await getContests();
+  return contests.find((contest) => contest.slug === slug) ?? null;
+}
+
 export async function getCurrentSeason() {
   try { return (await prisma.season.findFirst({ where: { isCurrent: true }, orderBy: { year: "desc" } })) ?? { year: 2026, name: "2026 Season", isDemo: false }; }
   catch { return { year: 2026, name: "2026 Season", isDemo: false }; }
