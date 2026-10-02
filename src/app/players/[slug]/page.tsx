@@ -8,6 +8,7 @@ import { PlayerStatsTabs } from "@/components/PlayerStatsTabs";
 import { PlayerCard } from "@/components/PlayerCard";
 import { TrackEvent } from "@/components/TrackEvent";
 import { PlayerReportCard } from "@/components/PlayerReportCard";
+import { getSiteUrl } from "@/lib/site-settings";
 
 type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -18,9 +19,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PlayerProfilePage({ params }: Props) {
   const { slug } = await params; const player = await getPlayerBySlug(slug); if (!player) notFound();
-  const [stats, roster] = await Promise.all([getPlayerStats(player.id), getPlayers()]);
+  const [stats, roster, siteUrl] = await Promise.all([getPlayerStats(player.id), getPlayers(), getSiteUrl()]);
   const meta = [player.role?.replaceAll("_", " ") || "Role to be confirmed", player.nationality || player.country || "Nationality to be confirmed", player.jerseyNumber ? `SQUAD #${player.jerseyNumber}` : "SQUAD NUMBER TBC"];
-  const personData = JSON.stringify({ "@context": "https://schema.org", "@type": "Person", name: player.fullName, jobTitle: player.role?.replaceAll("_", " ") || undefined, nationality: player.nationality || player.country || undefined, image: player.profileImage || undefined, url: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/players/${player.slug}` }).replaceAll("<", "\\u003c");
+  const personData = JSON.stringify({ "@context": "https://schema.org", "@type": "Person", name: player.fullName, jobTitle: player.role?.replaceAll("_", " ") || undefined, nationality: player.nationality || player.country || undefined, image: player.profileImage || undefined, url: `${siteUrl}/players/${player.slug}` }).replaceAll("<", "\\u003c");
   return <>
     <TrackEvent event="player_profile_view" payload={{ id: player.id, path: `/players/${player.slug}` }} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: personData }} />
     <section className={`player-profile-hero ${player.coverImage ? "has-cover" : ""}`} style={player.coverImage ? { backgroundImage: `url('${player.coverImage}')` } : undefined}>

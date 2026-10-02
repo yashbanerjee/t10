@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getSession, hasPermission, recordAudit } from "@/lib/auth";
 import { failure, success } from "@/lib/api";
+import { normalizeSiteSetting, redactSettingRow, redactSettingValue } from "@/lib/site-settings";
 
 const permissions: Record<string, { read: string; write: string }> = {
   players: { read: "TEAM_READ", write: "TEAM_WRITE" }, staff: { read: "TEAM_READ", write: "TEAM_WRITE" }, matches: { read: "MATCH_READ", write: "MATCH_WRITE" },
@@ -39,7 +40,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   const { collection } = await params; const access = permissions[collection]; const session = await getSession();
   if (!access) return failure("Collection not found", 404);
   if (!session || !hasPermission(session.role, access.read)) return failure("You do not have permission to view this collection", 403);
-  try { return success(await list(collection)); }
+  try {
+    const data = await list(collection);
+    if (collection === "settings" && Array.isArray(data)) return success(data.map((row) => redactSettingRow(row)));
+    return success(data);
+  }
   catch { return success(collection === "players" ? [] : [], "Database is not connected; configure PostgreSQL to load CMS records"); }
 }
 
@@ -48,6 +53,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!access) return failure("Collection not found", 404);
   if (!session || !hasPermission(session.role, access.write)) return failure("You do not have permission to edit this collection", 403);
   const body = await request.json().catch(() => null);
+  let auditBody: unknown = body;
   try {
     let result: unknown;
     if (collection === "players") {
@@ -75,10 +81,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     } else if (collection === "gallery") {
       const parsed = galleryInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues); result = await prisma.gallery.create({ data: parsed.data });
     } else if (collection === "settings") {
-      const parsed = settingInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues); result = await prisma.siteSetting.upsert({ where: { key: parsed.data.key }, create: { key: parsed.data.key, value: parsed.data.value as never }, update: { value: parsed.data.value as never } });
+      const parsed = settingInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
+      const existing = parsed.data.key === "storage" ? await prisma.siteSetting.findUnique({ where: { key: "storage" } }) : null;
+      const normalized = normalizeSiteSetting(parsed.data.key, parsed.data.value, existing?.value);
+      if (!normalized.ok) return failure(normalized.message, 400);
+      result = await prisma.siteSetting.upsert({ where: { key: parsed.data.key }, create: { key: parsed.data.key, value: normalized.value as never }, update: { value: normalized.value as never } });
+      auditBody = { key: parsed.data.key, value: redactSettingValue(parsed.data.key, normalized.value) };
     } else return failure("This collection is read-only", 405);
     const entityId = result && typeof result === "object" && "id" in result ? String(result.id) : undefined;
-    await recordAudit(session.sub, "CREATE", collection, entityId, undefined, body, request.headers.get("x-forwarded-for")?.split(",")[0]);
+    await recordAudit(session.sub, "CREATE", collection, entityId, undefined, auditBody, request.headers.get("x-forwarded-for")?.split(",")[0]);
     return success(result, "Created", { status: 201 });
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2002") return failure("A record with this name or slug already exists", 409);

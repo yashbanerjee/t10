@@ -26,7 +26,13 @@ The original workspace contained no application or official brand files. The cur
    Copy-Item .env.example .env
    ```
 
-2. Set `DATABASE_URL`, a unique `JWT_SECRET` of at least 32 characters, `ADMIN_EMAIL`, and a unique `ADMIN_PASSWORD` of at least 12 characters in `.env`. Keep real secrets out of source control.
+2. In `.env`, set only what the app needs before anyone can sign in:
+
+   - `DATABASE_URL` — PostgreSQL connection
+   - `JWT_SECRET` — at least 32 random characters, used to sign the admin session
+   - `ADMIN_EMAIL` and a unique `ADMIN_PASSWORD` of at least 8 characters — used once by the seed to create the first super admin
+
+   Site URL, live-score polling, storage and homepage copy are saved later in **Admin → Site settings**. Keep real secrets out of source control.
 
 3. Install, generate Prisma Client, create the database schema and seed development records:
 
@@ -82,19 +88,19 @@ Player report cards display a small, transparent club index derived from verifie
 - Super-admin account creation/deactivation and the built-in role-permission matrix
 - Safe Markdown authoring for stories and daily updates, plus match-day live score state controls
 
-Media upload accepts JPG, PNG, WebP and MP4 up to 25 MB. Configure `STORAGE_ENDPOINT`, `STORAGE_BUCKET`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_REGION`, and (when the object endpoint is not publicly readable) `STORAGE_PUBLIC_URL`. Uploaded object URLs are stored in PostgreSQL; binaries are not.
+Media upload accepts JPG, PNG, WebP and MP4 up to 25 MB. In **Admin → Site settings**, set the S3-compatible endpoint, bucket, region, access key, secret key, and (when the object endpoint is not publicly readable) the public file URL. Leave the keys blank on a later save to keep the current secrets. Uploaded object URLs are stored in PostgreSQL; binaries are not.
 
 ## REST API
 
 The API is rooted at `/api/v1`, uses a consistent JSON envelope and is documented in [`docs/API.md`](docs/API.md). Public routes expose players, matches, news, updates and derived player stats. Admin routes require an HTTP-only session cookie, check role permissions, validate request bodies, and add audit entries for important changes. Admin mutations also validate the request origin.
 
-Live pages poll the match endpoint at `NEXT_PUBLIC_LIVE_POLL_INTERVAL_MS` (5–60 seconds; defaults to 15 seconds). `Match.liveState` stores current innings, score, overs, batters, bowler, partnership and run rates so polling can later be replaced with SSE or WebSockets.
+Live pages poll the match endpoint at the interval saved in **Admin → Site settings** (5–60 seconds; defaults to 15 seconds). `Match.liveState` stores current innings, score, overs, batters, bowler, partnership and run rates so polling can later be replaced with SSE or WebSockets.
 
 ## Production configuration
 
-- Use a managed PostgreSQL service, set all server secrets in the deployment environment, and run `npm run db:deploy` during deployment.
-- Set `NEXT_PUBLIC_SITE_URL` to the canonical HTTPS origin for metadata and the sitemap.
-- Configure public S3/R2-compatible storage and `STORAGE_PUBLIC_URL` for image delivery.
+- Use a managed PostgreSQL service, set `DATABASE_URL`, `JWT_SECRET`, `ADMIN_EMAIL` and `ADMIN_PASSWORD` in the deployment environment, and run `npm run db:deploy` during deployment.
+- Set the canonical HTTPS origin in **Admin → Site settings**. That value is used for metadata and the sitemap.
+- Configure public S3/R2-compatible storage in **Admin → Site settings**, including the public file URL used for image delivery.
 - Terminate HTTPS at the deployment edge; production responses add security headers and secure cookies.
 - Put distributed login throttling and request limits at the edge when deploying multiple application instances. The in-process login limiter is intended for a single-instance deployment.
 

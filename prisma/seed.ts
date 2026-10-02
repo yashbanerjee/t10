@@ -18,8 +18,8 @@ const roster = [
 async function main() {
   const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   const adminPassword = process.env.ADMIN_PASSWORD;
-  if (!adminEmail || !adminPassword || adminPassword.length < 12 || adminPassword.includes("change-this")) {
-    throw new Error("Set ADMIN_EMAIL and a unique ADMIN_PASSWORD of at least 12 characters in .env before seeding.");
+  if (!adminEmail || !adminPassword || adminPassword.length < 8 || adminPassword.includes("change-this")) {
+    throw new Error("Set ADMIN_EMAIL and a unique ADMIN_PASSWORD of at least 8 characters in .env before seeding.");
   }
 
   const team = await prisma.team.upsert({
@@ -82,6 +82,9 @@ async function main() {
     await prisma.pointsEntry.upsert({ where: { seasonId_teamName: { seasonId: season.id, teamName } }, update: { isDemo: true }, create: { seasonId: season.id, teamName, played: index === 0 ? 1 : 0, won: index === 0 ? 1 : 0, points: index === 0 ? 2 : 0, position: index + 1, netRunRate: index === 0 ? 0.6 : 0, isDemo: true } });
   }
   await prisma.siteSetting.upsert({ where: { key: "homepage" }, update: {}, create: { key: "homepage", value: { title: "THE TIGERS ARE READY.", subtitle: "2026 T10 SEASON", heroImage: "/images/stadium-hero.png", primaryCta: { label: "VIEW SQUAD", href: "/team" }, secondaryCta: { label: "FIXTURES", href: "/fixtures" } } } });
+  await prisma.siteSetting.upsert({ where: { key: "siteUrl" }, update: {}, create: { key: "siteUrl", value: "http://localhost:3000" } });
+  await prisma.siteSetting.upsert({ where: { key: "livePollIntervalMs" }, update: {}, create: { key: "livePollIntervalMs", value: 15000 } });
+  await prisma.siteSetting.upsert({ where: { key: "storage" }, update: {}, create: { key: "storage", value: { endpoint: "", bucket: "", accessKey: "", secretKey: "", region: "auto", publicUrl: "" } } });
   await prisma.socialLink.upsert({ where: { id: "instagram-united-tigers" }, update: {}, create: { id: "instagram-united-tigers", platform: "Instagram", handle: "@unitedtigers.ae", url: "https://www.instagram.com/unitedtigers.ae/", displayOrder: 1 } });
 
   const existing = await prisma.user.findUnique({ where: { email: adminEmail } });

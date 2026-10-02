@@ -1,9 +1,5 @@
 import type { NextConfig } from "next";
 
-const storageOrigin = process.env.STORAGE_ENDPOINT ? (() => {
-  try { const endpoint = new URL(process.env.STORAGE_ENDPOINT!); return { protocol: endpoint.protocol.slice(0, -1) as "http" | "https", hostname: endpoint.hostname, port: endpoint.port, pathname: "/**" }; }
-  catch { return null; }
-})() : null;
 const isProduction = process.env.NODE_ENV === "production";
 const csp = [
   "default-src 'self'", "base-uri 'self'", "object-src 'none'", "frame-ancestors 'none'", "form-action 'self'",
@@ -17,7 +13,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "images.pexels.com" },
-      ...(storageOrigin ? [storageOrigin] : []),
+      { protocol: "https", hostname: "**", pathname: "/**" },
     ],
   },
   async headers() {

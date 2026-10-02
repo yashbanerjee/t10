@@ -10,11 +10,12 @@ import { EmptyState } from "@/components/EmptyState";
 import { Reveal } from "@/components/Reveal";
 import { StatusBadge } from "@/components/Badge";
 import { LiveScore } from "@/components/LiveScore";
+import { getLivePollIntervalMs } from "@/lib/site-settings";
 
 export const metadata: Metadata = { title: "United Tigers | The Tigers Are Ready", description: "The official digital home of United Tigers. Meet the squad and follow the team into the 2026 Abu Dhabi T10 season." };
 
 export default async function HomePage() {
-  const [players, matches, news, updates, sponsors, settings, season] = await Promise.all([getPlayers(), getMatches(), getNews(), getUpdates(), getSponsors(), getPublicSettings(), getCurrentSeason()]);
+  const [players, matches, news, updates, sponsors, settings, season, pollIntervalMs] = await Promise.all([getPlayers(), getMatches(), getNews(), getUpdates(), getSponsors(), getPublicSettings(), getCurrentSeason(), getLivePollIntervalMs()]);
   const homepage = (settings.homepage ?? {}) as Record<string, unknown>;
   const featuredPlayer = players.find((player) => player.isIconPlayer) ?? players[0];
   const upcoming = matches.find((match) => match.status === "UPCOMING" || match.status === "LIVE");
@@ -47,7 +48,7 @@ export default async function HomePage() {
         <div className="match-fixture"><div className="match-teams"><span className="match-team-home">UNITED TIGERS</span><span className="vs-mark">VS</span><span>THE FIELD</span></div><div className="fixture-placeholder">OFFICIAL FIXTURES WILL APPEAR HERE</div></div>
         <div className="match-details"><div className="detail-line"><span>SEASON</span><strong>ABU DHABI T10 · 2026</strong></div><div className="detail-line"><span>FIRST BALL</span><strong>TO BE ANNOUNCED</strong></div><Link className="text-link" href="/fixtures">FOLLOW FIXTURES <ArrowUpRight size={14} /></Link></div>
       </div>}
-      {upcoming?.status === "LIVE" && <LiveScore slug={upcoming.slug} initial={{ status: upcoming.status, liveState: upcoming.liveState as never, innings: upcoming.innings.map((entry) => ({ runs: entry.runs, wickets: entry.wickets, overs: entry.overs.toString() })) }} />}
+      {upcoming?.status === "LIVE" && <LiveScore slug={upcoming.slug} pollIntervalMs={pollIntervalMs} initial={{ status: upcoming.status, liveState: upcoming.liveState as never, innings: upcoming.innings.map((entry) => ({ runs: entry.runs, wickets: entry.wickets, overs: entry.overs.toString() })) }} />}
       <div className="last-match-card"><div><span className="eyebrow"><i className="eyebrow-dot" />LAST MATCH</span><h3>{previous ? previous.result || `UNITED TIGERS vs ${previous.opponent}` : "THE FIRST INNINGS IS STILL AHEAD."}</h3><p>{previous ? `${previous.venue?.name ?? "Venue to be confirmed"} · ${new Date(previous.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Dubai" })}` : "The Tigers are preparing for their debut season. Results and scorecards will live here after the opening match."}</p></div>{previous ? <Link className="button button-outline" href={`/matches/${previous.slug}`}>VIEW SCORECARD <ArrowUpRight size={15} /></Link> : <span className="first-match-mark"><Trophy size={20} />01</span>}</div>
       <div className="season-strip" style={{ marginTop: 18 }}>
         <div className="season-stat"><span>Matches played</span><strong>{previous ? matches.filter((m) => m.status === "COMPLETED").length : "—"}</strong><small>{previous ? "2026 season" : "Scorecards to come"}</small></div>

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { demoPlayers, sampleNews, sampleUpdates } from "@/lib/demo";
+import { PRIVATE_SETTING_KEYS } from "@/lib/site-settings";
 
 export async function getPlayers() {
   try {
@@ -73,7 +74,7 @@ export async function getUpdateBySlug(slug: string) {
 export async function getPublicSettings() {
   try {
     const rows = await prisma.siteSetting.findMany();
-    return Object.fromEntries(rows.map((row) => [row.key, row.value]));
+    return Object.fromEntries(rows.filter((row) => !PRIVATE_SETTING_KEYS.has(row.key)).map((row) => [row.key, row.value]));
   } catch {
     return {};
   }
