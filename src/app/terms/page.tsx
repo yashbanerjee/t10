@@ -1,0 +1,4 @@
+import type { Metadata } from "next";
+export const metadata: Metadata = { title: "Terms" };
+export default function TermsPage() { return <div className="inner-page"><section className="inner-hero"><div className="wrap"><span className="eyebrow">UNITED TIGERS</span><h1>TERMS.</h1><p>Information about the use of this website.</p></div></section><section className="section"><div className="wrap article-content"><h2>Website information</h2><p>Fixtures, results, player information and team updates are published as they are confirmed by the club. Schedule information may change.</p><h2>Media and trademarks</h2><p>United Tigers names and brand assets are owned by their respective rights holders. Editorial content is provided for supporter information.</p><h2>Contact</h2><p>For questions about this website, please use the contact page.</p></div></section></div>; }
+
