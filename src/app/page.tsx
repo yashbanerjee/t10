@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowRight, ArrowUpRight, MoveDown, Trophy } from "lucide-react";
-import { getCurrentSeason, getMatches, getNews, getPlayers, getPublicSettings, getSponsors, getUpdates } from "@/lib/data";
+import { getCurrentSeason, getMatches, getNews, getPlayers, getPublicSettings, getRecords, getSponsors, getUpdates } from "@/lib/data";
 import { PlayerCard } from "@/components/PlayerCard";
 import { NewsCard, UpdateCard } from "@/components/ContentCards";
 import { SectionHeading } from "@/components/SectionHeading";
@@ -15,7 +15,7 @@ import { getLivePollIntervalMs } from "@/lib/site-settings";
 export const metadata: Metadata = { title: "United Tigers | The Tigers Are Ready", description: "The official digital home of United Tigers. Meet the squad and follow the team into the 2026 Abu Dhabi T10 season." };
 
 export default async function HomePage() {
-  const [players, matches, news, updates, sponsors, settings, season, pollIntervalMs] = await Promise.all([getPlayers(), getMatches(), getNews(), getUpdates(), getSponsors(), getPublicSettings(), getCurrentSeason(), getLivePollIntervalMs()]);
+  const [players, matches, news, updates, sponsors, records, settings, season, pollIntervalMs] = await Promise.all([getPlayers(), getMatches(), getNews(), getUpdates(), getSponsors(), getRecords(), getPublicSettings(), getCurrentSeason(), getLivePollIntervalMs()]);
   const homepage = (settings.homepage ?? {}) as Record<string, unknown>;
   const featuredPlayer = players.find((player) => player.isIconPlayer) ?? players[0];
   const upcoming = matches.find((match) => match.status === "UPCOMING" || match.status === "LIVE");
@@ -23,6 +23,10 @@ export default async function HomePage() {
   const headline = typeof homepage.title === "string" ? homepage.title : "THE TIGERS ARE READY.";
   const heroImage = typeof homepage.heroImage === "string" ? homepage.heroImage : "/images/stadium-hero.png";
   const seasonYear = "year" in season ? season.year : 2026;
+  const completed = matches.filter((match) => match.status === "COMPLETED");
+  const wins = completed.filter((match) => /united tigers won/i.test(match.result || "")).length;
+  const runsScored = completed.reduce((total, match) => total + match.innings.filter((entry) => entry.battingTeam === "United Tigers").reduce((sum, entry) => sum + entry.runs, 0), 0);
+  const wicketsTaken = completed.reduce((total, match) => total + match.innings.filter((entry) => entry.battingTeam !== "United Tigers").reduce((sum, entry) => sum + entry.wickets, 0), 0);
   return <>
     <section className="home-hero" style={{ "--hero-image": `url('${heroImage}')` } as React.CSSProperties}>
       <div className="hero-orbit" aria-hidden="true" /><span className="hero-scroll-ball" aria-hidden="true" />
@@ -51,10 +55,10 @@ export default async function HomePage() {
       {upcoming?.status === "LIVE" && <LiveScore slug={upcoming.slug} pollIntervalMs={pollIntervalMs} initial={{ status: upcoming.status, liveState: upcoming.liveState as never, innings: upcoming.innings.map((entry) => ({ runs: entry.runs, wickets: entry.wickets, overs: entry.overs.toString() })) }} />}
       <div className="last-match-card"><div><span className="eyebrow"><i className="eyebrow-dot" />LAST MATCH</span><h3>{previous ? previous.result || `UNITED TIGERS vs ${previous.opponent}` : "THE FIRST INNINGS IS STILL AHEAD."}</h3><p>{previous ? `${previous.venue?.name ?? "Venue to be confirmed"} · ${new Date(previous.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Dubai" })}` : "The Tigers are preparing for their debut season. Results and scorecards will live here after the opening match."}</p></div>{previous ? <Link className="button button-outline" href={`/matches/${previous.slug}`}>VIEW SCORECARD <ArrowUpRight size={15} /></Link> : <span className="first-match-mark"><Trophy size={20} />01</span>}</div>
       <div className="season-strip" style={{ marginTop: 18 }}>
-        <div className="season-stat"><span>Matches played</span><strong>{previous ? matches.filter((m) => m.status === "COMPLETED").length : "—"}</strong><small>{previous ? "2026 season" : "Scorecards to come"}</small></div>
-        <div className="season-stat"><span>Wins</span><strong>—</strong><small>Season record</small></div>
-        <div className="season-stat"><span>Runs scored</span><strong>—</strong><small>Team total</small></div>
-        <div className="season-stat"><span>Wickets taken</span><strong>—</strong><small>Team total</small></div>
+        <div className="season-stat"><span>Matches played</span><strong>{completed.length || "—"}</strong><small>{completed.length ? "2026 season" : "Scorecards to come"}</small></div>
+        <div className="season-stat"><span>Wins</span><strong>{completed.length ? wins : "—"}</strong><small>Season record</small></div>
+        <div className="season-stat"><span>Runs scored</span><strong>{completed.length ? runsScored : "—"}</strong><small>Team total</small></div>
+        <div className="season-stat"><span>Wickets taken</span><strong>{completed.length ? wicketsTaken : "—"}</strong><small>Team total</small></div>
       </div>
     </div></section>
 
@@ -79,12 +83,12 @@ export default async function HomePage() {
 
     <section className="section"><div className="wrap">
       <SectionHeading overline="BUILT ON BIG MOMENTS" title="RECORDS START HERE" href="/records" linkText="RECORDS & STATS" />
-      <div className="announcement-band"><div><span>NEW TEAM. CLEAN SCOREBOARD.</span><strong>EVERY RECORD IS STILL TO BE WRITTEN.</strong></div><Link href="/stats" aria-label="Explore statistics"><ArrowUpRight size={21} /></Link></div>
+      {records.length ? <div className="record-grid">{records.slice(0, 3).map((record) => <div className="record-card" key={record.id}><span>{record.scope} · {record.category}</span><strong>{record.value}</strong><h3>{record.title}</h3><p>{record.playerName || "United Tigers"}</p></div>)}</div> : <div className="announcement-band"><div><span>NEW TEAM. CLEAN SCOREBOARD.</span><strong>EVERY RECORD IS STILL TO BE WRITTEN.</strong></div><Link href="/stats" aria-label="Explore statistics"><ArrowUpRight size={21} /></Link></div>}
     </div></section>
 
     <section className="section section-dark"><div className="wrap">
       <div className="section-heading"><div><span className="eyebrow"><i className="eyebrow-dot" />THE TIGERS FAMILY</span><h2>POWERED BY<br />OUR PARTNERS</h2></div><Link className="text-link" href="/partners">PARTNER WITH US <ArrowUpRight size={14} /></Link></div>
-      {sponsors.length ? <div className="partner-grid">{sponsors.slice(0, 4).map((sponsor) => <div className="partner-item" key={sponsor.id}>{sponsor.logoUrl ? <Image src={sponsor.logoUrl} alt={sponsor.name} width={180} height={80} /> : <span>{sponsor.name}</span>}</div>)}</div> : <div className="sponsor-cta" style={{ marginTop: 0 }}><h3>Make the next chapter yours.</h3><span>Partnership opportunities for the 2026 season</span><Link className="button button-outline" href="/contact">TALK PARTNERSHIPS <ArrowRight size={15} /></Link></div>}
+      {sponsors.length ? <div className="partner-grid">{sponsors.slice(0, 4).map((sponsor) => <div className="partner-item" key={sponsor.id}>{sponsor.logoUrl ? <Image src={sponsor.logoUrl} alt={sponsor.name} fill sizes="(max-width: 760px) 50vw, 25vw" /> : <span>{sponsor.name}</span>}</div>)}</div> : <div className="sponsor-cta" style={{ marginTop: 0 }}><h3>Make the next chapter yours.</h3><span>Partnership opportunities for the 2026 season</span><Link className="button button-outline" href="/contact">TALK PARTNERSHIPS <ArrowRight size={15} /></Link></div>}
     </div></section>
 
     <section className="section"><div className="wrap">
