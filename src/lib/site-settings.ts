@@ -71,7 +71,54 @@ export function normalizeSiteSetting(key: string, value: unknown, previous?: unk
       },
     };
   }
+  if (key === "homepage") {
+    const parsed = homepageSchema.safeParse(value ?? {});
+    if (!parsed.success) return { ok: false, message: "Homepage banner settings are invalid." };
+    const image = safeAsset(parsed.data.image);
+    if (parsed.data.image.trim() && !image) return { ok: false, message: "Banner image must be a site path or an http(s) URL." };
+    const href = parsed.data.ctaHref.trim() || "/team";
+    if (!href.startsWith("/") && !/^https?:\/\//.test(href)) return { ok: false, message: "Banner button link must start with / or be an http(s) URL." };
+    return { ok: true, value: { ...parsed.data, image, ctaHref: href, mode: parsed.data.mode === "image" && image ? "image" : parsed.data.mode === "image" ? "static" : parsed.data.mode } };
+  }
   return { ok: true, value };
+}
+
+const homepageSchema = z.object({
+  mode: z.enum(["static", "image"]).default("static"),
+  title: z.string().trim().min(2).max(80),
+  accent: z.string().trim().min(2).max(40),
+  tagline: z.string().trim().min(2).max(80),
+  ctaLabel: z.string().trim().min(2).max(40),
+  ctaHref: z.string().trim().max(300).default("/team"),
+  image: z.string().trim().max(500).default(""),
+  roar: z.string().trim().max(40).default("ROAR FOR ABU DHABI"),
+});
+
+export type HomepageBanner = z.infer<typeof homepageSchema>;
+
+export const homepageDefaults: HomepageBanner = {
+  mode: "static",
+  title: "THE NEXT GAME",
+  accent: "STARTS HERE",
+  tagline: "BIGGER BOLDER TOGETHER",
+  ctaLabel: "BACK OUR TIGERS",
+  ctaHref: "/team",
+  image: "",
+  roar: "ROAR FOR ABU DHABI",
+};
+
+function safeAsset(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed || /["'()\\\s]/.test(trimmed)) return "";
+  if (trimmed.startsWith("/") || /^https?:\/\//.test(trimmed)) return trimmed;
+  return "";
+}
+
+export function readHomepageBanner(value: unknown): HomepageBanner {
+  const parsed = homepageSchema.safeParse(value ?? {});
+  if (!parsed.success) return homepageDefaults;
+  const image = safeAsset(parsed.data.image);
+  return { ...homepageDefaults, ...parsed.data, image, mode: parsed.data.mode === "image" && image ? "image" : "static" };
 }
 
 export function redactSettingValue(key: string, value: unknown) {

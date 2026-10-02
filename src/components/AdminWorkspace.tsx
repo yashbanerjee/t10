@@ -48,7 +48,7 @@ export const adminSections: Record<string, { title: string; subtitle: string; fi
   users: { title: "Admin users", subtitle: "Create administrator accounts and assign a built-in access role.", create: true, edit: true, remove: true, columns: [["name", "NAME"], ["email", "EMAIL"], ["role", "ROLE"], ["isActive", "ACTIVE"], ["lastLoginAt", "LAST SIGN-IN"]], fields: [{ key: "name", label: "Full name", required: true }, { key: "email", label: "Email address", type: "text", required: true }, { key: "role", label: "Access role", type: "select", options: ["SUPER_ADMIN", "ADMIN", "EDITOR", "STATISTICS_MANAGER", "CONTENT_MANAGER"], required: true }, { key: "password", label: "Temporary password", type: "password", required: true, hint: "At least 12 characters. Leave blank when editing to keep the current password." }, { key: "isActive", label: "Active account", type: "checkbox" }] },
   roles: { title: "Roles & permissions", subtitle: "Built-in roles use a fixed permission matrix enforced by every API route.", columns: [["name", "ROLE"], ["description", "ACCESS SUMMARY"], ["permissions", "PERMISSIONS"]] },
 };
-const managedSettingKeys = new Set(["siteUrl", "livePollIntervalMs", "storage"]);
+const managedSettingKeys = new Set(["siteUrl", "livePollIntervalMs", "storage", "homepage"]);
 const showValue = (value: unknown) => value == null || value === "" ? "—" : typeof value === "boolean" ? value ? "YES" : "NO" : typeof value === "object" ? JSON.stringify(value) : String(value);
 const recordName = (item: Entry) => String(item.number ?? item.title ?? item.fullName ?? item.name ?? item.opponent ?? item.key ?? "this record");
 

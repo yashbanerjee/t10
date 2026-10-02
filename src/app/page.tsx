@@ -1,106 +1,173 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, ArrowUpRight, MoveDown, Trophy } from "lucide-react";
-import { getContests, getCurrentSeason, getMatches, getNews, getPlayers, getPolls, getProducts, getPublicSettings, getRecords, getSponsors, getUpdates } from "@/lib/data";
-import { formatMoney } from "@/lib/money";
-import { PlayerCard } from "@/components/PlayerCard";
-import { NewsCard, UpdateCard } from "@/components/ContentCards";
-import { SectionHeading } from "@/components/SectionHeading";
-import { EmptyState } from "@/components/EmptyState";
-import { Reveal } from "@/components/Reveal";
-import { StatusBadge } from "@/components/Badge";
+import { ArrowUpRight, Play } from "lucide-react";
+import { getMatches, getNews, getPlayers, getPolls, getPublicSettings, getSponsors } from "@/lib/data";
 import { LiveScore } from "@/components/LiveScore";
+import { NationSignup } from "@/components/NationSignup";
+import { homepageDefaults, readHomepageBanner } from "@/lib/site-settings";
 import { getLivePollIntervalMs } from "@/lib/site-settings";
 
-export const metadata: Metadata = { title: "United Tigers | The Tigers Are Ready", description: "The official digital home of United Tigers. Meet the squad and follow the team into the 2026 Abu Dhabi T10 season." };
+export const metadata: Metadata = { title: "United Tigers | The Next Game Starts Here", description: "The official home of United Tigers. Fixtures, the squad, the vote and the Abu Dhabi T10." };
+
+const shots = ["/images/demo/gallery-match.jpg", "/images/demo/news-opener.jpg", "/images/demo/gallery-huddle.jpg"];
+
+function splitName(fullName: string) {
+  const parts = fullName.trim().split(/\s+/);
+  return { first: parts.slice(0, -1).join(" "), last: parts.at(-1) ?? fullName };
+}
+
+function when(value: Date | string) {
+  const date = new Date(value);
+  return {
+    day: date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Dubai" }).toUpperCase(),
+    time: `${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Dubai" })} GST`,
+  };
+}
 
 export default async function HomePage() {
-  const [players, matches, news, updates, sponsors, records, settings, season, pollIntervalMs, products, polls, contests] = await Promise.all([getPlayers(), getMatches(), getNews(), getUpdates(), getSponsors(), getRecords(), getPublicSettings(), getCurrentSeason(), getLivePollIntervalMs(), getProducts(), getPolls(), getContests()]);
-  const homepage = (settings.homepage ?? {}) as Record<string, unknown>;
-  const featuredPlayer = players.find((player) => player.isIconPlayer) ?? players[0];
+  const [players, matches, news, sponsors, settings, polls, pollIntervalMs] = await Promise.all([getPlayers(), getMatches(), getNews(), getSponsors(), getPublicSettings(), getPolls(), getLivePollIntervalMs()]);
+  const banner = readHomepageBanner(settings.homepage ?? homepageDefaults);
+  const custom = banner.mode === "image" && Boolean(banner.image);
+  const portraits = players.filter((player) => player.profileImage).slice(0, 6).map((player) => player.profileImage as string);
+  const cast = portraits.length >= 4 ? portraits : ["/images/demo/fakhar-zaman.jpg", "/images/demo/iftikhar-ahmed.jpg", "/images/demo/abbas-afridi.jpg", "/images/demo/odean-smith.jpg", "/images/demo/azmatullah-omarzai.jpg", "/images/demo/paul-van-meekeren.jpg"];
+  const squad = players.slice(0, 4);
   const upcoming = matches.find((match) => match.status === "UPCOMING" || match.status === "LIVE");
-  const previous = [...matches].reverse().find((match) => match.status === "COMPLETED");
-  const headline = typeof homepage.title === "string" ? homepage.title : "THE TIGERS ARE READY.";
-  const heroImage = typeof homepage.heroImage === "string" ? homepage.heroImage : "/images/stadium-hero.png";
-  const seasonYear = "year" in season ? season.year : 2026;
-  const completed = matches.filter((match) => match.status === "COMPLETED");
-  const wins = completed.filter((match) => /united tigers won/i.test(match.result || "")).length;
-  const runsScored = completed.reduce((total, match) => total + match.innings.filter((entry) => entry.battingTeam === "United Tigers").reduce((sum, entry) => sum + entry.runs, 0), 0);
-  const wicketsTaken = completed.reduce((total, match) => total + match.innings.filter((entry) => entry.battingTeam !== "United Tigers").reduce((sum, entry) => sum + entry.wickets, 0), 0);
+  const kickoff = upcoming ? when(upcoming.date) : null;
+  const poll = polls[0];
+  const stories = news.slice(0, 3);
+  const listed = matches.slice(0, 4);
+
   return <>
-    <section className="home-hero" style={{ "--hero-image": `url('${heroImage}')` } as React.CSSProperties}>
-      <div className="hero-orbit" aria-hidden="true" /><span className="hero-scroll-ball" aria-hidden="true" />
-      <div className="hero-content">
-        <div className="hero-overline"><span />ABU DHABI T10 · {seasonYear}</div>
-        <span className="hero-kicker">{headline}</span>
-        <h1>UNITED<span>TIGERS</span></h1>
-        <p className="hero-subtitle">{typeof homepage.subtitle === "string" ? homepage.subtitle : "The next chapter starts here. Meet the squad, follow the build-up and get ready for cricket at full throttle."}</p>
-        <div className="hero-actions"><Link className="button button-primary" href="/team">VIEW SQUAD <ArrowRight size={15} /></Link><Link className="button button-outline" href="/fixtures">FIXTURES <ArrowUpRight size={15} /></Link></div>
+    <section className={`home-stage ${custom ? "is-custom" : ""}`} style={custom ? { "--banner": `url("${banner.image}")` } as React.CSSProperties : undefined}>
+      <div className="stage-top wrap">
+        <div className="stage-copy">
+          <p className="stage-kicker">ABU DHABI T10</p>
+          <h1>{banner.title.trim().split(/\s+/).slice(0, -1).join(" ")}<br />{banner.title.trim().split(/\s+/).at(-1)}<span>{banner.accent}</span></h1>
+          <p className="stage-tagline">{banner.tagline}</p>
+          <Link className="button button-orange" href={banner.ctaHref}>{banner.ctaLabel} <ArrowUpRight size={16} /></Link>
+        </div>
+        {!custom && <div className="stage-art" aria-hidden="true">
+          <div className="stage-sky" />
+          <p className="stage-roar">{banner.roar}</p>
+          <div className="stage-cast">
+            {cast.map((src) => <div className="stage-player" key={src}><Image src={src} alt="" fill sizes="18vw" /></div>)}
+          </div>
+          <p className="stage-script">Cricket beyond borders</p>
+        </div>}
       </div>
-      <div className="hero-index"><i />2026 · ABU DHABI</div><a className="hero-scroll" href="#season"><span>SCROLL TO EXPLORE</span><i /><MoveDown size={13} /></a>
+      <div className="wrap dash-grid">
+        <article className="dash-card">
+          <header><span>NEXT MATCH</span><small>ABU DHABI T10</small></header>
+          {upcoming && kickoff ? <>
+            <div className="crest-row">
+              <div><b>UT</b><strong>United Tigers</strong><em>Abu Dhabi</em></div>
+              <span>VS</span>
+              <div><b>{(upcoming.opponentShort || upcoming.opponent).slice(0, 2).toUpperCase()}</b><strong>{upcoming.opponent}</strong><em>{upcoming.venue?.city || "Away"}</em></div>
+            </div>
+            <dl>
+              <div><dt>DATE</dt><dd>{kickoff.day}<br />{kickoff.time}</dd></div>
+              <div><dt>VENUE</dt><dd>{upcoming.venue?.name ?? "Venue TBC"}</dd></div>
+            </dl>
+            {upcoming.status === "LIVE" && <LiveScore slug={upcoming.slug} pollIntervalMs={pollIntervalMs} initial={{ status: upcoming.status, liveState: upcoming.liveState as never, innings: upcoming.innings.map((entry) => ({ runs: entry.runs, wickets: entry.wickets, overs: entry.overs.toString() })) }} />}
+            <Link className="button button-orange" href={`/matches/${upcoming.slug}`}>BUY TICKETS</Link>
+          </> : <>
+            <div className="crest-row"><div><b>UT</b><strong>United Tigers</strong><em>Abu Dhabi</em></div><span>VS</span><div><b>T10</b><strong>The field</strong><em>Abu Dhabi</em></div></div>
+            <p className="dash-empty">The next fixture will appear here as soon as it is confirmed.</p>
+            <Link className="button button-orange" href="/fixtures">BUY TICKETS</Link>
+          </>}
+        </article>
+
+        <article className="dash-card">
+          <header><span>MEET OUR TIGERS</span><Link href="/team">View all <ArrowUpRight size={13} /></Link></header>
+          <div className="mini-squad">
+            {squad.map((player) => {
+              const name = splitName(player.fullName);
+              return <Link href={`/players/${player.slug}`} key={player.id}>
+                <i>{player.profileImage ? <Image src={player.profileImage} alt="" fill sizes="80px" /> : name.last.slice(0, 1)}</i>
+                <b>{player.jerseyNumber ?? "UT"}</b>
+                <small>{name.first}</small>
+                <strong>{name.last}</strong>
+                <em>{(player.role || "Player").replaceAll("_", " ")}</em>
+              </Link>;
+            })}
+          </div>
+        </article>
+
+        <article className="dash-card">
+          <header><span>VOTE</span></header>
+          <h2>{poll?.question ?? "Player of the match"}</h2>
+          <p>Cast your vote and make your voice count.</p>
+          <div className="vote-faces">
+            {(poll?.options ?? []).slice(0, 4).map((option) => <span key={option.id}>{option.label.split(" ")[0]}</span>)}
+          </div>
+          <Link className="button button-orange" href={poll ? `/polls/${poll.slug}` : "/fan#vote"}>CAST YOUR VOTE</Link>
+        </article>
+
+        <article className="dash-card">
+          <header><span>TIGERS NATION</span></header>
+          <ul className="nation-stats">
+            <li><strong>{players.length || "—"}</strong><span>Squad</span></li>
+            <li><strong>{matches.length || "—"}</strong><span>Fixtures</span></li>
+            <li><strong>{sponsors.length || "—"}</strong><span>Partners</span></li>
+            <li><strong>10</strong><span>Overs</span></li>
+          </ul>
+          <p className="nation-join">JOIN THE TIGERS NATION</p>
+          <NationSignup />
+        </article>
+      </div>
     </section>
-    <div className="ticker"><div className="ticker-inner wrap"><span>UNITED TIGERS</span><i /><span>ABU DHABI T10</span><i /><span>THE FASTEST FORMAT</span><i /><span>2026 SEASON</span><i /><span>UNITED TIGERS</span></div></div>
-    <section className="fan-launch"><div className="wrap fan-launch-grid">
-      <Link href="/shop"><span>01 · KIT</span><h2>{products[0]?.name ?? "THE SHOP"}</h2><p>{products[0] ? formatMoney(products[0].price) : "Colours, sizes and a bag that books with your phone."}</p></Link>
-      <Link href={polls[0] ? `/polls/${polls[0].slug}` : "/fan"}><span>02 · POLL</span><h2>{polls[0]?.question ?? "HAVE YOUR SAY"}</h2><p>Vote with your name, email and phone.</p></Link>
-      <Link href={contests[0] ? `/contests/${contests[0].slug}` : "/fan"}><span>03 · CONTEST</span><h2>{contests[0]?.title ?? "WIN WITH THE TIGERS"}</h2><p>{contests[0]?.prize ?? "Club contests open from the fan zone."}</p></Link>
-    </div></section>
 
-    <section className="section" id="season"><div className="wrap">
-      <SectionHeading overline="MATCH DAY" title={upcoming?.status === "LIVE" ? "LIVE NOW" : "NEXT UP"} href="/fixtures" linkText="ALL FIXTURES" />
-      {upcoming ? <div className="next-match">
-        <div className="match-caption"><StatusBadge live={upcoming.status === "LIVE"}>{upcoming.status}</StatusBadge><strong>{upcoming.competition ?? "2026 T10 SEASON"}</strong><small>{upcoming.matchNumber ?? "FIXTURE"}</small></div>
-        <div className="match-fixture"><div className="match-teams"><span className="match-team-home">UNITED TIGERS</span><span className="vs-mark">VS</span><span>{upcoming.opponent.toUpperCase()}</span></div><div className="fixture-placeholder">{upcoming.status === "LIVE" ? "SCORE UPDATING" : "TIGERS READY FOR THE NEXT CHALLENGE"}</div></div>
-        <div className="match-details"><div className="detail-line"><span>DATE</span><strong>{new Date(upcoming.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Dubai" })}</strong></div><div className="detail-line"><span>VENUE</span><strong>{upcoming.venue?.name ?? "Venue TBC"}</strong></div><Link className="text-link" href={`/matches/${upcoming.slug}`}>MATCH CENTRE <ArrowUpRight size={14} /></Link></div>
-      </div> : <div className="next-match">
-        <div className="match-caption"><span className="eyebrow"><i className="eyebrow-dot" />2026 SEASON</span><strong>THE COUNTDOWN STARTS HERE.</strong><small>FIXTURE LIST PENDING</small></div>
-        <div className="match-fixture"><div className="match-teams"><span className="match-team-home">UNITED TIGERS</span><span className="vs-mark">VS</span><span>THE FIELD</span></div><div className="fixture-placeholder">OFFICIAL FIXTURES WILL APPEAR HERE</div></div>
-        <div className="match-details"><div className="detail-line"><span>SEASON</span><strong>ABU DHABI T10 · 2026</strong></div><div className="detail-line"><span>FIRST BALL</span><strong>TO BE ANNOUNCED</strong></div><Link className="text-link" href="/fixtures">FOLLOW FIXTURES <ArrowUpRight size={14} /></Link></div>
-      </div>}
-      {upcoming?.status === "LIVE" && <LiveScore slug={upcoming.slug} pollIntervalMs={pollIntervalMs} initial={{ status: upcoming.status, liveState: upcoming.liveState as never, innings: upcoming.innings.map((entry) => ({ runs: entry.runs, wickets: entry.wickets, overs: entry.overs.toString() })) }} />}
-      <div className="last-match-card"><div><span className="eyebrow"><i className="eyebrow-dot" />LAST MATCH</span><h3>{previous ? previous.result || `UNITED TIGERS vs ${previous.opponent}` : "THE FIRST INNINGS IS STILL AHEAD."}</h3><p>{previous ? `${previous.venue?.name ?? "Venue to be confirmed"} · ${new Date(previous.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Dubai" })}` : "The Tigers are preparing for their debut season. Results and scorecards will live here after the opening match."}</p></div>{previous ? <Link className="button button-outline" href={`/matches/${previous.slug}`}>VIEW SCORECARD <ArrowUpRight size={15} /></Link> : <span className="first-match-mark"><Trophy size={20} />01</span>}</div>
-      <div className="season-strip" style={{ marginTop: 18 }}>
-        <div className="season-stat"><span>Matches played</span><strong>{completed.length || "—"}</strong><small>{completed.length ? "2026 season" : "Scorecards to come"}</small></div>
-        <div className="season-stat"><span>Wins</span><strong>{completed.length ? wins : "—"}</strong><small>Season record</small></div>
-        <div className="season-stat"><span>Runs scored</span><strong>{completed.length ? runsScored : "—"}</strong><small>Team total</small></div>
-        <div className="season-stat"><span>Wickets taken</span><strong>{completed.length ? wicketsTaken : "—"}</strong><small>Team total</small></div>
+    <section className="home-board">
+      <div className="wrap board-grid">
+        <div>
+          <div className="board-head"><h2>LATEST HIGHLIGHTS</h2><Link href="/news">View all <ArrowUpRight size={14} /></Link></div>
+          <div className="highlight-row">
+            {stories.map((story, index) => <Link href={`/news/${story.slug}`} key={story.id}>
+              <span style={{ backgroundImage: `url('${story.coverImage || shots[index % shots.length]}')` }}><Play size={16} /></span>
+              <small>{story.category}</small>
+              <strong>{story.title}</strong>
+            </Link>)}
+          </div>
+        </div>
+        <div>
+          <div className="board-head"><h2>FIXTURES & RESULTS</h2><Link href="/fixtures">View all <ArrowUpRight size={14} /></Link></div>
+          <div className="result-list">
+            {listed.length ? listed.map((match) => {
+              const won = /united tigers won/i.test(match.result || "");
+              const label = match.status === "LIVE" ? "LIVE" : match.status === "COMPLETED" ? (won ? "WIN" : "RESULT") : "NEXT";
+              return <Link href={`/matches/${match.slug}`} key={match.id}>
+                <b className={label === "WIN" ? "is-win" : label === "NEXT" ? "is-next" : ""}>{label}</b>
+                <span>vs {match.opponent}</span>
+                <small>{when(match.date).day}</small>
+                <em>{match.result || match.competition || "Abu Dhabi T10"}</em>
+              </Link>;
+            }) : <p className="dash-empty">Fixtures will be listed here.</p>}
+          </div>
+        </div>
+        <aside className="stay-card">
+          <h2>STAY CONNECTED</h2>
+          <div className="stay-links">
+            <a href="https://www.instagram.com/unitedtigers.ae/" target="_blank" rel="noreferrer">Instagram</a>
+            <Link href="/news">News</Link>
+            <Link href="/fan">Fan zone</Link>
+            <Link href="/shop">Shop</Link>
+          </div>
+          <p>#RoarForAbuDhabi</p>
+          <div className="stay-photo" style={{ backgroundImage: "url('/images/demo/gallery-stadium.jpg')" }} />
+        </aside>
       </div>
-    </div></section>
+    </section>
 
-    <section className="section section-dark"><div className="wrap">
-      <SectionHeading overline="THE PEOPLE BEHIND THE STRIPES" title="MEET THE SQUAD" href="/team" linkText="FULL SQUAD" />
-      <div className="player-feature">
-        {featuredPlayer && <PlayerCard player={featuredPlayer} featured />}
-        <Reveal className="player-feature-copy"><span className="eyebrow"><i className="eyebrow-dot" />ICON PLAYER</span><h3>{featuredPlayer?.fullName ?? "THE TIGERS"}</h3><p>Fakhar Zaman leads the announced names as the United Tigers icon player for the 2026 Abu Dhabi T10. Player roles and profile details will be confirmed by the club.</p><Link className="text-link" href={featuredPlayer ? `/players/${featuredPlayer.slug}` : "/team"}>PLAYER PROFILE <ArrowUpRight size={14} /></Link></Reveal>
+    <section className="partner-rail">
+      <div className="wrap">
+        <span>OUR PARTNERS</span>
+        <div>
+          {sponsors.length ? sponsors.map((sponsor) => sponsor.website ? <a key={sponsor.id} href={sponsor.website} target="_blank" rel="noreferrer">{sponsor.logoUrl ? <Image src={sponsor.logoUrl} alt={sponsor.name} width={120} height={36} /> : sponsor.name}</a> : <span key={sponsor.id}>{sponsor.logoUrl ? <Image src={sponsor.logoUrl} alt={sponsor.name} width={120} height={36} /> : sponsor.name}</span>) : <Link href="/partners">Partner with the Tigers</Link>}
+        </div>
+        <em>CRICKET UNITES PEOPLE</em>
       </div>
-      <div className="player-grid" style={{ marginTop: 26 }}>{players.filter((player) => !player.isIconPlayer).slice(0, 3).map((player) => <PlayerCard key={player.id} player={player} />)}</div>
-    </div></section>
-
-    <section className="section"><div className="wrap">
-      <SectionHeading overline="INSIDE THE TIGERS" title="THE DAILY" href="/updates" linkText="ALL UPDATES" />
-      {updates.length ? <div className="update-grid">{updates.slice(0, 3).map((item) => <UpdateCard key={item.id} item={item} />)}</div> : <EmptyState title="No team updates yet" description="Training notes, match-day moments and news from the Tigers will be published here." />}
-    </div></section>
-
-    <section className="section section-dark"><div className="wrap">
-      <SectionHeading overline="THE LATEST" title="TIGERS NEWSROOM" href="/news" linkText="ALL STORIES" />
-      {news.length ? <div className="news-grid">{news.slice(0, 3).map((item, index) => <NewsCard key={item.id} item={item} featured={index === 0} />)}</div> : <EmptyState title="The story starts soon" description="Official team news and match reports will appear here." kind="news" />}
-    </div></section>
-
-    <section className="section"><div className="wrap">
-      <SectionHeading overline="BUILT ON BIG MOMENTS" title="RECORDS START HERE" href="/records" linkText="RECORDS & STATS" />
-      {records.length ? <div className="record-grid">{records.slice(0, 3).map((record) => <div className="record-card" key={record.id}><span>{record.scope} · {record.category}</span><strong>{record.value}</strong><h3>{record.title}</h3><p>{record.playerName || "United Tigers"}</p></div>)}</div> : <div className="announcement-band"><div><span>NEW TEAM. CLEAN SCOREBOARD.</span><strong>EVERY RECORD IS STILL TO BE WRITTEN.</strong></div><Link href="/stats" aria-label="Explore statistics"><ArrowUpRight size={21} /></Link></div>}
-    </div></section>
-
-    <section className="section section-dark"><div className="wrap">
-      <div className="section-heading"><div><span className="eyebrow"><i className="eyebrow-dot" />THE TIGERS FAMILY</span><h2>POWERED BY<br />OUR PARTNERS</h2></div><Link className="text-link" href="/partners">PARTNER WITH US <ArrowUpRight size={14} /></Link></div>
-      {sponsors.length ? <div className="partner-grid">{sponsors.slice(0, 4).map((sponsor) => <div className="partner-item" key={sponsor.id}>{sponsor.logoUrl ? <Image src={sponsor.logoUrl} alt={sponsor.name} fill sizes="(max-width: 760px) 50vw, 25vw" /> : <span>{sponsor.name}</span>}</div>)}</div> : <div className="sponsor-cta" style={{ marginTop: 0 }}><h3>Make the next chapter yours.</h3><span>Partnership opportunities for the 2026 season</span><Link className="button button-outline" href="/contact">TALK PARTNERSHIPS <ArrowRight size={15} /></Link></div>}
-    </div></section>
-
-    <section className="section"><div className="wrap">
-      <div className="about-grid"><div className="about-art" /><div className="about-copy"><span className="eyebrow"><i className="eyebrow-dot" />A NEW CHAPTER</span><h2>A TEAM<br />BUILT FOR<br />THE MOMENT.</h2><p>United Tigers arrive in the Abu Dhabi T10 with a simple ambition: bring people together around fearless cricket, big moments and a team that keeps moving forward.</p><Link className="text-link" href="/about">OUR STORY <ArrowUpRight size={14} /></Link></div></div>
-    </div></section>
-    <section className="social-band"><div className="wrap social-band-inner"><div><span className="eyebrow"><i className="eyebrow-dot" />FOLLOW THE TIGERS</span><h2>JOIN THE PRIDE.</h2><p>Follow <strong>@unitedtigers.ae</strong> for the latest from the team.</p></div><a className="button button-primary" href="https://www.instagram.com/unitedtigers.ae/" target="_blank" rel="noreferrer">FOLLOW ON INSTAGRAM <ArrowUpRight size={16} /></a></div></section>
+    </section>
   </>;
 }
 
