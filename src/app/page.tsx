@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowUpRight, Play } from "lucide-react";
-import { getMatches, getNews, getPlayers, getPolls, getPublicSettings, getSponsors } from "@/lib/data";
+import { getContests, getGallery, getMatches, getNews, getPlayers, getPolls, getProducts, getPublicSettings, getSponsors } from "@/lib/data";
+import { formatMoney } from "@/lib/money";
 import { LiveScore } from "@/components/LiveScore";
 import { NationSignup } from "@/components/NationSignup";
 import { homepageDefaults, readHomepageBanner } from "@/lib/site-settings";
@@ -26,7 +27,7 @@ function when(value: Date | string) {
 }
 
 export default async function HomePage() {
-  const [players, matches, news, sponsors, settings, polls, pollIntervalMs] = await Promise.all([getPlayers(), getMatches(), getNews(), getSponsors(), getPublicSettings(), getPolls(), getLivePollIntervalMs()]);
+  const [players, matches, news, sponsors, settings, polls, pollIntervalMs, products, gallery, contests] = await Promise.all([getPlayers(), getMatches(), getNews(), getSponsors(), getPublicSettings(), getPolls(), getLivePollIntervalMs(), getProducts(), getGallery(), getContests()]);
   const banner = readHomepageBanner(settings.homepage ?? homepageDefaults);
   const custom = banner.mode === "image" && Boolean(banner.image);
   const portraits = players.filter((player) => player.profileImage).slice(0, 6).map((player) => player.profileImage as string);
@@ -37,6 +38,12 @@ export default async function HomePage() {
   const poll = polls[0];
   const stories = news.slice(0, 3);
   const listed = matches.slice(0, 4);
+  const leadStory = news.find((story) => story.isFeatured) ?? news[0];
+  const sideStories = news.filter((story) => story.id !== leadStory?.id).slice(0, 2);
+  const featuredKit = (products.some((product) => product.isFeatured) ? products.filter((product) => product.isFeatured) : products).slice(0, 4);
+  const frames = gallery.filter((item) => item.type === "IMAGE");
+  const featuredFrames = (frames.some((item) => item.isFeatured) ? frames.filter((item) => item.isFeatured) : frames).slice(0, 5);
+  const spotlight = contests[0];
 
   return <>
     <section className={`home-stage ${custom ? "is-custom" : ""}`} style={custom ? { "--banner": `url("${banner.image}")` } as React.CSSProperties : undefined}>
@@ -153,11 +160,72 @@ export default async function HomePage() {
             <Link href="/fan">Fan zone</Link>
             <Link href="/shop">Shop</Link>
           </div>
-          <p>#RoarForAbuDhabi</p>
+          <p>#UnitedTigers</p>
           <div className="stay-photo" style={{ backgroundImage: "url('/images/demo/gallery-stadium.jpg')" }} />
         </aside>
       </div>
     </section>
+
+    <section className="home-feature">
+      <div className="wrap">
+        <div className="board-head"><h2>FROM THE NEWSROOM</h2><Link href="/news">View all <ArrowUpRight size={14} /></Link></div>
+        {leadStory ? <div className="news-feature">
+          <Link className="news-lead" href={`/news/${leadStory.slug}`}>
+            <span style={{ backgroundImage: `url('${leadStory.coverImage || shots[0]}')` }} />
+            <small>{leadStory.isFeatured ? "FEATURED" : leadStory.category}</small>
+            <strong>{leadStory.title}</strong>
+            <p>{leadStory.excerpt}</p>
+          </Link>
+          <div>
+            {sideStories.map((story) => <Link href={`/news/${story.slug}`} key={story.id}>
+              <span style={{ backgroundImage: `url('${story.coverImage || shots[1]}')` }} />
+              <small>{story.category}</small>
+              <strong>{story.title}</strong>
+            </Link>)}
+          </div>
+        </div> : <p className="dash-empty">Club news will appear here.</p>}
+      </div>
+    </section>
+
+    <section className="home-feature home-feature-kit">
+      <div className="wrap">
+        <div className="board-head"><h2>FEATURED KIT</h2><Link href="/shop">Shop all <ArrowUpRight size={14} /></Link></div>
+        <div className="kit-row">
+          {featuredKit.map((product) => {
+            const colours = [...new Set(product.variants.map((variant) => variant.color))].slice(0, 3);
+            return <Link href={`/shop/${product.slug}`} key={product.id}>
+              <span className={product.image ? "" : "is-empty"} style={product.image ? { backgroundImage: `url('${product.image}')` } : undefined}>{product.category}</span>
+              <strong>{product.name}</strong>
+              <em>{formatMoney(product.price)}</em>
+              <small>{colours.join(" · ") || "Club colours"}</small>
+            </Link>;
+          })}
+        </div>
+      </div>
+    </section>
+
+    <section className="home-feature">
+      <div className="wrap">
+        <div className="board-head"><h2>IN THE FRAME</h2><Link href="/gallery">Gallery <ArrowUpRight size={14} /></Link></div>
+        <div className="frame-row">
+          {(featuredFrames.length ? featuredFrames : shots.map((src, index) => ({ id: src, mediaUrl: src, title: ["Match night", "The opener", "The huddle"][index] ?? "United Tigers", altText: "" }))).map((item) => <Link href="/gallery" key={item.id}>
+            <span style={{ backgroundImage: `url('${item.mediaUrl}')` }} />
+            <strong>{item.title}</strong>
+          </Link>)}
+        </div>
+      </div>
+    </section>
+
+    {spotlight && <section className="contest-band">
+      <div className="wrap">
+        <div>
+          <span>FAN CONTEST</span>
+          <h2>{spotlight.title}</h2>
+          <p>{spotlight.prize ? `Prize · ${spotlight.prize}` : spotlight.description}</p>
+        </div>
+        <Link className="button button-orange" href={`/contests/${spotlight.slug}`}>ENTER NOW <ArrowUpRight size={16} /></Link>
+      </div>
+    </section>}
 
     <section className="partner-rail">
       <div className="wrap">

@@ -411,6 +411,7 @@ model Gallery {
   altText      String?
   displayOrder Int       @default(0)
   isPublished  Boolean   @default(true)
+  isFeatured   Boolean   @default(false)
   isDemo       Boolean   @default(false)
   createdAt    DateTime  @default(now())
 
@@ -527,6 +528,7 @@ model Product {
   image       String?
   category    ProductCategory @default(JERSEY)
   isPublished Boolean         @default(true)
+  isFeatured  Boolean         @default(false)
   variants    ProductVariant[]
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt

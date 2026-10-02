@@ -91,7 +91,7 @@ const homepageSchema = z.object({
   ctaLabel: z.string().trim().min(2).max(40),
   ctaHref: z.string().trim().max(300).default("/team"),
   image: z.string().trim().max(500).default(""),
-  roar: z.string().trim().max(40).default("ROAR FOR ABU DHABI"),
+  roar: z.string().trim().max(40).default("UNITED TIGERS"),
 });
 
 export type HomepageBanner = z.infer<typeof homepageSchema>;
@@ -104,7 +104,7 @@ export const homepageDefaults: HomepageBanner = {
   ctaLabel: "BACK OUR TIGERS",
   ctaHref: "/team",
   image: "",
-  roar: "ROAR FOR ABU DHABI",
+  roar: "UNITED TIGERS",
 };
 
 function safeAsset(value: string) {

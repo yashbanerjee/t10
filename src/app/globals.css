@@ -881,17 +881,49 @@ img { max-width: 100%; }
 .stay-links a { padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,.08); font-size: 12px; }
 .stay-card p { margin: 0; color: #f0c14a; font-weight: 800; }
 .stay-photo { min-height: 120px; border-radius: 12px; background: center / cover no-repeat; }
+.home-feature { padding: 8px 0 28px; background: #0d061c; }
+.home-feature-kit { background: #120828; }
+.news-feature { display: grid; grid-template-columns: 1.4fr .8fr; gap: 14px; }
+.news-lead, .news-feature > div a, .kit-row a, .frame-row a { display: grid; gap: 8px; min-width: 0; }
+.news-lead span, .news-feature > div a span, .kit-row a span, .frame-row a span { display: block; border-radius: 16px; background: #241048 center / cover no-repeat; }
+.news-lead span { min-height: 320px; }
+.news-feature > div { display: grid; gap: 14px; }
+.news-feature > div a span { min-height: 140px; }
+.news-lead small, .news-feature small, .kit-row small, .frame-row strong { color: rgba(255,255,255,.68); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+.news-lead strong, .news-feature strong { font-family: var(--font-display); font-size: clamp(22px, 2vw, 34px); line-height: 1; text-transform: uppercase; }
+.news-lead p { margin: 0; color: rgba(255,255,255,.72); }
+.kit-row, .frame-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.kit-row a span { min-height: 220px; padding: 14px; color: #f0c14a; font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+.kit-row a span.is-empty { background: radial-gradient(circle at 30% 20%, rgba(255,106,20,.35), transparent 42%), #241048; }
+.kit-row strong { font-family: var(--font-display); font-size: 26px; text-transform: uppercase; }
+.kit-row em { color: #ff6a14; font-style: normal; font-weight: 800; }
+.frame-row { grid-template-columns: 1.4fr repeat(3, 1fr); }
+.frame-row a:first-child { grid-row: span 2; }
+.frame-row a:first-child span { min-height: 100%; }
+.frame-row a span { min-height: 150px; }
+.contest-band { background: linear-gradient(90deg, #ff6a14, #c43b12); color: white; }
+.contest-band .wrap { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 140px; padding-block: 24px; }
+.contest-band span { font-size: 11px; font-weight: 800; letter-spacing: .16em; }
+.contest-band h2 { margin: 6px 0; font-family: var(--font-display); font-size: clamp(32px, 4vw, 48px); line-height: .9; text-transform: uppercase; }
+.contest-band p { margin: 0; }
+.contest-band .button { background: #14082c; }
+.contest-band .button:hover { background: #2a1460; }
 .partner-rail { border-top: 1px solid rgba(255,255,255,.08); background: #090612; }
 .partner-rail .wrap { display: grid; grid-template-columns: auto 1fr auto; gap: 18px; align-items: center; min-height: 74px; }
 .partner-rail span, .partner-rail em { color: rgba(255,255,255,.62); font-size: 11px; font-style: normal; font-weight: 800; letter-spacing: .12em; }
 .partner-rail div { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 18px; }
 .partner-rail img { width: auto; max-width: 110px; height: 28px; object-fit: contain; filter: grayscale(1) brightness(2); }
 @media (max-width: 1100px) {
-  .stage-top, .dash-grid, .board-grid { grid-template-columns: 1fr 1fr; }
+  .stage-top, .dash-grid, .board-grid, .kit-row, .frame-row { grid-template-columns: 1fr 1fr; }
+  .news-feature { grid-template-columns: 1fr; }
+  .frame-row a:first-child { grid-row: auto; }
   .dash-grid .dash-card:last-child, .board-grid aside { grid-column: 1 / -1; }
 }
 @media (max-width: 760px) {
-  .stage-top, .dash-grid, .board-grid, .highlight-row, .partner-rail .wrap, .mini-squad { grid-template-columns: 1fr 1fr; }
+  .stage-top, .dash-grid, .board-grid, .highlight-row, .partner-rail .wrap, .mini-squad, .news-feature, .kit-row { grid-template-columns: 1fr; }
+  .frame-row { grid-template-columns: 1fr 1fr; }
+  .frame-row a:first-child { grid-row: auto; }
+  .contest-band .wrap { align-items: flex-start; flex-direction: column; }
   .stage-art { min-height: 280px; }
   .stage-copy h1 { font-size: 64px; }
   .partner-rail .wrap { padding-block: 16px; }
