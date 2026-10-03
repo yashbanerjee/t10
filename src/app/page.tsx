@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowUpRight, Clock, Globe, Instagram, Play, Shield, Users } from "lucide-react";
+import { ArrowUpRight, Calendar, Clock, Globe, Instagram, MapPin, Play, Shield, Users } from "lucide-react";
 import { getContests, getGallery, getMatches, getNews, getPlayers, getPolls, getProducts, getPublicSettings, getSponsors } from "@/lib/data";
 import { formatMoney } from "@/lib/money";
 import { LiveScore } from "@/components/LiveScore";
@@ -74,9 +74,9 @@ export default async function HomePage() {
           <header><span>NEXT MATCH</span><small>ABU DHABI T10</small></header>
           {upcoming && kickoff ? <>
             <div className="crest-row">
-              <div><b>UT</b><strong>United Tigers</strong><em>Abu Dhabi</em><small>{kickoff.day}<br />{kickoff.time}</small></div>
+              <div><b>UT</b><strong>United Tigers</strong><em>Abu Dhabi</em><small><Calendar size={12} aria-hidden="true" /> {kickoff.day}<br />{kickoff.time}</small></div>
               <span>VS</span>
-              <div><b>{(upcoming.opponentShort || upcoming.opponent).slice(0, 2).toUpperCase()}</b><strong>{upcoming.opponent}</strong><em>{upcoming.venue?.city || "Away"}</em><small>{upcoming.venue?.name ?? "Venue TBC"}</small></div>
+              <div><b>{(upcoming.opponentShort || upcoming.opponent).slice(0, 2).toUpperCase()}</b><strong>{upcoming.opponent}</strong><em>{upcoming.venue?.city || "Away"}</em><small><MapPin size={12} aria-hidden="true" /> {upcoming.venue?.name ?? "Venue TBC"}</small></div>
             </div>
             {upcoming.status === "LIVE" && <LiveScore slug={upcoming.slug} pollIntervalMs={pollIntervalMs} initial={{ status: upcoming.status, liveState: upcoming.liveState as never, innings: upcoming.innings.map((entry) => ({ runs: entry.runs, wickets: entry.wickets, overs: entry.overs.toString() })) }} />}
             <Link className="button button-orange" href={`/matches/${upcoming.slug}`}>BUY TICKETS</Link>
@@ -104,9 +104,8 @@ export default async function HomePage() {
         </article>
 
         <article className="dash-card">
-          <header><span>VOTE</span></header>
-          <h2>{poll?.question ?? "Player of the match"}</h2>
-          <p>Cast your vote and make your voice count.</p>
+          <h2>Vote for<br />player of the match</h2>
+          <p>{poll?.question ?? "Who lit up the game?"}<br />Cast your vote and make your voice count.</p>
           <div className="vote-faces">
             {(poll?.options ?? []).slice(0, 5).map((option) => {
               const face = playerForLabel(option.label, players);
@@ -119,10 +118,10 @@ export default async function HomePage() {
         <article className="dash-card">
           <header><span>TIGERS NATION</span></header>
           <ul className="nation-stats">
-            <li><Users size={16} aria-hidden="true" /><strong>{players.length || "—"}</strong><span>Squad</span></li>
-            <li><Shield size={16} aria-hidden="true" /><strong>{matches.length || "—"}</strong><span>Fixtures</span></li>
-            <li><Globe size={16} aria-hidden="true" /><strong>{sponsors.length || "—"}</strong><span>Partners</span></li>
-            <li><Clock size={16} aria-hidden="true" /><strong>10</strong><span>Overs</span></li>
+            <li><Users size={16} aria-hidden="true" /><strong>30K+</strong><span>Fans worldwide</span></li>
+            <li><Shield size={16} aria-hidden="true" /><strong>6</strong><span>Franchise teams</span></li>
+            <li><Globe size={16} aria-hidden="true" /><strong>30+</strong><span>T10 nations</span></li>
+            <li><Clock size={16} aria-hidden="true" /><strong>90</strong><span>Minutes of thrill</span></li>
           </ul>
           <p className="nation-join">JOIN THE TIGERS NATION</p>
           <NationSignup />
