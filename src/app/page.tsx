@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowUpRight, Play } from "lucide-react";
+import { ArrowUpRight, Clock, Globe, Instagram, Play, Shield, Users } from "lucide-react";
 import { getContests, getGallery, getMatches, getNews, getPlayers, getPolls, getProducts, getPublicSettings, getSponsors } from "@/lib/data";
 import { formatMoney } from "@/lib/money";
 import { LiveScore } from "@/components/LiveScore";
@@ -22,8 +22,14 @@ function when(value: Date | string) {
   const date = new Date(value);
   return {
     day: date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Dubai" }).toUpperCase(),
-    time: `${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Dubai" })} GST`,
+    time: `${date.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Dubai" })} GST`,
   };
+}
+
+function playerForLabel(label: string, roster: { fullName: string; profileImage: string | null }[]) {
+  const needle = label.trim().toLowerCase();
+  return roster.find((player) => player.fullName.toLowerCase() === needle)
+    ?? roster.find((player) => needle.includes(player.fullName.toLowerCase()) || player.fullName.toLowerCase().includes(needle));
 }
 
 export default async function HomePage() {
@@ -35,9 +41,9 @@ export default async function HomePage() {
   const squad = players.slice(0, 4);
   const upcoming = matches.find((match) => match.status === "UPCOMING" || match.status === "LIVE");
   const kickoff = upcoming ? when(upcoming.date) : null;
-  const poll = polls[0];
+  const poll = [...polls].sort((left, right) => right.options.filter((option) => playerForLabel(option.label, players)).length - left.options.filter((option) => playerForLabel(option.label, players)).length)[0] ?? polls[0];
   const stories = news.slice(0, 3);
-  const listed = matches.slice(0, 4);
+  const listed = [...matches.filter((match) => match.status === "COMPLETED").slice(-2), ...matches.filter((match) => match.status === "UPCOMING" || match.status === "LIVE").slice(0, 1)];
   const leadStory = news.find((story) => story.isFeatured) ?? news[0];
   const sideStories = news.filter((story) => story.id !== leadStory?.id).slice(0, 2);
   const featuredKit = (products.some((product) => product.isFeatured) ? products.filter((product) => product.isFeatured) : products).slice(0, 4);
@@ -68,14 +74,10 @@ export default async function HomePage() {
           <header><span>NEXT MATCH</span><small>ABU DHABI T10</small></header>
           {upcoming && kickoff ? <>
             <div className="crest-row">
-              <div><b>UT</b><strong>United Tigers</strong><em>Abu Dhabi</em></div>
+              <div><b>UT</b><strong>United Tigers</strong><em>Abu Dhabi</em><small>{kickoff.day}<br />{kickoff.time}</small></div>
               <span>VS</span>
-              <div><b>{(upcoming.opponentShort || upcoming.opponent).slice(0, 2).toUpperCase()}</b><strong>{upcoming.opponent}</strong><em>{upcoming.venue?.city || "Away"}</em></div>
+              <div><b>{(upcoming.opponentShort || upcoming.opponent).slice(0, 2).toUpperCase()}</b><strong>{upcoming.opponent}</strong><em>{upcoming.venue?.city || "Away"}</em><small>{upcoming.venue?.name ?? "Venue TBC"}</small></div>
             </div>
-            <dl>
-              <div><dt>DATE</dt><dd>{kickoff.day}<br />{kickoff.time}</dd></div>
-              <div><dt>VENUE</dt><dd>{upcoming.venue?.name ?? "Venue TBC"}</dd></div>
-            </dl>
             {upcoming.status === "LIVE" && <LiveScore slug={upcoming.slug} pollIntervalMs={pollIntervalMs} initial={{ status: upcoming.status, liveState: upcoming.liveState as never, innings: upcoming.innings.map((entry) => ({ runs: entry.runs, wickets: entry.wickets, overs: entry.overs.toString() })) }} />}
             <Link className="button button-orange" href={`/matches/${upcoming.slug}`}>BUY TICKETS</Link>
           </> : <>
@@ -106,7 +108,10 @@ export default async function HomePage() {
           <h2>{poll?.question ?? "Player of the match"}</h2>
           <p>Cast your vote and make your voice count.</p>
           <div className="vote-faces">
-            {(poll?.options ?? []).slice(0, 4).map((option) => <span key={option.id}>{option.label.split(" ")[0]}</span>)}
+            {(poll?.options ?? []).slice(0, 5).map((option) => {
+              const face = playerForLabel(option.label, players);
+              return <span key={option.id} title={option.label}>{face?.profileImage ? <Image src={face.profileImage} alt="" fill sizes="42px" /> : option.label.slice(0, 1)}</span>;
+            })}
           </div>
           <Link className="button button-orange" href={poll ? `/polls/${poll.slug}` : "/fan#vote"}>CAST YOUR VOTE</Link>
         </article>
@@ -114,10 +119,10 @@ export default async function HomePage() {
         <article className="dash-card">
           <header><span>TIGERS NATION</span></header>
           <ul className="nation-stats">
-            <li><strong>{players.length || "—"}</strong><span>Squad</span></li>
-            <li><strong>{matches.length || "—"}</strong><span>Fixtures</span></li>
-            <li><strong>{sponsors.length || "—"}</strong><span>Partners</span></li>
-            <li><strong>10</strong><span>Overs</span></li>
+            <li><Users size={16} aria-hidden="true" /><strong>{players.length || "—"}</strong><span>Squad</span></li>
+            <li><Shield size={16} aria-hidden="true" /><strong>{matches.length || "—"}</strong><span>Fixtures</span></li>
+            <li><Globe size={16} aria-hidden="true" /><strong>{sponsors.length || "—"}</strong><span>Partners</span></li>
+            <li><Clock size={16} aria-hidden="true" /><strong>10</strong><span>Overs</span></li>
           </ul>
           <p className="nation-join">JOIN THE TIGERS NATION</p>
           <NationSignup />
@@ -143,11 +148,12 @@ export default async function HomePage() {
             {listed.length ? listed.map((match) => {
               const won = /united tigers won/i.test(match.result || "");
               const label = match.status === "LIVE" ? "LIVE" : match.status === "COMPLETED" ? (won ? "WIN" : "RESULT") : "NEXT";
+              const score = match.innings.length ? match.innings.map((innings) => `${innings.runs}/${innings.wickets} (${innings.overs})`).join(" – ") : "";
               return <Link href={`/matches/${match.slug}`} key={match.id}>
                 <b className={label === "WIN" ? "is-win" : label === "NEXT" ? "is-next" : ""}>{label}</b>
                 <span>vs {match.opponent}</span>
                 <small>{when(match.date).day}</small>
-                <em>{match.result || match.competition || "Abu Dhabi T10"}</em>
+                <em>{score || (match.status === "UPCOMING" || match.status === "LIVE" ? when(match.date).time : match.result || match.competition || "Abu Dhabi T10")}</em>
               </Link>;
             }) : <p className="dash-empty">Fixtures will be listed here.</p>}
           </div>
@@ -155,13 +161,10 @@ export default async function HomePage() {
         <aside className="stay-card">
           <h2>STAY CONNECTED</h2>
           <div className="stay-links">
-            <a href="https://www.instagram.com/unitedtigers.ae/" target="_blank" rel="noreferrer">Instagram</a>
-            <Link href="/news">News</Link>
-            <Link href="/fan">Fan zone</Link>
-            <Link href="/shop">Shop</Link>
+            <a href="https://www.instagram.com/unitedtigers.ae/" target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram size={16} /></a>
           </div>
           <p>#UnitedTigers</p>
-          <div className="stay-photo" style={{ backgroundImage: "url('/images/demo/gallery-stadium.jpg')" }} />
+          <div className="stay-photo" style={{ backgroundImage: "url('/images/demo/gallery-stadium.jpg')" }}><strong>Once a Tiger<br />always a Tiger</strong></div>
         </aside>
       </div>
     </section>
