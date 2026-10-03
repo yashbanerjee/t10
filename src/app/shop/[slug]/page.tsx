@@ -14,12 +14,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const product = await getProductBySlug((await params).slug);
   if (!product) notFound();
   return <div className="inner-page">
+    <section className="inner-hero"><div className="wrap"><span className="eyebrow"><i className="eyebrow-dot" />OFFICIAL KIT</span><h1>{product.name}</h1><p>{product.description}</p></div></section>
     <section className="section"><div className="wrap">
       <Link className="text-link" href="/shop"><ArrowLeft size={14} /> BACK TO THE SHOP</Link>
-      <div className="product-layout">
-        <div><span className="eyebrow"><i className="eyebrow-dot" />{product.category}</span><h1>{product.name}</h1><p>{product.description}</p></div>
-        <ProductPicker product={product} />
-      </div>
+      <ProductPicker product={product} />
     </div></section>
   </div>;
 }

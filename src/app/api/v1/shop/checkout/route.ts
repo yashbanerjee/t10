@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { failure, success } from "@/lib/api";
+import { notifyAdminAndUser } from "@/lib/mail";
+import { formatMoney } from "@/lib/money";
 
 const checkoutInput = z.object({
   name: z.string().trim().min(2).max(120),
@@ -48,7 +50,17 @@ export async function POST(request: NextRequest) {
           total,
           items: { create: lines.map((line) => ({ productName: line.variant.product.name, color: line.variant.color, size: line.variant.size, quantity: line.quantity, unitPrice: line.unitPrice })) },
         },
+        include: { items: true },
       });
+    });
+    const itemLines = order.items.map((item) => `${item.quantity} × ${item.productName} (${item.color}, ${item.size}) — ${formatMoney(Number(item.unitPrice))}`).join("\n");
+    const summary = [`Order: ${order.number}`, `Name: ${order.name}`, `Email: ${order.email}`, `Phone: ${order.phone}`, `Address: ${order.address}, ${order.city}, ${order.country}`, order.notes ? `Notes: ${order.notes}` : "", "", itemLines, "", `Total: ${formatMoney(Number(order.total))}`, "Payment is confirmed by the club."].filter(Boolean).join("\n");
+    await notifyAdminAndUser({
+      adminSubject: `Booking ${order.number}`,
+      adminText: summary,
+      userEmail: order.email,
+      userSubject: `Your United Tigers booking ${order.number}`,
+      userText: `Hello ${order.name},\n\nWe have your booking. The club will confirm payment by phone or email.\n\n${summary}`,
     });
     return success({ number: order.number }, "Order booked", { status: 201 });
   } catch (error) {

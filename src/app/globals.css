@@ -547,6 +547,7 @@ img { max-width: 100%; }
 .admin-field-control > input:focus, .admin-field-control > select:focus, .admin-field-control > textarea:focus, .admin-editor-grid > label > input:focus, .admin-editor-grid > label > select:focus, .admin-editor-grid > label > textarea:focus, .admin-field .rich-editor textarea:focus { border-color: #0C66E4; outline: none; }
 .admin-field-control > input[type="date"], .admin-field-control > input[type="datetime-local"], .admin-field-control > input[type="file"], .admin-editor-grid > label > input[type="date"], .admin-editor-grid > label > input[type="datetime-local"], .admin-editor-grid > label > input[type="file"] { min-width: 0; width: 100%; }
 .admin-field-control > input[type="file"], .admin-editor-grid > label > input[type="file"] { padding: 6px 10px; font-size: 14px; line-height: 24px; }
+.admin-field-control > input[type="checkbox"] { width: 18px; height: 18px; padding: 0; }
 .admin-field-control > select, .admin-editor-grid > label > select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, #44546F 50%), linear-gradient(135deg, #44546F 50%, transparent 50%); background-position: calc(100% - 16px) 17px, calc(100% - 11px) 17px; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: 28px; }
 .admin-field-note, .admin-editor-grid > label > small { min-height: 16px; padding-bottom: 14px; color: #626F86; font-size: 12px; font-weight: 400; line-height: 16px; letter-spacing: normal; text-transform: none; overflow-wrap: anywhere; }
 .admin-field.field-wide .admin-field-note:empty { display: none; min-height: 0; }
@@ -942,3 +943,58 @@ img { max-width: 100%; }
   .partner-rail .wrap { padding-block: 16px; }
   .partner-rail em { display: none; }
 }
+
+/* Public pages keep the same arrangement on every screen size. */
+body:not(:has(.admin-shell)):not(:has(.login-page)) { min-width: 1280px; }
+body:not(:has(.admin-shell)) .wrap { width: min(1280px, calc(100% - 64px)); }
+body:not(:has(.admin-shell)) .site-header { height: 78px; }
+body:not(:has(.admin-shell)) .desktop-nav { display: flex; gap: clamp(12px, 1.4vw, 22px); }
+body:not(:has(.admin-shell)) .desktop-nav a { font-size: 13px; }
+body:not(:has(.admin-shell)) .header-slogan { display: grid; }
+body:not(:has(.admin-shell)) .header-tickets { display: inline-flex; }
+body:not(:has(.admin-shell)) .menu-toggle,
+body:not(:has(.admin-shell)) .mobile-nav { display: none; }
+body:not(:has(.admin-shell)) .stage-top { grid-template-columns: minmax(280px, .72fr) minmax(0, 1.28fr); }
+body:not(:has(.admin-shell)) .stage-art { min-height: 460px; }
+body:not(:has(.admin-shell)) .stage-copy h1 { font-size: clamp(52px, 5.6vw, 86px); }
+body:not(:has(.admin-shell)) .dash-grid { grid-template-columns: 1.15fr 1.2fr .85fr .9fr; }
+body:not(:has(.admin-shell)) .dash-grid .dash-card:last-child,
+body:not(:has(.admin-shell)) .board-grid aside { grid-column: auto; }
+body:not(:has(.admin-shell)) .board-grid { grid-template-columns: 1.3fr 1fr .72fr; }
+body:not(:has(.admin-shell)) .highlight-row,
+body:not(:has(.admin-shell)) .mini-squad { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+body:not(:has(.admin-shell)) .highlight-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+body:not(:has(.admin-shell)) .news-feature { grid-template-columns: 1.4fr .8fr; }
+body:not(:has(.admin-shell)) .kit-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+body:not(:has(.admin-shell)) .frame-row { grid-template-columns: 1.4fr repeat(3, 1fr); }
+body:not(:has(.admin-shell)) .frame-row a:first-child { grid-row: span 2; }
+body:not(:has(.admin-shell)) .contest-band .wrap { align-items: center; flex-direction: row; }
+body:not(:has(.admin-shell)) .partner-rail .wrap { grid-template-columns: auto 1fr auto; padding-block: 0; }
+body:not(:has(.admin-shell)) .partner-rail em { display: inline; }
+body:not(:has(.admin-shell)) .player-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+body:not(:has(.admin-shell)) .news-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+body:not(:has(.admin-shell)) .fixture-row { grid-template-columns: 125px 1.3fr 1fr 1fr 130px; gap: 15px; padding: 20px 23px; }
+body:not(:has(.admin-shell)) .fixture-meta,
+body:not(:has(.admin-shell)) .fixture-score,
+body:not(:has(.admin-shell)) .fixture-link { grid-column: auto; grid-row: auto; }
+body:not(:has(.admin-shell)) .fixture-link { justify-self: end; }
+body:not(:has(.admin-shell)) .partner-grid { grid-template-columns: repeat(4, 1fr); }
+body:not(:has(.admin-shell)) .gallery-grid { grid-template-columns: repeat(3, 1fr); }
+body:not(:has(.admin-shell)) .contact-layout { grid-template-columns: .75fr 1.25fr; gap: 60px; }
+body:not(:has(.admin-shell)) .about-grid { grid-template-columns: 1fr 1fr; gap: 55px; }
+body:not(:has(.admin-shell)) .footer-top { grid-template-columns: 1.25fr .7fr .7fr 1.2fr; gap: 40px; padding-block: 66px 50px; }
+body:not(:has(.admin-shell)) .footer-brand,
+body:not(:has(.admin-shell)) .footer-callout { grid-column: auto; }
+body:not(:has(.admin-shell)) .footer-callout { padding: 0 0 0 25px; border-left: 1px solid var(--border); border-top: 0; }
+body:not(:has(.admin-shell)) .footer-bottom > span:nth-child(2) { display: inline; }
+body:not(:has(.admin-shell)) .fan-launch-grid,
+body:not(:has(.admin-shell)) .product-grid,
+body:not(:has(.admin-shell)) .fan-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+body:not(:has(.admin-shell)) .product-layout { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); }
+body:not(:has(.admin-shell)) .product-buy { grid-template-columns: minmax(0, .9fr) minmax(220px, .8fr); }
+body:not(:has(.admin-shell)) .cart-layout,
+body:not(:has(.admin-shell)) .checkout-layout { grid-template-columns: minmax(0, 1.4fr) minmax(260px, .6fr); }
+body:not(:has(.admin-shell)) .fan-form,
+body:not(:has(.admin-shell)) .checkout-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body:not(:has(.admin-shell)) .cart-lines article { grid-template-columns: 84px minmax(0, 1fr) 80px auto; }
+body:not(:has(.admin-shell)) .fan-launch a { border-right: 1px solid rgba(232,181,60,.18); border-bottom: 0; }

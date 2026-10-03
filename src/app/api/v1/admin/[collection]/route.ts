@@ -116,7 +116,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       result = await prisma.contest.create({ data: { title: data.title, slug: slugify(data.slug || data.title), description: data.description, prize: data.prize || null, prompt: data.prompt, image: data.image || null, closesAt: data.closesAt ? new Date(data.closesAt) : null, isPublished: data.isPublished ?? true } });
     } else if (collection === "settings") {
       const parsed = settingInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
-      const existing = parsed.data.key === "storage" ? await prisma.siteSetting.findUnique({ where: { key: "storage" } }) : null;
+      const existing = parsed.data.key === "storage" || parsed.data.key === "smtp" ? await prisma.siteSetting.findUnique({ where: { key: parsed.data.key } }) : null;
       const normalized = normalizeSiteSetting(parsed.data.key, parsed.data.value, existing?.value);
       if (!normalized.ok) return failure(normalized.message, 400);
       result = await prisma.siteSetting.upsert({ where: { key: parsed.data.key }, create: { key: parsed.data.key, value: normalized.value as never }, update: { value: normalized.value as never } });

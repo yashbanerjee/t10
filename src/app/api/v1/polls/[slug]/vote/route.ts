@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { failure, success } from "@/lib/api";
+import { notifyAdminAndUser } from "@/lib/mail";
 
 const voteInput = z.object({
   optionId: z.string().min(1),
@@ -19,7 +20,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (poll.closesAt && poll.closesAt.getTime() < Date.now()) return failure("This poll has closed", 409);
   if (!poll.options.some((option) => option.id === parsed.data.optionId)) return failure("Choose one of the listed options", 400);
   try {
-    await prisma.pollVote.create({ data: { pollId: poll.id, optionId: parsed.data.optionId, name: parsed.data.name, email: parsed.data.email.toLowerCase(), phone: parsed.data.phone } });
+    const vote = await prisma.pollVote.create({ data: { pollId: poll.id, optionId: parsed.data.optionId, name: parsed.data.name, email: parsed.data.email.toLowerCase(), phone: parsed.data.phone } });
+    const choice = poll.options.find((option) => option.id === vote.optionId)?.label ?? "Your choice";
+    const summary = [`Poll: ${poll.question}`, `Choice: ${choice}`, `Name: ${vote.name}`, `Email: ${vote.email}`, `Phone: ${vote.phone}`].join("\n");
+    await notifyAdminAndUser({
+      adminSubject: `Vote: ${poll.title}`,
+      adminText: summary,
+      userEmail: vote.email,
+      userSubject: `Your United Tigers vote`,
+      userText: `Hello ${vote.name},\n\nYour vote has been counted.\n\n${summary}`,
+    });
     return success({ ok: true }, "Vote counted", { status: 201 });
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2002") return failure("This email has already voted in this poll", 409);

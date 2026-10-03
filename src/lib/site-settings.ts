@@ -2,7 +2,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 
 /** Settings that must never be sent to public pages. */
-export const PRIVATE_SETTING_KEYS = new Set(["storage"]);
+export const PRIVATE_SETTING_KEYS = new Set(["storage", "smtp"]);
 
 const siteUrlSchema = z.string().trim().url().refine((value) => {
   const url = new URL(value);
@@ -71,6 +71,28 @@ export function normalizeSiteSetting(key: string, value: unknown, previous?: unk
       },
     };
   }
+  if (key === "smtp") {
+    const parsed = smtpSchema.safeParse(value ?? {});
+    if (!parsed.success) return { ok: false, message: "Mail settings are invalid." };
+    const email = z.string().email();
+    if (parsed.data.fromEmail && !email.safeParse(parsed.data.fromEmail).success) return { ok: false, message: "From email must be a valid address." };
+    if (parsed.data.adminEmail && !email.safeParse(parsed.data.adminEmail).success) return { ok: false, message: "Admin email must be a valid address." };
+    const prior = previous && typeof previous === "object" && !Array.isArray(previous) ? previous as Record<string, unknown> : {};
+    const clearing = !parsed.data.host && !parsed.data.user && !parsed.data.password && !parsed.data.fromEmail && !parsed.data.adminEmail;
+    return {
+      ok: true,
+      value: {
+        host: parsed.data.host,
+        port: parsed.data.port,
+        secure: parsed.data.secure,
+        user: parsed.data.user,
+        fromEmail: parsed.data.fromEmail,
+        fromName: parsed.data.fromName || "United Tigers",
+        adminEmail: parsed.data.adminEmail,
+        password: parsed.data.password || (clearing ? "" : typeof prior.password === "string" ? prior.password : ""),
+      },
+    };
+  }
   if (key === "homepage") {
     const parsed = homepageSchema.safeParse(value ?? {});
     if (!parsed.success) return { ok: false, message: "Homepage banner settings are invalid." };
@@ -121,11 +143,31 @@ export function readHomepageBanner(value: unknown): HomepageBanner {
   return { ...homepageDefaults, ...parsed.data, image, mode: parsed.data.mode === "image" && image ? "image" : "static" };
 }
 
+const smtpSchema = z.object({
+  host: z.string().trim().max(200).optional().default(""),
+  port: z.coerce.number().int().min(1).max(65535).optional().default(587),
+  secure: z.boolean().optional().default(false),
+  user: z.string().trim().max(200).optional().default(""),
+  password: z.string().max(300).optional().default(""),
+  fromEmail: z.string().trim().max(200).optional().default(""),
+  fromName: z.string().trim().max(80).optional().default("United Tigers"),
+  adminEmail: z.string().trim().max(200).optional().default(""),
+});
+
+export type SmtpSettings = z.infer<typeof smtpSchema>;
+
 export function redactSettingValue(key: string, value: unknown) {
-  if (key !== "storage" || !value || typeof value !== "object" || Array.isArray(value)) return value;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
   const source = value as Record<string, unknown>;
-  const { accessKey, secretKey, ...rest } = source;
-  return { ...rest, hasAccessKey: Boolean(accessKey), hasSecretKey: Boolean(secretKey) };
+  if (key === "storage") {
+    const { accessKey, secretKey, ...rest } = source;
+    return { ...rest, hasAccessKey: Boolean(accessKey), hasSecretKey: Boolean(secretKey) };
+  }
+  if (key === "smtp") {
+    const { password, ...rest } = source;
+    return { ...rest, hasPassword: Boolean(password) };
+  }
+  return value;
 }
 
 export function redactSettingRow<T>(row: T): T {
