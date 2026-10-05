@@ -1,99 +1,86 @@
-import 'dart:convert';
-import 'dart:io' show Platform;
-
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:united_tigers/api/admin_repository.dart';
+import 'package:united_tigers/api/api_client.dart';
+import 'package:united_tigers/api/club_repository.dart';
+import 'package:united_tigers/models.dart';
+import 'package:united_tigers/models/admin_models.dart';
 
 class ClubApi extends ChangeNotifier {
-  ClubApi() {
+  ClubApi() : client = ApiClient() {
+    repository = ClubRepository(client);
+    admin = AdminRepository(client);
     _load();
   }
 
-  static const _key = 'ut-api-base';
-  String base = _defaultBase();
+  final ApiClient client;
+  late ClubRepository repository;
+  late AdminRepository admin;
   String? error;
   bool loading = true;
-  Map<String, dynamic> home = {};
+  ClubCatalog catalog = ClubCatalog.empty;
+  HomeBanner banner = HomeBanner.fallback;
+  AdminSession? adminSession;
 
-  static String _defaultBase() {
-    if (kIsWeb) return 'http://localhost:3001';
-    if (Platform.isAndroid) return 'http://10.0.2.2:3001';
-    return 'http://localhost:3001';
-  }
+  String get base => client.base;
 
   Future<void> _load() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      base = prefs.getString(_key) ?? _defaultBase();
-    } catch (_) {}
+    await client.loadSavedBase();
+    await client.loadToken();
     await refresh();
+    await restoreAdmin();
+  }
+
+  Future<void> restoreAdmin() async {
+    if (client.token == null || client.token!.isEmpty) return;
+    try {
+      adminSession = await admin.me();
+    } catch (_) {
+      adminSession = null;
+      await client.clearToken();
+    }
+    notifyListeners();
+  }
+
+  Future<void> signIn(String email, String password) async {
+    adminSession = await admin.signIn(email, password);
+    notifyListeners();
+  }
+
+  Future<void> signOut() async {
+    await admin.signOut();
+    adminSession = null;
+    notifyListeners();
   }
 
   Future<void> setBase(String value) async {
-    base = value.trim().replaceAll(RegExp(r'/+$'), '');
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, base);
+    await client.saveBase(value);
     notifyListeners();
     await refresh();
   }
 
-  String media(dynamic path) {
-    final value = path?.toString() ?? '';
-    if (value.isEmpty) return '';
-    if (value.startsWith('http')) return value;
-    return '$base$value';
-  }
+  String media(String? path) => client.media(path);
 
-  Future<dynamic> get(String path) async {
-    final response = await http.get(Uri.parse('$base$path'));
-    final body = jsonDecode(response.body);
-    if (response.statusCode >= 400 || body is! Map || body['success'] != true) {
-      throw Exception(body is Map ? body['message'] ?? 'Request failed' : 'Request failed');
-    }
-    return body['data'];
-  }
+  Future<String> post(String path, Map<String, dynamic> payload) => client.post(path, payload);
 
-  Future<String> post(String path, Map<String, dynamic> payload) async {
-    final response = await http.post(
-      Uri.parse('$base$path'),
-      headers: {'content-type': 'application/json'},
-      body: jsonEncode(payload),
-    );
-    final body = jsonDecode(response.body);
-    if (response.statusCode >= 400 || body is! Map || body['success'] != true) {
-      throw Exception(body is Map ? body['message'] ?? 'Request failed' : 'Request failed');
-    }
-    return body['message']?.toString() ?? 'Saved';
-  }
+  Future<String> sendContact(Map<String, dynamic> payload) => repository.contact(payload);
+
+  Future<String> sendVote(String slug, Map<String, dynamic> payload) => repository.vote(slug, payload);
+
+  Future<String> sendEntry(String slug, Map<String, dynamic> payload) => repository.enterContest(slug, payload);
+
+  Future<String> sendOrder(Map<String, dynamic> payload) => repository.checkout(payload);
 
   Future<void> refresh() async {
     loading = true;
     error = null;
     notifyListeners();
     try {
-      final results = await Future.wait([
-        get('/api/v1/players'),
-        get('/api/v1/matches'),
-        get('/api/v1/news'),
-        get('/api/v1/products'),
-        get('/api/v1/polls'),
-        get('/api/v1/contests'),
-        get('/api/v1/gallery'),
-        get('/api/v1/sponsors'),
-        get('/api/v1/staff'),
+      final loaded = await Future.wait([
+        repository.loadCatalog(),
+        repository.loadBanner().catchError((_) => HomeBanner.fallback),
       ]);
-      home = {
-        'players': results[0],
-        'matches': results[1],
-        'news': results[2],
-        'products': results[3],
-        'polls': results[4],
-        'contests': results[5],
-        'gallery': results[6],
-        'sponsors': results[7],
-        'staff': results[8],
-      };
+      catalog = loaded[0] as ClubCatalog;
+      banner = loaded[1] as HomeBanner;
     } catch (reason) {
       error = reason.toString().replaceFirst('Exception: ', '');
     } finally {
@@ -101,29 +88,41 @@ class ClubApi extends ChangeNotifier {
       notifyListeners();
     }
   }
-}
 
-List<Map<String, dynamic>> asList(dynamic value) {
-  if (value is! List) return [];
-  return value.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
-}
+  Poll? get featuredPoll {
+    if (catalog.polls.isEmpty) return null;
+    int matches(Poll poll) => poll.options.where((option) => _matchesPlayer(option.label)).length;
+    final ranked = [...catalog.polls]..sort((left, right) => matches(right).compareTo(matches(left)));
+    return ranked.first;
+  }
 
-String money(dynamic value) {
-  final amount = double.tryParse(value?.toString() ?? '') ?? 0;
-  return 'AED ${amount.toStringAsFixed(2)}';
-}
+  bool _matchesPlayer(String label) {
+    final needle = label.trim().toLowerCase();
+    return catalog.players.any((player) {
+      final name = player.fullName.toLowerCase();
+      return name == needle || needle.contains(name) || name.contains(needle);
+    });
+  }
 
-String when(dynamic value) {
-  final date = DateTime.tryParse(value?.toString() ?? '');
-  if (date == null) return '';
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  final local = date.toLocal();
-  final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
-  final minute = local.minute.toString().padLeft(2, '0');
-  final suffix = local.hour >= 12 ? 'pm' : 'am';
-  return '${local.day.toString().padLeft(2, '0')} ${months[local.month - 1]} ${local.year} · $hour:$minute $suffix';
-}
+  Future<Player> fetchPlayer(String slug) => repository.player(slug);
 
-String plain(dynamic value) {
-  return (value?.toString() ?? '').replaceAll(RegExp(r'<[^>]+>'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+  Future<PlayerReport> fetchPlayerStats(String slug) => repository.playerStats(slug);
+
+  Future<TeamUpdate> fetchUpdate(String slug) => repository.update(slug);
+
+  Future<ClubMatch> fetchMatch(String slug) => repository.match(slug);
+
+  Future<NewsStory> fetchNews(String slug) => repository.news(slug);
+
+  Future<Product> fetchProduct(String slug) => repository.product(slug);
+
+  Future<Poll> fetchPoll(String slug) => repository.poll(slug);
+
+  Future<Contest> fetchContest(String slug) => repository.contest(slug);
+
+  Future<List<PlayerStat>> fetchStats() => repository.stats();
+
+  Future<List<ClubRecord>> fetchRecords() => repository.records();
+
+  Future<List<PointsRow>> fetchPoints() => repository.points();
 }

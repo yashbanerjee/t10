@@ -56,6 +56,7 @@ export function PublicHeader() {
   return <header className="site-header">
     <div className="header-inner wrap">
       <TeamMark />
+      <span className="league-chip">ABU DHABI <b>T10</b></span>
       <nav className="desktop-nav" aria-label="Main navigation">
         {links.map(([label, href]) => {
           const path = href.split("#")[0] || "/";

@@ -41,13 +41,41 @@ class _UnitedTigersAppState extends State<UnitedTigersApp> {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           brightness: Brightness.dark,
-          scaffoldBackgroundColor: night,
+          scaffoldBackgroundColor: Colors.transparent,
+          canvasColor: night,
           colorScheme: const ColorScheme.dark(primary: orange, secondary: gold, surface: purple),
-          appBarTheme: const AppBarTheme(backgroundColor: Color(0xB80B0016), foregroundColor: Colors.white, elevation: 0),
-          navigationBarTheme: const NavigationBarThemeData(backgroundColor: Color(0xF0110018), indicatorColor: glow),
-          filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(backgroundColor: orange, foregroundColor: Colors.white, minimumSize: const Size.fromHeight(46))),
-          textTheme: const TextTheme(headlineMedium: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+          iconTheme: const IconThemeData(color: gold),
+          appBarTheme: const AppBarTheme(backgroundColor: Colors.transparent, foregroundColor: Colors.white, elevation: 0, centerTitle: false),
+          navigationBarTheme: NavigationBarThemeData(
+            backgroundColor: const Color(0xF20B0016),
+            indicatorColor: glow,
+            labelTextStyle: WidgetStateProperty.resolveWith((states) {
+              final selected = states.contains(WidgetState.selected);
+              return TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: selected ? gold : Colors.white70);
+            }),
+          ),
+          chipTheme: ChipThemeData(
+            backgroundColor: Colors.white10,
+            selectedColor: glow,
+            labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+            side: BorderSide(color: gold.withValues(alpha: 0.45)),
+          ),
+          dialogTheme: const DialogThemeData(backgroundColor: purple),
+          filledButtonTheme: FilledButtonThemeData(
+            style: FilledButton.styleFrom(
+              backgroundColor: orange,
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(48),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              textStyle: const TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.6),
+            ),
+          ),
+          textTheme: const TextTheme(
+            headlineMedium: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.5),
+            bodyMedium: TextStyle(color: Color(0xFFF7F4FB), height: 1.35),
+          ),
         ),
+        builder: (context, child) => ClubAtmosphere(child: child ?? const SizedBox.shrink()),
         home: const ClubShell(),
       ),
     );
@@ -71,6 +99,7 @@ class _ClubShellState extends State<ClubShell> {
     return AnimatedBuilder(
       animation: cart,
       builder: (context, _) => Scaffold(
+        backgroundColor: Colors.transparent,
         body: pages[index],
         bottomNavigationBar: NavigationBar(
           selectedIndex: index,

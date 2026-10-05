@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:united_tigers/api.dart';
+import 'package:united_tigers/format.dart';
+import 'package:united_tigers/models.dart';
 import 'package:united_tigers/scope.dart';
 import 'package:united_tigers/widgets.dart';
 
@@ -12,19 +13,74 @@ class TeamPage extends StatelessWidget {
     return AnimatedBuilder(
       animation: api,
       builder: (context, _) {
-        final players = asList(api.home['players']);
-        final staff = asList(api.home['staff']);
         return Scaffold(
           appBar: AppBar(title: const Text('THE SQUAD')),
-          body: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              const Text('Meet the names announced for the Tigers’ first season.'),
-              const SizedBox(height: 12),
-              ...players.map((player) => Padding(padding: const EdgeInsets.only(bottom: 10), child: ClubCard(onTap: () => openPlayer(context, player), child: Row(children: [ClipRRect(borderRadius: BorderRadius.circular(12), child: SizedBox(width: 72, height: 72, child: RemoteImage(api.media(player['profileImage']), height: 72, radius: 12))), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('#${player['jerseyNumber'] ?? 'UT'}  ${player['fullName']}', style: const TextStyle(fontWeight: FontWeight.w800)), Text('${player['role'] ?? 'Player'}'.replaceAll('_', ' ')), if (player['nationality'] != null) Text(player['nationality'].toString())]))])))),
-              if (staff.isNotEmpty) const SectionTitle('STAFF'),
-              ...staff.map((member) => Padding(padding: const EdgeInsets.only(bottom: 8), child: ClubCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(member['fullName'].toString(), style: const TextStyle(fontWeight: FontWeight.w800)), Text('${member['role'] ?? ''} · ${member['category'] ?? ''}'), if (plain(member['bio']).isNotEmpty) Text(plain(member['bio']))])))),
-            ],
+          body: RefreshIndicator(
+            onRefresh: api.refresh,
+            child: CustomScrollView(
+              slivers: [
+                const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.fromLTRB(16, 16, 16, 12), child: Text('Meet the names announced for the Tigers’ first season.'))),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverGrid(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.72),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final player = api.catalog.players[index];
+                        return ClubCard(
+                          padding: const EdgeInsets.all(10),
+                          onTap: () => openPlayer(context, player),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              RemoteImage(api.media(player.profileImage), height: 110, radius: 14),
+                              const SizedBox(height: 8),
+                              Text(player.badge, style: const TextStyle(color: gold, fontSize: 10, fontWeight: FontWeight.w800)),
+                              Text(player.fullName, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
+                              Text('#${player.jerseyNumber ?? 'UT'} · ${roleLabel(player.role)}', style: const TextStyle(fontSize: 12)),
+                            ],
+                          ),
+                        );
+                      },
+                      childCount: api.catalog.players.length,
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Column(
+                      children: [
+                if (api.catalog.staff.isNotEmpty) const SectionTitle('STAFF'),
+                ...api.catalog.staff.map(
+                  (member) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: ClubCard(
+                      child: Row(
+                        children: [
+                          SizedBox(width: 64, height: 64, child: RemoteImage(api.media(member.profileImage), height: 64, radius: 12)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(member.fullName, style: const TextStyle(fontWeight: FontWeight.w800)),
+                                Text('${member.title} · ${member.category}'),
+                                if (member.bio != null) Text(member.bio!, maxLines: 3, overflow: TextOverflow.ellipsis),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -32,32 +88,120 @@ class TeamPage extends StatelessWidget {
   }
 }
 
-void openPlayer(BuildContext context, Map<String, dynamic> player) {
-  Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerPage(player: player)));
-}
+class _StatsBlock extends StatelessWidget {
+  const _StatsBlock(this.label, this.stats);
+  final String label;
+  final CricketStats stats;
 
-class PlayerPage extends StatelessWidget {
-  const PlayerPage({super.key, required this.player});
-  final Map<String, dynamic> player;
+  String _rate(double? value) => value == null ? '–' : value.toStringAsFixed(2);
 
   @override
   Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: ClubCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(color: gold, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 6),
+            Text('${stats.matches} matches · ${stats.runs} runs · ${stats.wickets} wickets'),
+            Text('HS ${stats.highestScore} · Avg ${_rate(stats.average)} · SR ${_rate(stats.strikeRate)}'),
+            Text('Econ ${_rate(stats.economy)} · ${stats.fours} fours · ${stats.sixes} sixes · ${stats.catches} catches'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+void openPlayer(BuildContext context, Player player) {
+  Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerPage(slug: player.slug, preview: player)));
+}
+
+class PlayerPage extends StatefulWidget {
+  const PlayerPage({super.key, required this.slug, this.preview});
+  final String slug;
+  final Player? preview;
+
+  @override
+  State<PlayerPage> createState() => _PlayerPageState();
+}
+
+class _PlayerPageState extends State<PlayerPage> {
+  Player? player;
+  PlayerReport? report;
+  String? error;
+  bool started = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (started) return;
+    started = true;
+    player = widget.preview;
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final api = ClubScope.of(context).api;
+      final loaded = await api.fetchPlayer(widget.slug);
+      if (mounted) setState(() => player = loaded);
+      try {
+        final stats = await api.fetchPlayerStats(widget.slug);
+        if (mounted) setState(() => report = stats);
+      } catch (_) {}
+    } catch (reason) {
+      if (mounted && player == null) setState(() => error = '$reason'.replaceFirst('Exception: ', ''));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final current = player;
+    if (current == null) {
+      return Scaffold(appBar: AppBar(title: const Text('PLAYER')), body: error == null ? const LoadingView() : MessageView(error!));
+    }
     final api = ClubScope.of(context).api;
+    final facts = <String, String>{
+      if (current.battingStyle != null) 'Batting': current.battingStyle!,
+      if (current.bowlingStyle != null) 'Bowling': current.bowlingStyle!,
+      if (current.heightCm != null) 'Height': '${current.heightCm} cm',
+      if (current.dateOfBirth != null) 'Born': when(current.dateOfBirth).split(' · ').first,
+      if (current.shortName != null) 'Short name': current.shortName!,
+      if (current.country != null) 'Country': current.country!,
+    };
     return Scaffold(
-      appBar: AppBar(title: Text(player['fullName'].toString())),
+      appBar: AppBar(title: Text(current.heading)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          RemoteImage(api.media(player['profileImage']), height: 280),
+          RemoteImage(api.media(current.coverImage ?? current.profileImage), height: 280),
           const SizedBox(height: 12),
-          Text('#${player['jerseyNumber'] ?? 'UT'}', style: const TextStyle(color: gold, fontSize: 28, fontWeight: FontWeight.w800)),
-          Text(player['fullName'].toString(), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800)),
-          Text('${player['role'] ?? ''}'.replaceAll('_', ' ')),
-          if (player['nationality'] != null) Text(player['nationality'].toString()),
-          if (player['battingStyle'] != null) Text('Batting · ${player['battingStyle']}'),
-          if (player['bowlingStyle'] != null) Text('Bowling · ${player['bowlingStyle']}'),
+          Text(current.badge, style: const TextStyle(color: gold, fontWeight: FontWeight.w800)),
+          Text('#${current.jerseyNumber ?? 'UT'}', style: const TextStyle(color: gold, fontSize: 28, fontWeight: FontWeight.w800)),
+          Text(current.heading, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800)),
+          Text(roleLabel(current.role)),
+          if (current.nationality != null) Text(current.nationality!),
           const SizedBox(height: 12),
-          Text(plain(player['bio']).isEmpty ? 'Player profile details are being completed.' : plain(player['bio'])),
+          Text(current.bio ?? 'Player profile details are being completed.'),
+          if (report?.currentSeason != null) _StatsBlock('THIS SEASON', report!.currentSeason!),
+          if (report?.career != null) _StatsBlock('CAREER', report!.career!),
+          if (facts.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            ...facts.entries.map(
+              (fact) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    SizedBox(width: 110, child: Text(fact.key, style: const TextStyle(color: gold))),
+                    Expanded(child: Text(fact.value, style: const TextStyle(fontWeight: FontWeight.w700))),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

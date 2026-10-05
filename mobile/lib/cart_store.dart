@@ -47,7 +47,12 @@ class CartStore extends ChangeNotifier {
   double get total => lines.fold(0, (sum, line) => sum + line.price * line.quantity);
 
   Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
+    final SharedPreferences prefs;
+    try {
+      prefs = await SharedPreferences.getInstance();
+    } catch (_) {
+      return;
+    }
     final raw = prefs.getString(_key);
     if (raw == null) return;
     final decoded = jsonDecode(raw);

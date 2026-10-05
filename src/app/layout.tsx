@@ -13,6 +13,8 @@ const oswald = Oswald({ subsets: ["latin"], variable: "--font-oswald" });
 
 export const dynamic = "force-dynamic";
 
+export const viewport = { width: "device-width", initialScale: 1 };
+
 export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(await getSiteUrl()),

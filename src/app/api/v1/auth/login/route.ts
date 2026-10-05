@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     await prisma.adminSession.create({ data: { userId: user!.id, tokenHash: tokenHash(token), expiresAt: new Date(Date.now() + 12 * 60 * 60_000) } });
     await prisma.user.update({ where: { id: user!.id }, data: { lastLoginAt: new Date() } });
   }
-  const response = NextResponse.json({ success: true, data: { email: claims.email, name: claims.name, role: claims.role, demo }, message: "Signed in" });
+  const response = NextResponse.json({ success: true, data: { sub: claims.sub, email: claims.email, name: claims.name, role: claims.role, demo, token }, message: "Signed in" });
   response.cookies.set("ut_admin", token, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/", maxAge: 12 * 60 * 60 });
   return response;
 }

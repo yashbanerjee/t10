@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { jwtVerify, SignJWT } from "jose";
 import { prisma } from "@/lib/db";
 
@@ -22,8 +22,15 @@ export function tokenHash(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
+export async function currentToken() {
+  const authorization = (await headers()).get("authorization") ?? "";
+  const bearer = authorization.toLowerCase().startsWith("bearer ") ? authorization.slice(7).trim() : "";
+  if (bearer) return bearer;
+  return (await cookies()).get("ut_admin")?.value;
+}
+
 export async function getSession(): Promise<SessionClaims | null> {
-  const token = (await cookies()).get("ut_admin")?.value;
+  const token = await currentToken();
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, signingKey());
