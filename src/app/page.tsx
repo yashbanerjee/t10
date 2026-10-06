@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowUpRight, Calendar, Clock, Globe, Instagram, MapPin, Play, Shield, Users, Youtube } from "lucide-react";
+import { ArrowUpRight, Calendar, ChevronRight, CircleCheck, Clock, Globe, Instagram, MapPin, Play, Shield, Ticket, Users, Youtube } from "lucide-react";
 import { getMatches, getNews, getPlayers, getPolls, getPublicSettings, getSponsors } from "@/lib/data";
 import { LiveScore } from "@/components/LiveScore";
 import { NationSignup } from "@/components/NationSignup";
@@ -36,12 +36,12 @@ export default async function HomePage() {
   const banner = readHomepageBanner(settings.homepage ?? homepageDefaults);
   const heroImage = banner.mode === "image" && banner.image ? banner.image : "/images/stadium-hero.png";
   const squad = players.slice(0, 4);
-  const cast = players.filter((player) => player.profileImage).slice(0, 3);
+  const cast = players.filter((player) => player.profileImage).slice(0, 5);
   const upcoming = matches.find((match) => match.status === "UPCOMING" || match.status === "LIVE");
   const kickoff = upcoming ? when(upcoming.date) : null;
   const poll = [...polls].sort((left, right) => right.options.filter((option) => playerForLabel(option.label, players)).length - left.options.filter((option) => playerForLabel(option.label, players)).length)[0] ?? polls[0];
   const stories = news.slice(0, 3);
-  const listed = [...matches.filter((match) => match.status === "COMPLETED").slice(-2), ...matches.filter((match) => match.status === "UPCOMING" || match.status === "LIVE").slice(0, 1)];
+  const listed = [...matches.filter((match) => match.status === "COMPLETED").slice(-2).reverse(), ...matches.filter((match) => match.status === "UPCOMING" || match.status === "LIVE").slice(0, 1)];
 
   return <>
     <section className="home-stage" style={{ "--banner": `url("${heroImage}")` } as React.CSSProperties}>
@@ -64,20 +64,20 @@ export default async function HomePage() {
       </div>
       <div className="wrap dash-grid">
         <article className="dash-card">
-          <header><span>NEXT MATCH</span><small>ABU DHABI T10</small></header>
+          <header><span className="is-gold">NEXT MATCH</span><small>ABU DHABI T10</small></header>
           {upcoming && kickoff ? <>
             <div className="crest-row">
-              <div><b>UT</b><strong>United Tigers</strong><em>Abu Dhabi</em></div>
+              <div><b><i className="mark-icon" aria-hidden="true"><i /><i /><i /></i></b><strong>United Tigers</strong><em>Abu Dhabi</em></div>
               <span>VS</span>
-              <div><b>{(upcoming.opponentShort || upcoming.opponent).slice(0, 2).toUpperCase()}</b><strong>{upcoming.opponent}</strong><em>{upcoming.venue?.city || "Away"}</em></div>
+              <div>{upcoming.opponentLogoUrl ? <b className="has-logo"><span><Image src={upcoming.opponentLogoUrl} alt="" fill sizes="64px" /></span></b> : <b>{(upcoming.opponentShort || upcoming.opponent).slice(0, 2).toUpperCase()}</b>}<strong>{upcoming.opponent}</strong><em>{upcoming.venue?.city || "Away"}</em></div>
             </div>
             <p className="match-meta"><Calendar size={12} aria-hidden="true" /> {kickoff.day} · {kickoff.time}<br /><MapPin size={12} aria-hidden="true" /> {upcoming.venue?.name ?? "Venue TBC"}</p>
             {upcoming.status === "LIVE" && <LiveScore slug={upcoming.slug} pollIntervalMs={pollIntervalMs} initial={{ status: upcoming.status, liveState: upcoming.liveState as never, innings: upcoming.innings.map((entry) => ({ runs: entry.runs, wickets: entry.wickets, overs: entry.overs.toString() })) }} />}
-            <Link className="button button-orange" href={`/matches/${upcoming.slug}`}>BUY TICKETS</Link>
+            <Link className="button button-orange" href={`/matches/${upcoming.slug}`}><Ticket size={14} aria-hidden="true" /> BUY TICKETS</Link>
           </> : <>
-            <div className="crest-row"><div><b>UT</b><strong>United Tigers</strong><em>Abu Dhabi</em></div><span>VS</span><div><b>T10</b><strong>The field</strong><em>Abu Dhabi</em></div></div>
+            <div className="crest-row"><div><b><i className="mark-icon" aria-hidden="true"><i /><i /><i /></i></b><strong>United Tigers</strong><em>Abu Dhabi</em></div><span>VS</span><div><b>T10</b><strong>The field</strong><em>Abu Dhabi</em></div></div>
             <p className="dash-empty">The next fixture will appear here as soon as it is confirmed.</p>
-            <Link className="button button-orange" href="/fixtures">BUY TICKETS</Link>
+            <Link className="button button-orange" href="/fixtures"><Ticket size={14} aria-hidden="true" /> BUY TICKETS</Link>
           </>}
         </article>
 
@@ -106,7 +106,7 @@ export default async function HomePage() {
               return <span className={index === 0 ? "is-picked" : ""} key={option.id} title={option.label}>{face?.profileImage ? <Image src={face.profileImage} alt="" fill sizes="42px" /> : option.label.slice(0, 1)}</span>;
             })}
           </div>
-          <Link className="button button-orange" href={poll ? `/polls/${poll.slug}` : "/fan#vote"}>CAST YOUR VOTE</Link>
+          <Link className="button button-orange" href={poll ? `/polls/${poll.slug}` : "/fan#vote"}><CircleCheck size={14} aria-hidden="true" /> CAST YOUR VOTE</Link>
         </article>
 
         <article className="dash-card">
@@ -129,8 +129,7 @@ export default async function HomePage() {
           <div className="board-head"><h2>LATEST HIGHLIGHTS</h2><Link href="/news">View all <ArrowUpRight size={14} /></Link></div>
           <div className="highlight-row">
             {stories.map((story, index) => <Link href={`/news/${story.slug}`} key={story.id}>
-              <span style={{ backgroundImage: `url('${story.coverImage || shots[index % shots.length]}')` }}><Play size={16} /></span>
-              <small>{story.category}</small>
+              <span style={{ backgroundImage: `url('${story.coverImage || shots[index % shots.length]}')` }}><Play size={16} /><small>{story.category}</small></span>
               <strong>{story.title}</strong>
             </Link>)}
           </div>
@@ -144,9 +143,10 @@ export default async function HomePage() {
               const score = match.innings.length ? match.innings.map((innings) => `${innings.runs}/${innings.wickets} (${innings.overs})`).join(" – ") : "";
               return <Link href={`/matches/${match.slug}`} key={match.id}>
                 <b className={label === "WIN" ? "is-win" : label === "UP NEXT" || label === "LIVE" ? "is-next" : ""}>{label}</b>
-                <span>vs {match.opponent}</span>
+                <span>{match.opponentLogoUrl ? <i style={{ backgroundImage: `url('${match.opponentLogoUrl}')` }} aria-hidden="true" /> : null}vs {match.opponent}</span>
                 <small>{when(match.date).day}</small>
                 <em>{score || (match.status === "UPCOMING" || match.status === "LIVE" ? when(match.date).time : match.result || match.competition || "Abu Dhabi T10")}</em>
+                <ChevronRight className="result-go" size={14} aria-hidden="true" />
               </Link>;
             }) : <p className="dash-empty">Fixtures will be listed here.</p>}
           </div>
