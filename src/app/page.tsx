@@ -36,6 +36,7 @@ export default async function HomePage() {
   const banner = readHomepageBanner(settings.homepage ?? homepageDefaults);
   const heroImage = banner.mode === "image" && banner.image ? banner.image : "/images/stadium-hero.png";
   const squad = players.slice(0, 4);
+  const cast = players.filter((player) => player.profileImage).slice(0, 3);
   const upcoming = matches.find((match) => match.status === "UPCOMING" || match.status === "LIVE");
   const kickoff = upcoming ? when(upcoming.date) : null;
   const poll = [...polls].sort((left, right) => right.options.filter((option) => playerForLabel(option.label, players)).length - left.options.filter((option) => playerForLabel(option.label, players)).length)[0] ?? polls[0];
@@ -44,7 +45,11 @@ export default async function HomePage() {
 
   return <>
     <section className="home-stage" style={{ "--banner": `url("${heroImage}")` } as React.CSSProperties}>
-      <div className="stage-banner" aria-hidden="true" />
+      <div className="stage-scene" aria-hidden="true">
+        <div className="stage-sky" />
+        <div className="stage-photo" />
+        <div className="stage-glow" />
+      </div>
       <div className="stage-top wrap">
         <div className="stage-copy">
           <p className="stage-kicker">ABU DHABI T10</p>
@@ -52,6 +57,9 @@ export default async function HomePage() {
           <p className="stage-tagline">{banner.tagline}</p>
           <Link className="button button-orange" href={banner.ctaHref}>{banner.ctaLabel} <ArrowUpRight size={16} /></Link>
         </div>
+        {cast.length > 0 && <div className="stage-cast">
+          {cast.map((player) => <span key={player.id}><Image src={player.profileImage!} alt="" fill sizes="200px" /></span>)}
+        </div>}
         {banner.roar ? <p className="stage-roar">{banner.roar}</p> : null}
       </div>
       <div className="wrap dash-grid">
@@ -59,10 +67,11 @@ export default async function HomePage() {
           <header><span>NEXT MATCH</span><small>ABU DHABI T10</small></header>
           {upcoming && kickoff ? <>
             <div className="crest-row">
-              <div><b>UT</b><strong>United Tigers</strong><em>Abu Dhabi</em><small><Calendar size={12} aria-hidden="true" /> {kickoff.day}<br />{kickoff.time}</small></div>
+              <div><b>UT</b><strong>United Tigers</strong><em>Abu Dhabi</em></div>
               <span>VS</span>
-              <div><b>{(upcoming.opponentShort || upcoming.opponent).slice(0, 2).toUpperCase()}</b><strong>{upcoming.opponent}</strong><em>{upcoming.venue?.city || "Away"}</em><small><MapPin size={12} aria-hidden="true" /> {upcoming.venue?.name ?? "Venue TBC"}</small></div>
+              <div><b>{(upcoming.opponentShort || upcoming.opponent).slice(0, 2).toUpperCase()}</b><strong>{upcoming.opponent}</strong><em>{upcoming.venue?.city || "Away"}</em></div>
             </div>
+            <p className="match-meta"><Calendar size={12} aria-hidden="true" /> {kickoff.day} · {kickoff.time}<br /><MapPin size={12} aria-hidden="true" /> {upcoming.venue?.name ?? "Venue TBC"}</p>
             {upcoming.status === "LIVE" && <LiveScore slug={upcoming.slug} pollIntervalMs={pollIntervalMs} initial={{ status: upcoming.status, liveState: upcoming.liveState as never, innings: upcoming.innings.map((entry) => ({ runs: entry.runs, wickets: entry.wickets, overs: entry.overs.toString() })) }} />}
             <Link className="button button-orange" href={`/matches/${upcoming.slug}`}>BUY TICKETS</Link>
           </> : <>
@@ -92,9 +101,9 @@ export default async function HomePage() {
           <header><span>VOTE FOR PLAYER OF THE MATCH</span></header>
           <p>{poll?.question ?? "Who lit up the game?"}<br />Cast your vote and make your voice count.</p>
           <div className="vote-faces">
-            {(poll?.options ?? []).slice(0, 5).map((option) => {
+            {(poll?.options ?? []).slice(0, 5).map((option, index) => {
               const face = playerForLabel(option.label, players);
-              return <span key={option.id} title={option.label}>{face?.profileImage ? <Image src={face.profileImage} alt="" fill sizes="42px" /> : option.label.slice(0, 1)}</span>;
+              return <span className={index === 0 ? "is-picked" : ""} key={option.id} title={option.label}>{face?.profileImage ? <Image src={face.profileImage} alt="" fill sizes="42px" /> : option.label.slice(0, 1)}</span>;
             })}
           </div>
           <Link className="button button-orange" href={poll ? `/polls/${poll.slug}` : "/fan#vote"}>CAST YOUR VOTE</Link>

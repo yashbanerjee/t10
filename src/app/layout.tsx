@@ -9,7 +9,7 @@ import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 import { getSiteUrl } from "@/lib/site-settings";
 
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope" });
-const oswald = Oswald({ subsets: ["latin"], variable: "--font-oswald" });
+const oswald = Oswald({ subsets: ["latin"], variable: "--font-oswald", weight: ["500", "600", "700"] });
 
 export const dynamic = "force-dynamic";
 
