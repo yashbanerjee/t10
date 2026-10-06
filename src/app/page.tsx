@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowUpRight, Calendar, Clock, Globe, Instagram, MapPin, Play, Shield, Users } from "lucide-react";
+import { ArrowUpRight, Calendar, Clock, Globe, Instagram, MapPin, Play, Shield, Users, Youtube } from "lucide-react";
 import { getMatches, getNews, getPlayers, getPolls, getPublicSettings, getSponsors } from "@/lib/data";
 import { LiveScore } from "@/components/LiveScore";
 import { NationSignup } from "@/components/NationSignup";
@@ -98,7 +98,7 @@ export default async function HomePage() {
         </article>
 
         <article className="dash-card">
-          <header><span>VOTE FOR PLAYER OF THE MATCH</span></header>
+          <header><span>VOTE FOR <em>PLAYER OF THE MATCH</em></span></header>
           <p>{poll?.question ?? "Who lit up the game?"}<br />Cast your vote and make your voice count.</p>
           <div className="vote-faces">
             {(poll?.options ?? []).slice(0, 5).map((option, index) => {
@@ -110,7 +110,7 @@ export default async function HomePage() {
         </article>
 
         <article className="dash-card">
-          <header><span>TIGERS NATION</span></header>
+          <header><span className="is-gold">TIGERS NATION</span></header>
           <ul className="nation-stats">
             <li><Users size={16} aria-hidden="true" /><strong>30K+</strong><span>Fans worldwide</span></li>
             <li><Shield size={16} aria-hidden="true" /><strong>6</strong><span>Franchise teams</span></li>
@@ -140,10 +140,10 @@ export default async function HomePage() {
           <div className="result-list">
             {listed.length ? listed.map((match) => {
               const won = /united tigers won/i.test(match.result || "");
-              const label = match.status === "LIVE" ? "LIVE" : match.status === "COMPLETED" ? (won ? "WIN" : "RESULT") : "NEXT";
+              const label = match.status === "LIVE" ? "LIVE" : match.status === "COMPLETED" ? (won ? "WIN" : "RESULT") : "UP NEXT";
               const score = match.innings.length ? match.innings.map((innings) => `${innings.runs}/${innings.wickets} (${innings.overs})`).join(" – ") : "";
               return <Link href={`/matches/${match.slug}`} key={match.id}>
-                <b className={label === "WIN" ? "is-win" : label === "NEXT" ? "is-next" : ""}>{label}</b>
+                <b className={label === "WIN" ? "is-win" : label === "UP NEXT" || label === "LIVE" ? "is-next" : ""}>{label}</b>
                 <span>vs {match.opponent}</span>
                 <small>{when(match.date).day}</small>
                 <em>{score || (match.status === "UPCOMING" || match.status === "LIVE" ? when(match.date).time : match.result || match.competition || "Abu Dhabi T10")}</em>
@@ -154,7 +154,8 @@ export default async function HomePage() {
         <aside className="stay-card">
           <h2>STAY CONNECTED</h2>
           <div className="stay-links">
-            <a href="https://www.instagram.com/unitedtigers.ae/" target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram size={16} /></a>
+            <a className="is-instagram" href="https://www.instagram.com/unitedtigers.ae/" target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram size={16} /></a>
+            <a className="is-youtube" href="https://www.youtube.com/" target="_blank" rel="noreferrer" aria-label="YouTube"><Youtube size={16} /></a>
           </div>
           <p>#UnitedTigers</p>
           <div className="stay-photo" style={{ backgroundImage: "url('/images/demo/gallery-stadium.jpg')" }}><strong>Once a Tiger<br />always a Tiger</strong></div>
