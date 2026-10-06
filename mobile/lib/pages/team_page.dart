@@ -108,6 +108,7 @@ class _StatsBlock extends StatelessWidget {
             Text('${stats.matches} matches · ${stats.runs} runs · ${stats.wickets} wickets'),
             Text('HS ${stats.highestScore} · Avg ${_rate(stats.average)} · SR ${_rate(stats.strikeRate)}'),
             Text('Econ ${_rate(stats.economy)} · ${stats.fours} fours · ${stats.sixes} sixes · ${stats.catches} catches'),
+            if (stats.bowlingOvers != null || stats.bestBowling != null) Text('Overs ${stats.bowlingOvers ?? '–'} · Best ${stats.bestBowling ?? '–'}'),
           ],
         ),
       ),

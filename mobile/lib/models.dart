@@ -569,7 +569,7 @@ class HomeBanner {
 }
 
 class CricketStats {
-  const CricketStats({required this.matches, required this.runs, required this.wickets, required this.average, required this.strikeRate, required this.economy, required this.highestScore, required this.fours, required this.sixes, required this.catches});
+  const CricketStats({required this.matches, required this.runs, required this.wickets, required this.average, required this.strikeRate, required this.economy, required this.highestScore, required this.fours, required this.sixes, required this.catches, this.bestBowling, this.bowlingOvers});
 
   final int matches;
   final int runs;
@@ -581,6 +581,8 @@ class CricketStats {
   final int fours;
   final int sixes;
   final int catches;
+  final String? bestBowling;
+  final String? bowlingOvers;
 
   factory CricketStats.fromJson(dynamic value) {
     final json = asMap(value);
@@ -596,6 +598,8 @@ class CricketStats {
       fours: asInt(json['fours']),
       sixes: asInt(json['sixes']),
       catches: asInt(json['catches']),
+      bestBowling: asText(json['bestBowling']),
+      bowlingOvers: asText(json['bowlingOvers']),
     );
   }
 }

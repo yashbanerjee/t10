@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { summarize } from "../src/lib/stats";
+import { mergeCareer, summarize } from "../src/lib/stats";
 import { hasPermission } from "../src/lib/auth";
 import { contactSubmissionSchema, loginSchema } from "../src/lib/validation";
 import { calculatePlayerReport } from "../src/lib/performance";
@@ -35,6 +35,17 @@ test("batting and bowling calculations use scorecard totals and cricket over not
   assert.equal(career.matches, 2);
   assert.equal(career.runs, 110);
   assert.equal(career.catches, 3);
+  const withRecord = mergeCareer(career, { matches: 10, runs: 400, strikeRate: 150, bestScore: 98, wickets: 5, bestBowling: "4/18" });
+  assert.equal(withRecord.matches, 12);
+  assert.equal(withRecord.runs, 510);
+  assert.equal(withRecord.highestScore, 98);
+  assert.equal(withRecord.wickets, 8);
+  assert.equal(withRecord.bestBowling, "4/18");
+  const recordedOnly = mergeCareer(summarize([], [], []), { matches: 4, runs: 180, strikeRate: 140, bestScore: 72 });
+  assert.equal(recordedOnly.matches, 4);
+  assert.equal(recordedOnly.runs, 180);
+  assert.equal(recordedOnly.highestScore, 72);
+  assert.equal(recordedOnly.strikeRate, 140);
 });
 
 test("role permissions keep content and statistics scopes distinct", () => {

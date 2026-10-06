@@ -176,6 +176,7 @@ model Player {
   isDemo        Boolean               @default(false)
   displayOrder  Int                   @default(0)
   socialLinks   Json?
+  careerRecord  Json?
   teamId        String
   team          Team                  @relation(fields: [teamId], references: [id])
   seasons       PlayerSeason[]
