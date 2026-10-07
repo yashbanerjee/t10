@@ -10,11 +10,13 @@ type SmtpValue = { host?: string; port?: number; secure?: boolean; user?: string
 const empty = { siteUrl: "http://localhost:3000", livePollIntervalMs: "15000", endpoint: "", bucket: "", region: "auto", publicUrl: "", accessKey: "", secretKey: "" };
 const smtpEmpty = { host: "", port: "587", secure: false, user: "", password: "", fromEmail: "", fromName: "United Tigers", adminEmail: "" };
 const bannerEmpty = { mode: "static", title: "THE NEXT GAME", accent: "STARTS HERE", tagline: "BIGGER BOLDER TOGETHER", ctaLabel: "BACK OUR TIGERS", ctaHref: "/team", image: "", roar: "LET’S GO HUNT" };
+const ticketsEmpty = { url: "", label: "BUY TICKETS", note: "" };
 
 export function SiteSettingsPanel() {
   const [form, setForm] = useState(empty);
   const [smtp, setSmtp] = useState(smtpEmpty);
   const [banner, setBanner] = useState(bannerEmpty);
+  const [tickets, setTickets] = useState(ticketsEmpty);
   const [savedSecrets, setSavedSecrets] = useState({ access: false, secret: false, mail: false });
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -42,6 +44,9 @@ export function SiteSettingsPanel() {
         image: typeof savedBanner.image === "string" ? savedBanner.image : "",
         roar: typeof savedBanner.roar === "string" ? savedBanner.roar : bannerEmpty.roar,
       });
+      const ticketRow = rows.find((row) => row.key === "tickets");
+      const savedTickets = ticketRow?.value && typeof ticketRow.value === "object" && !Array.isArray(ticketRow.value) ? ticketRow.value as Record<string, unknown> : {};
+      setTickets({ url: typeof savedTickets.url === "string" ? savedTickets.url : "", label: typeof savedTickets.label === "string" && savedTickets.label ? savedTickets.label : ticketsEmpty.label, note: typeof savedTickets.note === "string" ? savedTickets.note : "" });
       const mail = rows.find((row) => row.key === "smtp");
       const mailValue = mail?.value && typeof mail.value === "object" && !Array.isArray(mail.value) ? mail.value as SmtpValue : {};
       const storageValue = storage?.value && typeof storage.value === "object" ? storage.value as StorageValue : {};
@@ -82,6 +87,7 @@ export function SiteSettingsPanel() {
       { key: "livePollIntervalMs", value: Number(form.livePollIntervalMs) },
       { key: "storage", value: { endpoint: form.endpoint.trim(), bucket: form.bucket.trim(), region: form.region.trim() || "auto", publicUrl: form.publicUrl.trim(), accessKey: form.accessKey, secretKey: form.secretKey } },
       { key: "homepage", value: banner },
+      { key: "tickets", value: { url: tickets.url.trim(), label: tickets.label.trim(), note: tickets.note.trim() } },
       { key: "smtp", value: { host: smtp.host.trim(), port: Number(smtp.port), secure: smtp.secure, user: smtp.user.trim(), password: smtp.password, fromEmail: smtp.fromEmail.trim(), fromName: smtp.fromName.trim(), adminEmail: smtp.adminEmail.trim() } },
     ];
     try {
@@ -112,7 +118,7 @@ export function SiteSettingsPanel() {
       <label className="admin-field"><span className="admin-field-label">Storage endpoint</span><span className="admin-field-control"><input value={form.endpoint} onChange={(event) => change("endpoint", event.target.value)} placeholder="https://account.r2.cloudflarestorage.com" /></span><span className="admin-field-note">S3-compatible API endpoint for uploads.</span></label>
       <label className="admin-field"><span className="admin-field-label">Storage bucket</span><span className="admin-field-control"><input value={form.bucket} onChange={(event) => change("bucket", event.target.value)} /></span><span className="admin-field-note" /></label>
       <label className="admin-field"><span className="admin-field-label">Storage region</span><span className="admin-field-control"><input value={form.region} onChange={(event) => change("region", event.target.value)} placeholder="auto" /></span><span className="admin-field-note" /></label>
-      <label className="admin-field"><span className="admin-field-label">Public file URL</span><span className="admin-field-control"><input value={form.publicUrl} onChange={(event) => change("publicUrl", event.target.value)} placeholder="https://media.unitedtigers.ae" /></span><span className="admin-field-note">Optional. Used when the bucket endpoint is not public.</span></label>
+      <label className="admin-field"><span className="admin-field-label">Public file URL</span><span className="admin-field-control"><input value={form.publicUrl} onChange={(event) => change("publicUrl", event.target.value)} placeholder="https://media.unitedtigers.ae" /></span><span className="admin-field-note">Optional, for buckets that are publicly readable, for example https://bucket.t3.storageapi.dev. Uploads that are not public are served through this website automatically.</span></label>
       <label className="admin-field"><span className="admin-field-label">Storage access key</span><span className="admin-field-control"><input value={form.accessKey} onChange={(event) => change("accessKey", event.target.value)} autoComplete="off" placeholder={savedSecrets.access ? "Saved — leave blank to keep" : ""} /></span><span className="admin-field-note" /></label>
       <label className="admin-field"><span className="admin-field-label">Storage secret key</span><span className="admin-field-control"><input type="password" value={form.secretKey} onChange={(event) => change("secretKey", event.target.value)} autoComplete="new-password" placeholder={savedSecrets.secret ? "Saved — leave blank to keep" : ""} /></span><span className="admin-field-note" /></label>
     </div>
@@ -127,6 +133,13 @@ export function SiteSettingsPanel() {
       <label className="admin-field"><span className="admin-field-label">From email</span><span className="admin-field-control"><input type="email" value={smtp.fromEmail} onChange={(event) => setSmtp((current) => ({ ...current, fromEmail: event.target.value }))} placeholder="info@unitedtigers.ae" /></span><span className="admin-field-note">Address fans see as the sender.</span></label>
       <label className="admin-field"><span className="admin-field-label">Admin email</span><span className="admin-field-control"><input type="email" value={smtp.adminEmail} onChange={(event) => setSmtp((current) => ({ ...current, adminEmail: event.target.value }))} placeholder="info@vedha.ae" /></span><span className="admin-field-note">Receives contact, booking, vote and contest mail.</span></label>
       <label className="admin-field"><span className="admin-field-label">Use SSL</span><span className="admin-field-control"><input type="checkbox" checked={smtp.secure} onChange={(event) => setSmtp((current) => ({ ...current, secure: event.target.checked }))} /></span><span className="admin-field-note">Turn on for port 465.</span></label>
+    </div>
+    <div className="admin-panel-header"><h2>Tickets</h2></div>
+    <p className="admin-storage-note">The Buy Tickets buttons on the match centre, homepage and header open this link. Leave it blank until sales open and fans see the tickets page with an on-sale-soon notice instead.</p>
+    <div className="admin-editor-grid">
+      <label className="admin-field"><span className="admin-field-label">Ticket link</span><span className="admin-field-control"><input value={tickets.url} onChange={(event) => setTickets((current) => ({ ...current, url: event.target.value }))} placeholder="https://tickets.example.com/united-tigers" /></span><span className="admin-field-note">The official ticket seller page, or a site path such as /contact.</span></label>
+      <label className="admin-field"><span className="admin-field-label">Button label</span><span className="admin-field-control"><input value={tickets.label} onChange={(event) => setTickets((current) => ({ ...current, label: event.target.value }))} maxLength={40} required /></span><span className="admin-field-note" /></label>
+      <label className="admin-field field-wide"><span className="admin-field-label">Ticket note</span><span className="admin-field-control"><input value={tickets.note} onChange={(event) => setTickets((current) => ({ ...current, note: event.target.value }))} maxLength={200} placeholder="Gates open 90 minutes before the first ball." /></span><span className="admin-field-note">Optional line shown under the button on the match centre and tickets page.</span></label>
     </div>
     <div className="admin-panel-header"><h2>Homepage banner</h2></div>
     <p className="admin-storage-note">The homepage hero uses one wide picture as its background. The headline sits on the left. Upload a new image here to replace the built-in stadium.</p>

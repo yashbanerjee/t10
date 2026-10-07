@@ -24,7 +24,20 @@ function inline(text: string, keySeed: string): ReactNode[] {
   return pieces;
 }
 
-function isBlockStart(line: string) { return /^#{2,3}\s|^>\s|^[-*]\s|^\d+\.\s/.test(line); }
+/**
+ * Reads a heading line. Accepts `#`–`######` followed by a space (so hashtags such as #LetsGoHunt
+ * stay text), repeated markers from clicking the toolbar more than once (`## ## Title`), and bold
+ * wrapped around the whole heading (`**## Title**`). Returns the level clamped to h2/h3 and the text.
+ */
+function heading(line: string): { level: 2 | 3; text: string } | null {
+  let text = line.trim();
+  const wrapped = /^\*\*(.+)\*\*$/.exec(text); if (wrapped && /^#/.test(wrapped[1].trim())) text = wrapped[1].trim();
+  const match = /^(#{1,6})(?:\s+#{1,6})*\s+(.*)$/.exec(text); if (!match) return null;
+  const body = match[2].replace(/\s*#+\s*$/, "").trim(); if (!body) return null;
+  return { level: match[1].length >= 3 ? 3 : 2, text: body };
+}
+
+function isBlockStart(line: string) { return heading(line) !== null || /^>\s|^[-*]\s|^\d+\.\s/.test(line); }
 
 export function SafeMarkdown({ content }: { content: string }) {
   const lines = content.replaceAll("\r", "").split("\n"); const blocks: ReactNode[] = []; let index = 0; let key = 0;
@@ -32,9 +45,9 @@ export function SafeMarkdown({ content }: { content: string }) {
     const line = lines[index]?.trim() ?? ""; if (!line) { index++; continue; }
     const image = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(line);
     if (image) { blocks.push(safeUrl(image[2]) ? <figure className="content-image" key={key++}><img src={image[2]} alt={image[1]} /><figcaption>{image[1]}</figcaption></figure> : null); index++; continue; }
-    if (line.startsWith("### ")) { blocks.push(<h3 key={key++}>{inline(line.slice(4), `h3-${index}`)}</h3>); index++; continue; }
-    if (line.startsWith("## ")) { blocks.push(<h2 key={key++}>{inline(line.slice(3), `h2-${index}`)}</h2>); index++; continue; }
-    if (line.startsWith("> ")) { blocks.push(<blockquote key={key++}>{inline(line.slice(2), `q-${index}`)}</blockquote>); index++; continue; }
+    const head = heading(line);
+    if (head) { blocks.push(head.level === 3 ? <h3 key={key++}>{inline(head.text, `h3-${index}`)}</h3> : <h2 key={key++}>{inline(head.text, `h2-${index}`)}</h2>); index++; continue; }
+    if (/^>\s?/.test(line)) { blocks.push(<blockquote key={key++}>{inline(line.replace(/^>\s?/, ""), `q-${index}`)}</blockquote>); index++; continue; }
     if (/^[-*]\s/.test(line) || /^\d+\.\s/.test(line)) {
       const ordered = /^\d+\.\s/.test(line); const entries: ReactNode[] = [];
       while (index < lines.length && (ordered ? /^\d+\.\s/.test(lines[index].trim()) : /^[-*]\s/.test(lines[index].trim()))) { const current = lines[index].trim(); entries.push(<li key={index}>{inline(current.replace(ordered ? /^\d+\.\s/ : /^[-*]\s/, ""), `li-${index}`)}</li>); index++; }

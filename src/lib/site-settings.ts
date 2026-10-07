@@ -93,6 +93,13 @@ export function normalizeSiteSetting(key: string, value: unknown, previous?: unk
       },
     };
   }
+  if (key === "tickets") {
+    const parsed = ticketsSchema.safeParse(value ?? {});
+    if (!parsed.success) return { ok: false, message: "Ticket settings are invalid." };
+    const url = parsed.data.url.trim();
+    if (url && !/^https?:\/\//.test(url) && !url.startsWith("/")) return { ok: false, message: "Ticket link must start with / or be an http(s) URL." };
+    return { ok: true, value: { url, label: parsed.data.label.trim() || ticketsDefaults.label, note: parsed.data.note.trim() } };
+  }
   if (key === "homepage") {
     const parsed = homepageSchema.safeParse(value ?? {});
     if (!parsed.success) return { ok: false, message: "Homepage banner settings are invalid." };
@@ -134,6 +141,33 @@ function safeAsset(value: string) {
   if (!trimmed || /["'()\\\s]/.test(trimmed)) return "";
   if (trimmed.startsWith("/") || /^https?:\/\//.test(trimmed)) return trimmed;
   return "";
+}
+
+const ticketsSchema = z.object({
+  url: z.string().trim().max(500).default(""),
+  label: z.string().trim().max(40).default("BUY TICKETS"),
+  note: z.string().trim().max(200).default(""),
+});
+
+export type TicketSettings = z.infer<typeof ticketsSchema>;
+
+export const ticketsDefaults: TicketSettings = { url: "", label: "BUY TICKETS", note: "" };
+
+/** Ticket link shown on the match centre, homepage and header. An empty URL sends fans to the /tickets page. */
+export function readTickets(value: unknown): TicketSettings {
+  const parsed = ticketsSchema.safeParse(value ?? {});
+  if (!parsed.success) return ticketsDefaults;
+  const url = parsed.data.url.trim();
+  return { url: /^https?:\/\//.test(url) || url.startsWith("/") ? url : "", label: parsed.data.label.trim() || ticketsDefaults.label, note: parsed.data.note.trim() };
+}
+
+export async function getTicketSettings() {
+  try {
+    const row = await prisma.siteSetting.findUnique({ where: { key: "tickets" } });
+    return readTickets(row?.value);
+  } catch {
+    return ticketsDefaults;
+  }
 }
 
 export function readHomepageBanner(value: unknown): HomepageBanner {

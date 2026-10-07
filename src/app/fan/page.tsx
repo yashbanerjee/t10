@@ -12,7 +12,7 @@ export default async function FanPage() {
   return <div className="inner-page">
     <section className="inner-hero"><div className="wrap"><span className="eyebrow"><i className="eyebrow-dot" />FAN ZONE</span><h1>HAVE YOUR<br />SAY.</h1><p>Vote in the club poll and enter the contest. Your name, email and phone stay with the team.</p></div></section>
     <section className="section" id="vote"><div className="wrap">
-      <div className="section-heading"><div><span className="eyebrow"><i className="eyebrow-dot" />POLLS</span><h2>THE VOTE</h2></div></div>
+      <div className="section-heading"><div><span className="eyebrow"><i className="eyebrow-dot" />POLLS</span><h2>THE VOTE</h2></div><Link className="text-link" href="/vote">ALL POLLS <ArrowUpRight size={14} /></Link></div>
       {polls.length ? <div className="fan-grid">{polls.map((poll) => <Link className="fan-card" href={`/polls/${poll.slug}`} key={poll.id}><span>{open(poll.closesAt) ? "OPEN" : "CLOSED"}</span><h2>{poll.question}</h2><p>{poll.options.map((option) => option.label).join(" · ")}</p><small>VOTE <ArrowUpRight size={14} /></small></Link>)}</div> : <div className="fan-empty"><h2>No poll is live yet.</h2></div>}
     </div></section>
     <section className="section section-dark"><div className="wrap">

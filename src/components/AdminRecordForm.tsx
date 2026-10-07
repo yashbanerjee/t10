@@ -8,9 +8,13 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { ContestEntries, OptionEditor, OrderSummary, VariantEditor, type EntryRow, type OptionDraft, type OrderView, type VariantDraft } from "@/components/CatalogFields";
 import { adminSections, type Field } from "@/components/AdminWorkspace";
 import { flattenCareer } from "@/lib/career-record";
+import { describeIssues } from "@/lib/admin-validation";
 
 const inputDate = (value: unknown) => { if (!value) return ""; const date = new Date(String(value)); return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 16); };
 const inputDay = (value: unknown) => { if (!value) return ""; const date = new Date(String(value)); return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10); };
+const bound = (value: number | string | undefined) => value === "today" ? new Date().toISOString().slice(0, 10) : value;
+/** Browser-side limits that mirror the API rules, so invalid values are caught before the request is sent. */
+const constraints = (field: Field) => ({ pattern: field.pattern, title: field.title, maxLength: field.maxLength, min: bound(field.min) ?? (field.type === "number" ? 0 : undefined), max: bound(field.max) });
 
 function blankForm(section: string, fields: Field[]) {
   const values: Record<string, string | boolean> = {};
@@ -29,7 +33,7 @@ function formFromRecord(section: string, fields: Field[], item: Record<string, u
 }
 
 function CareerInputs({ fields, form, onChange }: { fields: Field[]; form: Record<string, string | boolean>; onChange: (key: string, value: string | boolean) => void }) {
-  return <div className="admin-editor-grid">{fields.map((field) => <label className="admin-field" key={field.key}><span className="admin-field-label">{field.label}</span><span className="admin-field-control"><input type={field.type === "number" ? "number" : "text"} min={field.type === "number" ? 0 : undefined} step={field.step ?? (field.type === "number" ? "1" : undefined)} value={String(form[field.key] ?? "")} onChange={(event) => onChange(field.key, event.target.value)} /></span><span className="admin-field-note">{field.hint ?? ""}</span></label>)}</div>;
+  return <div className="admin-editor-grid">{fields.map((field) => <label className="admin-field" key={field.key}><span className="admin-field-label">{field.label}</span><span className="admin-field-control"><input type={field.type === "number" ? "number" : "text"} {...constraints(field)} step={field.step ?? (field.type === "number" ? "1" : undefined)} value={String(form[field.key] ?? "")} onChange={(event) => onChange(field.key, event.target.value)} /></span><span className="admin-field-note">{field.hint ?? ""}</span></label>)}</div>;
 }
 
 function PlayerCareerFields({ fields, form, role, onChange }: { fields: Field[]; form: Record<string, string | boolean>; role: string; onChange: (key: string, value: string | boolean) => void }) {
@@ -114,7 +118,10 @@ export function AdminRecordForm({ section, recordId }: { section: string; record
     try {
       const response = await fetch(`/api/v1/admin/${section}${isNew ? "" : `/${recordId}`}`, { method: isNew ? "POST" : "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.message || "Could not save this record.");
+      if (!response.ok) {
+        const detail = describeIssues(result.errors, Object.fromEntries((definition.fields ?? []).map((field) => [field.key, field.label])));
+        throw new Error(detail ? `${result.message || "Validation failed"}. ${detail}` : result.message || "Could not save this record.");
+      }
       router.push(`/admin/${section}`);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not save this record."); setSaving(false); }
   }
@@ -124,7 +131,7 @@ export function AdminRecordForm({ section, recordId }: { section: string; record
     {loading ? <div className="admin-table-wrap"><div className="admin-loading-inline"><span className="admin-spinner" /> LOADING RECORD</div></div> : <form className="admin-editor" onSubmit={save}><div className="admin-editor-grid">{definition.fields.filter((field) => field.type !== "checkbox" && !field.group).map((field) => {
       const wide = field.type === "textarea" || field.type === "richtext";
       const note = [field.type === "file" && form[field.key] ? `Attached: ${String(form[field.key])}` : "", field.type === "file" && uploading ? "Uploading…" : "", field.hint ?? ""].filter(Boolean).join(" ");
-      return <label key={field.key} className={`admin-field${wide ? " field-wide" : ""}`}><span className="admin-field-label">{field.label}</span><span className="admin-field-control">{field.type === "richtext" ? <RichTextEditor required={field.required} value={String(form[field.key] ?? "")} onChange={(value) => change(field.key, value)} /> : field.type === "textarea" ? <textarea required={field.required} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)} /> : field.type === "select" ? <select required={field.required} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)}>{field.options?.map((option) => <option value={option} key={option}>{option || "Select"}</option>)}</select> : field.type === "file" ? <input type="file" accept={field.accept} required={field.required && !form[field.key]} onChange={(event) => void uploadFile(field, event.currentTarget.files?.[0])} /> : <input type={field.type === "date" ? "datetime-local" : field.type === "day" ? "date" : field.type === "number" ? "number" : field.type === "url" ? "url" : field.type === "password" ? "password" : "text"} step={field.step ?? (field.key === "price" ? "0.01" : undefined)} min={field.type === "number" ? 0 : undefined} required={field.key === "password" ? isNew : field.required} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)} autoComplete={field.type === "password" ? "new-password" : undefined} />}</span><span className="admin-field-note">{note}</span></label>;
+      return <label key={field.key} className={`admin-field${wide ? " field-wide" : ""}`}><span className="admin-field-label">{field.label}</span><span className="admin-field-control">{field.type === "richtext" ? <RichTextEditor required={field.required} value={String(form[field.key] ?? "")} onChange={(value) => change(field.key, value)} /> : field.type === "textarea" ? <textarea required={field.required} maxLength={field.maxLength} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)} /> : field.type === "select" ? <select required={field.required} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)}>{field.options?.map((option) => <option value={option} key={option}>{option || "Select"}</option>)}</select> : field.type === "file" ? <input type="file" accept={field.accept} required={field.required && !form[field.key]} onChange={(event) => void uploadFile(field, event.currentTarget.files?.[0])} /> : <input type={field.type === "date" ? "datetime-local" : field.type === "day" ? "date" : field.type === "number" ? "number" : field.type === "url" ? "url" : field.type === "password" ? "password" : "text"} step={field.step ?? (field.key === "price" ? "0.01" : undefined)} {...constraints(field)} required={field.key === "password" ? isNew : field.required} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)} autoComplete={field.type === "password" ? "new-password" : undefined} />}</span><span className="admin-field-note">{note}</span></label>;
     })}</div>
       {section === "players" && <PlayerCareerFields fields={definition.fields} form={form} role={String(form.role ?? "")} onChange={change} />}
       {section === "products" && <VariantEditor rows={variants} onChange={setVariants} />}

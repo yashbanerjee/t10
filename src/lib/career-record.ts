@@ -20,7 +20,7 @@ export const careerRecordSchema = z.object({
   economy: stat,
   bowlingAverage: stat,
   bowlingStrikeRate: stat,
-  bestBowling: z.union([z.null(), z.literal(""), z.string().trim().max(20)]).optional(),
+  bestBowling: z.union([z.null(), z.literal(""), z.string().trim().regex(/^\d{1,2}\/\d{1,3}$/, "Best figures use wickets/runs, for example 4/18")]).optional(),
   catches: stat,
   runOuts: stat,
   stumpings: stat,

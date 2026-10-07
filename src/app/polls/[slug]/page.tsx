@@ -15,7 +15,7 @@ export default async function PollPage({ params }: { params: Promise<{ slug: str
   if (!poll) notFound();
   const closed = Boolean(poll.closesAt && poll.closesAt.getTime() < Date.now());
   return <div className="inner-page"><section className="inner-hero"><div className="wrap"><span className="eyebrow"><i className="eyebrow-dot" />{closed ? "CLOSED" : "THE VOTE"}</span><h1>{poll.question}</h1>{poll.description && <p>{poll.description}</p>}</div></section><section className="section"><div className="wrap fan-detail">
-    <Link className="text-link" href="/fan"><ArrowLeft size={14} /> FAN ZONE</Link>
+    <Link className="text-link" href="/vote"><ArrowLeft size={14} /> ALL POLLS</Link>
     <PollBallot slug={poll.slug} options={poll.options} closed={closed} />
   </div></section></div>;
 }

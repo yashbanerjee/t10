@@ -12,8 +12,9 @@ const links = [
   ["Home", "/"],
   ["Team", "/team"],
   ["Fixtures", "/fixtures"],
+  ["Stats", "/stats"],
   ["Shop", "/shop"],
-  ["Vote", "/fan#vote"],
+  ["Vote", "/vote"],
   ["Fan Zone", "/fan"],
   ["News", "/news"],
   ["Sponsors", "/partners"],
@@ -22,10 +23,14 @@ const links = [
 const searchPages = [
   ["Team", "/team"],
   ["Fixtures", "/fixtures"],
+  ["Tickets", "/tickets"],
+  ["Stats centre", "/stats"],
+  ["Records", "/records"],
   ["Shop", "/shop"],
-  ["Vote", "/fan#vote"],
+  ["Vote", "/vote"],
   ["Fan Zone", "/fan"],
   ["News", "/news"],
+  ["Tigers Daily", "/updates"],
   ["Sponsors", "/partners"],
   ["Gallery", "/gallery"],
   ["About", "/about"],
@@ -60,7 +65,7 @@ export function PublicHeader() {
       <nav className="desktop-nav" aria-label="Main navigation">
         {links.map(([label, href]) => {
           const path = href.split("#")[0] || "/";
-          const active = label === "Vote" ? pathname.startsWith("/polls") : label === "Fan Zone" ? pathname === "/fan" || pathname.startsWith("/contests") : path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
+          const active = label === "Vote" ? pathname === "/vote" || pathname.startsWith("/polls") : label === "Fan Zone" ? pathname === "/fan" || pathname.startsWith("/contests") : label === "Stats" ? pathname === "/stats" || pathname === "/records" : path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
           return <Link key={label} className={active ? "is-active" : ""} href={href}>{label}</Link>;
         })}
       </nav>
@@ -68,7 +73,7 @@ export function PublicHeader() {
         <p className="header-slogan"><span>UNITED TIGERS</span><strong>Let’s Go Hunt</strong></p>
         <button className="header-icon" type="button" aria-label={searching ? "Close search" : "Search the site"} aria-expanded={searching} onClick={() => setSearching((value) => !value)}>{searching ? <X size={16} /> : <Search size={16} />}</button>
         <Link className="header-icon header-cart" href="/cart" aria-label={`Bag, ${cart.count} items`}><ShoppingBag size={16} />{cart.count > 0 && <b>{cart.count}</b>}</Link>
-        <Link className="header-tickets" href="/fixtures" onClick={() => track("fixture_click", { href: "/fixtures" })}><Ticket size={15} /> TICKETS</Link>
+        <Link className="header-tickets" href="/tickets" onClick={() => track("fixture_click", { href: "/tickets" })}><Ticket size={15} /> TICKETS</Link>
         <button className="menu-toggle" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
       </div>
     </div>
@@ -79,7 +84,7 @@ export function PublicHeader() {
     {open && <nav className="mobile-nav" aria-label="Mobile navigation">
       {links.map(([label, href], index) => <Link key={label} onClick={() => setOpen(false)} href={href}><span>0{index + 1}</span>{label}</Link>)}
       <Link className="mobile-match-link" onClick={() => setOpen(false)} href="/cart">BAG{cart.count > 0 ? ` (${cart.count})` : ""}</Link>
-      <Link className="mobile-match-link" onClick={() => setOpen(false)} href="/fixtures">TICKETS</Link>
+      <Link className="mobile-match-link" onClick={() => setOpen(false)} href="/tickets">TICKETS</Link>
     </nav>}
   </header>;
 }

@@ -1,11 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowUpRight, Calendar, ChevronRight, CircleCheck, Clock, Globe, Instagram, MapPin, Play, Shield, Ticket, Users, Youtube } from "lucide-react";
-import { getMatches, getNews, getPlayers, getPolls, getPublicSettings, getSponsors } from "@/lib/data";
+import { ArrowUpRight, Calendar, ChevronRight, CircleCheck, Clock, Globe, Instagram, MapPin, Shield, Users, Youtube } from "lucide-react";
+import { getGallery, getMatches, getNews, getPlayers, getPolls, getProducts, getPublicSettings, getSponsors, getUpdates } from "@/lib/data";
 import { LiveScore } from "@/components/LiveScore";
 import { NationSignup } from "@/components/NationSignup";
-import { homepageDefaults, readHomepageBanner } from "@/lib/site-settings";
+import { TicketButton } from "@/components/TicketButton";
+import { homepageDefaults, readHomepageBanner, readTickets } from "@/lib/site-settings";
 import { getLivePollIntervalMs } from "@/lib/site-settings";
 
 export const metadata: Metadata = { title: "United Tigers | The Next Game Starts Here", description: "The official home of United Tigers. Fixtures, the squad, the vote and the Abu Dhabi T10." };
@@ -32,8 +33,12 @@ function playerForLabel(label: string, roster: { fullName: string; profileImage:
 }
 
 export default async function HomePage() {
-  const [players, matches, news, sponsors, settings, polls, pollIntervalMs] = await Promise.all([getPlayers(), getMatches(), getNews(), getSponsors(), getPublicSettings(), getPolls(), getLivePollIntervalMs()]);
+  const [players, matches, news, sponsors, settings, polls, pollIntervalMs, updates, gallery, products] = await Promise.all([getPlayers(), getMatches(), getNews(), getSponsors(), getPublicSettings(), getPolls(), getLivePollIntervalMs(), getUpdates(), getGallery(), getProducts()]);
   const banner = readHomepageBanner(settings.homepage ?? homepageDefaults);
+  const tickets = readTickets(settings.tickets);
+  const daily = updates.filter((update) => !update.isDemo).slice(0, 3);
+  const moments = gallery.filter((item) => item.isFeatured && item.type === "IMAGE").slice(0, 4);
+  const kit = products.filter((product) => product.isFeatured).slice(0, 4);
   const heroImage = banner.mode === "image" && banner.image ? banner.image : "/images/stadium-hero.png";
   const squad = players.slice(0, 4);
   const cast = players.filter((player) => player.profileImage).slice(0, 5);
@@ -74,11 +79,11 @@ export default async function HomePage() {
             </div>
             <p className="match-meta"><Calendar size={12} aria-hidden="true" /> {kickoff.day} · {kickoff.time}<br /><MapPin size={12} aria-hidden="true" /> {upcoming.venue?.name ?? "Venue TBC"}</p>
             {upcoming.status === "LIVE" && <LiveScore slug={upcoming.slug} pollIntervalMs={pollIntervalMs} initial={{ status: upcoming.status, liveState: upcoming.liveState as never, innings: upcoming.innings.map((entry) => ({ runs: entry.runs, wickets: entry.wickets, overs: entry.overs.toString() })) }} />}
-            <Link className="button button-orange" href={`/matches/${upcoming.slug}`}><Ticket size={14} aria-hidden="true" /> BUY TICKETS</Link>
+            <TicketButton tickets={tickets} />
           </> : <>
             <div className="crest-row"><div><b className="has-crest"><Image src="/brand/tiger-gold.png" alt="" width={822} height={688} /></b><strong>United Tigers</strong><em>Abu Dhabi</em></div><span>VS</span><div><b>T10</b><strong>The field</strong><em>Abu Dhabi</em></div></div>
             <p className="dash-empty">The next fixture will appear here as soon as it is confirmed.</p>
-            <Link className="button button-orange" href="/fixtures"><Ticket size={14} aria-hidden="true" /> BUY TICKETS</Link>
+            <TicketButton tickets={tickets} />
           </>}
         </article>
 
@@ -107,7 +112,7 @@ export default async function HomePage() {
               return <span className={index === 0 ? "is-picked" : ""} key={option.id} title={option.label}>{face?.profileImage ? <Image src={face.profileImage} alt="" fill sizes="42px" /> : option.label.slice(0, 1)}</span>;
             })}
           </div>
-          <Link className="button button-accent" href={poll ? `/polls/${poll.slug}` : "/fan#vote"}><CircleCheck size={14} aria-hidden="true" /> CAST YOUR VOTE</Link>
+          <Link className="button button-accent" href={poll ? `/polls/${poll.slug}` : "/vote"}><CircleCheck size={14} aria-hidden="true" /> CAST YOUR VOTE</Link>
         </article>
 
         <article className="dash-card">
@@ -127,10 +132,10 @@ export default async function HomePage() {
     <section className="home-board">
       <div className="wrap board-grid">
         <div>
-          <div className="board-head"><h2>LATEST HIGHLIGHTS</h2><Link href="/news">View all <ArrowUpRight size={14} /></Link></div>
+          <div className="board-head"><h2>LATEST STORIES</h2><Link href="/news">View all <ArrowUpRight size={14} /></Link></div>
           <div className="highlight-row">
             {stories.map((story, index) => <Link href={`/news/${story.slug}`} key={story.id}>
-              <span style={{ backgroundImage: `url('${story.coverImage || shots[index % shots.length]}')` }}><Play size={16} /><small>{story.category}</small></span>
+              <span style={{ backgroundImage: `url('${story.coverImage || shots[index % shots.length]}')` }}><ArrowUpRight size={16} aria-hidden="true" /><small>{story.category}</small></span>
               <strong>{story.title}</strong>
             </Link>)}
           </div>
@@ -163,6 +168,44 @@ export default async function HomePage() {
         </aside>
       </div>
     </section>
+
+    {(daily.length > 0 || moments.length > 0) && <section className="home-pulse">
+      <div className={`wrap pulse-grid${daily.length && moments.length ? "" : " is-single"}`}>
+        {daily.length > 0 && <div>
+          <div className="board-head"><h2>TIGERS DAILY</h2><Link href="/updates">View all <ArrowUpRight size={14} /></Link></div>
+          <div className="daily-list">
+            {daily.map((update) => <Link href={`/updates/${update.slug}`} key={update.id}>
+              <time dateTime={new Date(update.publishedAt).toISOString()}>{when(update.publishedAt).day}</time>
+              <span className="update-category">{update.category.replaceAll("_", " ")}</span>
+              <strong>{update.title}</strong>
+              <p>{update.description}</p>
+              <ChevronRight className="result-go" size={14} aria-hidden="true" />
+            </Link>)}
+          </div>
+        </div>}
+        {moments.length > 0 && <div>
+          <div className="board-head"><h2>FEATURED MOMENTS</h2><Link href="/gallery">Gallery <ArrowUpRight size={14} /></Link></div>
+          <div className={`moment-grid count-${moments.length}`}>
+            {moments.map((item) => <Link href="/gallery" key={item.id} aria-label={item.altText || item.title}>
+              <span style={{ backgroundImage: `url('${item.mediaUrl}')` }} /><strong>{item.title}</strong>
+            </Link>)}
+          </div>
+        </div>}
+      </div>
+    </section>}
+
+    {kit.length > 0 && <section className="home-feature-kit">
+      <div className="wrap">
+        <div className="board-head"><h2>OFFICIAL KIT</h2><Link href="/shop">Shop all <ArrowUpRight size={14} /></Link></div>
+        <div className={`kit-row count-${kit.length}`}>
+          {kit.map((product) => <Link href={`/shop/${product.slug}`} key={product.id}>
+            <span className={product.image ? undefined : "is-empty"} style={product.image ? { backgroundImage: `url('${product.image}')` } : undefined}>{product.category}</span>
+            <strong>{product.name}</strong>
+            <em>AED {product.price.toLocaleString("en-AE", { maximumFractionDigits: 0 })}</em>
+          </Link>)}
+        </div>
+      </div>
+    </section>}
 
     <section className="partner-rail">
       <div className="wrap">
