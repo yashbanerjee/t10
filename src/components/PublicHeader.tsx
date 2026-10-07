@@ -55,7 +55,7 @@ export function PublicHeader() {
 
   return <header className="site-header">
     <div className="header-inner wrap">
-      <TeamMark />
+      <TeamMark priority />
       <span className="league-chip">ABU DHABI <b>T10</b></span>
       <nav className="desktop-nav" aria-label="Main navigation">
         {links.map(([label, href]) => {
@@ -65,7 +65,7 @@ export function PublicHeader() {
         })}
       </nav>
       <div className="header-tools">
-        <p className="header-slogan"><span>MORE THAN A TEAM</span><strong>A MOVEMENT</strong></p>
+        <p className="header-slogan"><span>UNITED TIGERS</span><strong>Let’s Go Hunt</strong></p>
         <button className="header-icon" type="button" aria-label={searching ? "Close search" : "Search the site"} aria-expanded={searching} onClick={() => setSearching((value) => !value)}>{searching ? <X size={16} /> : <Search size={16} />}</button>
         <Link className="header-icon header-cart" href="/cart" aria-label={`Bag, ${cart.count} items`}><ShoppingBag size={16} />{cart.count > 0 && <b>{cart.count}</b>}</Link>
         <Link className="header-tickets" href="/fixtures" onClick={() => track("fixture_click", { href: "/fixtures" })}><Ticket size={15} /> TICKETS</Link>

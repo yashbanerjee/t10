@@ -5,7 +5,7 @@ import { TeamMark } from "@/components/TeamMark";
 export function PublicFooter() {
   return <footer className="site-footer">
     <div className="footer-top wrap">
-      <div className="footer-brand"><TeamMark /><p>The next chapter of cricket’s fastest format.</p><a className="social-link" href="https://www.instagram.com/unitedtigers.ae/" target="_blank" rel="noreferrer"><Instagram size={16} /> @unitedtigers.ae <ArrowUpRight size={14} /></a></div>
+      <div className="footer-brand"><TeamMark stacked /><p className="footer-tagline">Let’s Go Hunt</p><p>The next chapter of cricket’s fastest format.</p><a className="social-link" href="https://www.instagram.com/unitedtigers.ae/" target="_blank" rel="noreferrer"><Instagram size={16} /> @unitedtigers.ae <ArrowUpRight size={14} /></a></div>
       <div className="footer-col"><span className="eyebrow">EXPLORE</span><Link href="/team">Team</Link><Link href="/fixtures">Fixtures</Link><Link href="/fan#vote">Vote</Link><Link href="/fan">Fan Zone</Link><Link href="/news">News</Link><Link href="/gallery">Gallery</Link><Link href="/shop">Shop</Link></div>
       <div className="footer-col"><span className="eyebrow">THE CLUB</span><Link href="/about">Our story</Link><Link href="/partners">Partners</Link><Link href="/contact">Contact</Link><Link href="/admin/login">Club admin</Link></div>
       <div className="footer-callout"><span className="eyebrow">A NEW FORCE. A NEW CHAPTER.</span><p>Follow every moment as the Tigers prepare for their first season.</p><a href="https://www.instagram.com/unitedtigers.ae/" target="_blank" rel="noreferrer">FOLLOW THE TIGERS <ArrowUpRight size={15} /></a></div>

@@ -49,6 +49,7 @@ export default async function HomePage() {
         <div className="stage-sky" />
         <div className="stage-photo" />
         <div className="stage-glow" />
+        <div className="stage-tiger" />
       </div>
       <div className="stage-top wrap">
         <div className="stage-copy">
@@ -67,7 +68,7 @@ export default async function HomePage() {
           <header><span className="is-gold">NEXT MATCH</span><small>ABU DHABI T10</small></header>
           {upcoming && kickoff ? <>
             <div className="crest-row">
-              <div><b><i className="mark-icon" aria-hidden="true"><i /><i /><i /></i></b><strong>United Tigers</strong><em>Abu Dhabi</em></div>
+              <div><b className="has-crest"><Image src="/brand/tiger-gold.png" alt="" width={822} height={688} /></b><strong>United Tigers</strong><em>Abu Dhabi</em></div>
               <span>VS</span>
               <div>{upcoming.opponentLogoUrl ? <b className="has-logo"><span><Image src={upcoming.opponentLogoUrl} alt="" fill sizes="64px" /></span></b> : <b>{(upcoming.opponentShort || upcoming.opponent).slice(0, 2).toUpperCase()}</b>}<strong>{upcoming.opponent}</strong><em>{upcoming.venue?.city || "Away"}</em></div>
             </div>
@@ -75,7 +76,7 @@ export default async function HomePage() {
             {upcoming.status === "LIVE" && <LiveScore slug={upcoming.slug} pollIntervalMs={pollIntervalMs} initial={{ status: upcoming.status, liveState: upcoming.liveState as never, innings: upcoming.innings.map((entry) => ({ runs: entry.runs, wickets: entry.wickets, overs: entry.overs.toString() })) }} />}
             <Link className="button button-orange" href={`/matches/${upcoming.slug}`}><Ticket size={14} aria-hidden="true" /> BUY TICKETS</Link>
           </> : <>
-            <div className="crest-row"><div><b><i className="mark-icon" aria-hidden="true"><i /><i /><i /></i></b><strong>United Tigers</strong><em>Abu Dhabi</em></div><span>VS</span><div><b>T10</b><strong>The field</strong><em>Abu Dhabi</em></div></div>
+            <div className="crest-row"><div><b className="has-crest"><Image src="/brand/tiger-gold.png" alt="" width={822} height={688} /></b><strong>United Tigers</strong><em>Abu Dhabi</em></div><span>VS</span><div><b>T10</b><strong>The field</strong><em>Abu Dhabi</em></div></div>
             <p className="dash-empty">The next fixture will appear here as soon as it is confirmed.</p>
             <Link className="button button-orange" href="/fixtures"><Ticket size={14} aria-hidden="true" /> BUY TICKETS</Link>
           </>}
@@ -157,7 +158,7 @@ export default async function HomePage() {
             <a className="is-instagram" href="https://www.instagram.com/unitedtigers.ae/" target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram size={16} /></a>
             <a className="is-youtube" href="https://www.youtube.com/" target="_blank" rel="noreferrer" aria-label="YouTube"><Youtube size={16} /></a>
           </div>
-          <p>#UnitedTigers</p>
+          <p>#LetsGoHunt</p>
           <div className="stay-photo" style={{ backgroundImage: "url('/images/demo/gallery-stadium.jpg')" }}><strong>Once a Tiger<br />always a Tiger</strong></div>
         </aside>
       </div>

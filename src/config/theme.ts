@@ -1,16 +1,21 @@
-/** Colors sampled from the purple-and-gold match kit. */
+/**
+ * United Tigers brand palette (brand guide "Color Palette" sheet):
+ * Purple Heart #3A2D61 · Deluge #8065A6 · Beeswax #E6DAA9 · Muted Gold #D1BE7D ·
+ * Medium Violet Red #D4317A · White #FCFCFC. Darker surfaces are shades of Purple Heart.
+ */
 export const theme = {
-  "--primary": "#ffc400",
-  "--secondary": "#210047",
-  "--accent": "#ff6a00",
-  "--background": "#150b3a",
-  "--surface": "#1f1052",
-  "--surface-raised": "#3b1d8f",
-  "--text": "#ffffff",
-  "--muted": "#cfc2e8",
-  "--border": "rgba(150,110,255,.3)",
+  "--primary": "#D1BE7D",
+  "--primary-light": "#E6DAA9",
+  "--secondary": "#3A2D61",
+  "--accent": "#D4317A",
+  "--deluge": "#8065A6",
+  "--background": "#19132a",
+  "--surface": "#2c2249",
+  "--surface-raised": "#473777",
+  "--text": "#FCFCFC",
+  "--muted": "#c9bde0",
+  "--border": "rgba(128,101,166,.38)",
   "--success": "#16c784",
   "--danger": "#e86d60",
   "--warning": "#e8b53a",
 } as const;
-

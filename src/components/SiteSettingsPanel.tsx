@@ -9,7 +9,7 @@ type SmtpValue = { host?: string; port?: number; secure?: boolean; user?: string
 
 const empty = { siteUrl: "http://localhost:3000", livePollIntervalMs: "15000", endpoint: "", bucket: "", region: "auto", publicUrl: "", accessKey: "", secretKey: "" };
 const smtpEmpty = { host: "", port: "587", secure: false, user: "", password: "", fromEmail: "", fromName: "United Tigers", adminEmail: "" };
-const bannerEmpty = { mode: "static", title: "THE NEXT GAME", accent: "STARTS HERE", tagline: "BIGGER BOLDER TOGETHER", ctaLabel: "BACK OUR TIGERS", ctaHref: "/team", image: "", roar: "UNITED TIGERS" };
+const bannerEmpty = { mode: "static", title: "THE NEXT GAME", accent: "STARTS HERE", tagline: "BIGGER BOLDER TOGETHER", ctaLabel: "BACK OUR TIGERS", ctaHref: "/team", image: "", roar: "LET’S GO HUNT" };
 
 export function SiteSettingsPanel() {
   const [form, setForm] = useState(empty);
