@@ -107,7 +107,7 @@ export default async function HomePage() {
               return <span className={index === 0 ? "is-picked" : ""} key={option.id} title={option.label}>{face?.profileImage ? <Image src={face.profileImage} alt="" fill sizes="42px" /> : option.label.slice(0, 1)}</span>;
             })}
           </div>
-          <Link className="button button-orange" href={poll ? `/polls/${poll.slug}` : "/fan#vote"}><CircleCheck size={14} aria-hidden="true" /> CAST YOUR VOTE</Link>
+          <Link className="button button-accent" href={poll ? `/polls/${poll.slug}` : "/fan#vote"}><CircleCheck size={14} aria-hidden="true" /> CAST YOUR VOTE</Link>
         </article>
 
         <article className="dash-card">
