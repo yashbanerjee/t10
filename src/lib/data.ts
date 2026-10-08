@@ -89,6 +89,11 @@ export async function getSponsors() {
   catch { return []; }
 }
 
+export async function getFranchises() {
+  try { return await prisma.franchise.findMany({ where: { isPublished: true }, orderBy: [{ displayOrder: "asc" }, { name: "asc" }] }); }
+  catch { return []; }
+}
+
 export async function getRecords() {
   try { return await prisma.teamRecord.findMany({ where: { isDemo: false }, orderBy: { createdAt: "desc" } }); }
   catch { return []; }

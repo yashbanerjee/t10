@@ -18,6 +18,7 @@ const permissions: Record<string, { read: string; write: string }> = {
   products: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, polls: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
   contests: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, orders: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
   settings: { read: "SETTINGS_WRITE", write: "SETTINGS_WRITE" }, audit: { read: "AUDIT_READ", write: "AUDIT_READ" },
+  franchises: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
 };
 const assetUrl = z.string().trim().max(1000).regex(/^(https?:\/\/|\/)/).nullable().optional();
 const optionalInt = (min: number, max: number) => z.union([z.null(), z.coerce.number().int().min(min).max(max)]).optional();
@@ -27,6 +28,9 @@ const updateInput = z.object({ title: z.string().trim().min(3).max(180), slug: z
 const optionalLabel = (max: number) => z.union([z.null(), z.literal(""), z.string().trim().max(max)]).optional();
 const matchInput = z.object({ opponent: z.string().trim().min(2).max(120), date: z.string().datetime(), status: z.enum(["UPCOMING", "LIVE", "COMPLETED", "POSTPONED", "CANCELLED"]).default("UPCOMING"), competition: optionalLabel(120), matchNumber: optionalLabel(30), venueName: optionalLabel(140), result: optionalLabel(250) });
 const sponsorInput = z.object({ name: z.string().trim().min(2).max(120), category: z.string().trim().min(2).max(60), logoUrl: assetUrl, website: z.union([z.string().trim().url().max(300), z.literal(""), z.null()]).optional(), displayOrder: optionalInt(0, 9999), isPublished: z.boolean().optional() });
+const socialUrl = z.union([z.string().trim().url().max(500), z.literal(""), z.null()]).optional();
+const franchiseInput = z.object({ name: z.string().trim().min(2).max(120), league: z.string().trim().min(2).max(120), logoUrl: assetUrl, facebook: socialUrl, instagram: socialUrl, x: socialUrl, youtube: socialUrl, displayOrder: optionalInt(0, 9999), isPublished: z.boolean().optional() });
+const blankToNull = (value: string | null | undefined) => (value ? value : null);
 const galleryInput = z.object({ title: z.string().trim().min(2).max(160), category: z.string().trim().min(2).max(60), mediaUrl: z.string().trim().max(1000).regex(/^(https?:\/\/|\/)/), type: z.enum(["IMAGE", "VIDEO"]).default("IMAGE"), altText: z.string().trim().max(300).nullable().optional(), displayOrder: optionalInt(0, 9999), isFeatured: z.boolean().optional(), isPublished: z.boolean().optional() });
 const recordInput = z.object({ title: z.string().trim().min(2).max(160), value: z.string().trim().min(1).max(40), category: z.string().trim().min(2).max(60), scope: z.string().trim().min(2).max(40), playerName: z.string().trim().max(120).nullable().optional(), seasonYear: optionalInt(1990, 2100) });
 const tally = z.union([z.null(), z.literal(""), z.coerce.number().int().min(0).max(999)]).optional().transform((value) => (typeof value === "number" ? value : 0));
@@ -50,7 +54,7 @@ async function list(collection: string) {
     matches: { include: { season: true, venue: true }, orderBy: { date: "desc" } },
     news: { orderBy: { updatedAt: "desc" } }, updates: { orderBy: { publishedAt: "desc" } },
     contacts: { orderBy: { createdAt: "desc" } }, gallery: { orderBy: { createdAt: "desc" } },
-    sponsors: { orderBy: { displayOrder: "asc" } }, records: { orderBy: { createdAt: "desc" } },
+    sponsors: { orderBy: { displayOrder: "asc" } }, franchises: { orderBy: [{ displayOrder: "asc" }, { name: "asc" }] }, records: { orderBy: { createdAt: "desc" } },
     products: { include: { _count: { select: { variants: true } } }, orderBy: { createdAt: "desc" } },
     polls: { include: { _count: { select: { votes: true, options: true } } }, orderBy: { createdAt: "desc" } },
     contests: { include: { _count: { select: { entries: true } } }, orderBy: { createdAt: "desc" } },
@@ -58,7 +62,7 @@ async function list(collection: string) {
     settings: { orderBy: { key: "asc" } }, audit: { include: { user: { select: { email: true, name: true } } }, orderBy: { createdAt: "desc" }, take: 100 },
   };
   if (!(collection in args)) throw new Error("NOT_FOUND");
-  const model = collection === "contacts" ? "contactSubmission" : collection === "updates" ? "teamUpdate" : collection === "news" ? "newsArticle" : collection === "gallery" ? "gallery" : collection === "sponsors" ? "sponsor" : collection === "records" ? "teamRecord" : collection === "settings" ? "siteSetting" : collection === "audit" ? "auditLog" : collection === "matches" ? "match" : collection === "staff" ? "staffMember" : collection === "products" ? "product" : collection === "polls" ? "poll" : collection === "contests" ? "contest" : collection === "orders" ? "order" : "player";
+  const model = collection === "contacts" ? "contactSubmission" : collection === "updates" ? "teamUpdate" : collection === "news" ? "newsArticle" : collection === "gallery" ? "gallery" : collection === "sponsors" ? "sponsor" : collection === "franchises" ? "franchise" : collection === "records" ? "teamRecord" : collection === "settings" ? "siteSetting" : collection === "audit" ? "auditLog" : collection === "matches" ? "match" : collection === "staff" ? "staffMember" : collection === "products" ? "product" : collection === "polls" ? "poll" : collection === "contests" ? "contest" : collection === "orders" ? "order" : "player";
   const rows = await db[model].findMany(args[collection]) as Array<Record<string, unknown>>;
   return rows.map((row) => {
     const count = row._count as { variants?: number; votes?: number; options?: number; entries?: number } | undefined;
@@ -120,6 +124,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     } else if (collection === "sponsors") {
       const parsed = sponsorInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
       const data = parsed.data; result = await prisma.sponsor.create({ data: { ...data, website: data.website || null, displayOrder: data.displayOrder ?? 0 } });
+    } else if (collection === "franchises") {
+      const parsed = franchiseInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
+      const data = parsed.data;
+      result = await prisma.franchise.create({ data: { name: data.name, slug: slugify(data.name), league: data.league, logoUrl: data.logoUrl || null, facebook: blankToNull(data.facebook), instagram: blankToNull(data.instagram), x: blankToNull(data.x), youtube: blankToNull(data.youtube), displayOrder: data.displayOrder ?? 0, isPublished: data.isPublished ?? true } });
     } else if (collection === "gallery") {
       const parsed = galleryInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
       result = await prisma.gallery.create({ data: { ...parsed.data, displayOrder: parsed.data.displayOrder ?? 0 } });

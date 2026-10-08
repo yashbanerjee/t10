@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowUpRight, Calendar, ChevronRight, CircleCheck, Clock, Globe, Instagram, MapPin, Shield, Users, Youtube } from "lucide-react";
-import { getGallery, getMatches, getNews, getPlayers, getPolls, getProducts, getPublicSettings, getSponsors, getUpdates } from "@/lib/data";
+import { ArrowUpRight, Calendar, ChevronRight, CircleCheck, Clock, Facebook, Globe, Instagram, MapPin, Shield, Users } from "lucide-react";
+import { getGallery, getMatches, getPlayers, getPolls, getProducts, getPublicSettings, getSponsors, getUpdates } from "@/lib/data";
 import { LiveScore } from "@/components/LiveScore";
 import { LeagueMark } from "@/components/LeagueMark";
 import { NationSignup } from "@/components/NationSignup";
@@ -10,8 +10,6 @@ import { teamLogo, teamShortName } from "@/lib/league";
 import { featuredPlayers, getLivePollIntervalMs, homepageDefaults, readHomepageBanner } from "@/lib/site-settings";
 
 export const metadata: Metadata = { title: "United Tigers | The Next Game Starts Here", description: "The official home of United Tigers. Fixtures, the squad, the vote and the Abu Dhabi T10." };
-
-const shots = ["/images/demo/gallery-match.jpg", "/images/demo/news-opener.jpg", "/images/demo/gallery-huddle.jpg"];
 
 function splitName(fullName: string) {
   const parts = fullName.trim().split(/\s+/);
@@ -33,7 +31,7 @@ function playerForLabel(label: string, roster: { fullName: string; profileImage:
 }
 
 export default async function HomePage() {
-  const [players, matches, news, sponsors, settings, polls, pollIntervalMs, updates, gallery, products] = await Promise.all([getPlayers(), getMatches(), getNews(), getSponsors(), getPublicSettings(), getPolls(), getLivePollIntervalMs(), getUpdates(), getGallery(), getProducts()]);
+  const [players, matches, sponsors, settings, polls, pollIntervalMs, updates, gallery, products] = await Promise.all([getPlayers(), getMatches(), getSponsors(), getPublicSettings(), getPolls(), getLivePollIntervalMs(), getUpdates(), getGallery(), getProducts()]);
   const banner = readHomepageBanner(settings.homepage ?? homepageDefaults);
   const daily = updates.filter((update) => !update.isDemo).slice(0, 3);
   const moments = gallery.filter((item) => item.isFeatured && item.type === "IMAGE").slice(0, 4);
@@ -46,7 +44,10 @@ export default async function HomePage() {
   const kickoff = upcoming ? when(upcoming.date) : null;
   const opponentLogo = upcoming ? teamLogo(upcoming.opponent, upcoming.opponentLogoUrl) : null;
   const poll = [...polls].sort((left, right) => right.options.filter((option) => playerForLabel(option.label, players)).length - left.options.filter((option) => playerForLabel(option.label, players)).length)[0] ?? polls[0];
-  const stories = news.slice(0, 3);
+  const draftMedia = gallery.filter((item) => /draft/i.test(item.category));
+  const draftClips = [...draftMedia.filter((item) => item.type === "VIDEO"), ...draftMedia.filter((item) => item.type !== "VIDEO")].slice(0, 3);
+  const draftAlbum = draftMedia[0] ? draftMedia[0].category.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : "";
+  const draftHref = draftAlbum ? `/gallery#album-${draftAlbum}` : "/gallery";
   // The board shows the most recent result and the next fixture, one row each.
   const listed = [...matches.filter((match) => match.status === "COMPLETED").slice(-1), ...matches.filter((match) => match.status === "UPCOMING" || match.status === "LIVE").slice(0, 1)];
 
@@ -133,12 +134,15 @@ export default async function HomePage() {
     <section className="home-board">
       <div className="wrap board-grid">
         <div>
-          <div className="board-head"><h2>LATEST STORIES</h2><Link href="/news">View all <ArrowUpRight size={14} /></Link></div>
+          <div className="board-head"><h2>DRAFT</h2><Link href={draftHref}>View all <ArrowUpRight size={14} /></Link></div>
           <div className="highlight-row">
-            {stories.map((story, index) => <Link href={`/news/${story.slug}`} key={story.id}>
-              <span style={{ backgroundImage: `url('${story.coverImage || shots[index % shots.length]}')` }}><ArrowUpRight size={16} aria-hidden="true" /><small>{story.category}</small></span>
-              <strong>{story.title}</strong>
-            </Link>)}
+            {draftClips.length ? draftClips.map((item) => <article key={item.id}>
+              <span className={item.type === "VIDEO" ? "is-video" : undefined} style={item.type === "VIDEO" ? undefined : { backgroundImage: `url('${item.mediaUrl}')` }}>
+                {item.type === "VIDEO" ? <video src={item.mediaUrl} controls playsInline preload="metadata" aria-label={item.altText || item.title} /> : <ArrowUpRight size={16} aria-hidden="true" />}
+                <small>{item.type === "VIDEO" ? "VIDEO" : "GALLERY"}</small>
+              </span>
+              <strong><Link href={draftHref}>{item.title}</Link></strong>
+            </article>) : <p className="dash-empty">Draft videos and the draft gallery will appear here once they are published.</p>}
           </div>
         </div>
         <div>
@@ -162,8 +166,8 @@ export default async function HomePage() {
         <aside className="stay-card">
           <h2>STAY CONNECTED</h2>
           <div className="stay-links">
-            <a className="is-instagram" href="https://www.instagram.com/unitedtigers.ae/" target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram size={16} /></a>
-            <a className="is-youtube" href="https://www.youtube.com/" target="_blank" rel="noreferrer" aria-label="YouTube"><Youtube size={16} /></a>
+            <a className="is-facebook" href="https://www.facebook.com/share/1Bxhkk4L97/?mibextid=wwXIfr" target="_blank" rel="noreferrer" aria-label="Facebook"><Facebook size={16} /></a>
+            <a className="is-instagram" href="https://www.instagram.com/unitedtigers.ae?stkn=MXVlMjRrM24yZDMxbQ==" target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram size={16} /></a>
           </div>
           <p>#LetsGoHunt</p>
           <div className="stay-photo" style={{ backgroundImage: "url('/images/demo/gallery-stadium.jpg')" }}><strong>Once a Tiger<br />always a Tiger</strong></div>
