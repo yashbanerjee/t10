@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session || !hasPermission(session.role, "MEDIA_WRITE")) return failure("You do not have permission to upload media", 403);
   const form = await request.formData().catch(() => null); const file = form?.get("file");
-  if (!(file instanceof File)) return failure("Select an image or MP4 video to upload", 400);
+  if (!(file instanceof File)) return failure("Select an image, MP4 video or PDF to upload", 400);
   const extension = allowed.get(file.type);
   if (!extension) return failure("Supported uploads: JPG, PNG, WebP, MP4 and PDF", 415);
   if (file.size <= 0 || file.size > MAX_BYTES) return failure("File size must be less than 25 MB", 413);

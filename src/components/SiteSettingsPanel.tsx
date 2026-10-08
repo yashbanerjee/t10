@@ -127,6 +127,23 @@ export function SiteSettingsPanel() {
     <p className="admin-storage-note">Canonical URL, live-score polling, media storage and outgoing mail are saved here. The environment file only needs the database URL, the session secret and the first admin account.</p>
     {error && <p className="form-status form-status-error">{error}</p>}
     {notice && <p className="admin-notice"><Check size={13} /> {notice}</p>}
+    <div className="admin-panel-header"><h2>Partner brochure</h2></div>
+    <p className="admin-storage-note">Upload the PDF that visitors download after they submit the Become a partner form. Choose the file, then save site settings. Requests are listed under Partner requests.</p>
+    <div className="admin-editor-grid">
+      <label className="admin-field"><span className="admin-field-label">Upload brochure</span><span className="admin-field-control"><input type="file" accept="application/pdf,.pdf" onChange={async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const body = new FormData();
+        body.set("file", file);
+        body.set("folder", "brochures");
+        const response = await fetch("/api/v1/admin/media/upload", { method: "POST", body });
+        const result = await response.json();
+        if (!response.ok) { setError(result.message || "Upload failed. Paste a brochure link instead."); return; }
+        setBrochure(result.data.url);
+        setNotice("Brochure uploaded. Save site settings to publish it.");
+      }} /></span><span className="admin-field-note">PDF, up to 25 MB.</span></label>
+      <label className="admin-field"><span className="admin-field-label">Brochure file</span><span className="admin-field-control"><input value={brochure} onChange={(event) => setBrochure(event.target.value)} placeholder="/media/uploads/…/brochure.pdf" /></span><span className="admin-field-note">{brochure ? <a href={brochure} target="_blank" rel="noreferrer">Open the current brochure</a> : "No brochure yet. Visitors are told the team will email it."}</span></label>
+    </div>
     <div className="admin-editor-grid">
       <label className="admin-field"><span className="admin-field-label">Canonical site URL</span><span className="admin-field-control"><input value={form.siteUrl} onChange={(event) => change("siteUrl", event.target.value)} required placeholder="https://unitedtigers.ae" /></span><span className="admin-field-note">Used for metadata, the sitemap and share links.</span></label>
       <label className="admin-field"><span className="admin-field-label">Live score poll interval (ms)</span><span className="admin-field-control"><input type="number" min={5000} max={60000} step={1000} value={form.livePollIntervalMs} onChange={(event) => change("livePollIntervalMs", event.target.value)} required /></span><span className="admin-field-note">Between 5 and 60 seconds.</span></label>
@@ -172,23 +189,6 @@ export function SiteSettingsPanel() {
         setBanner((current) => ({ ...current, mode: "image", image: result.data.url }));
         setNotice("Banner image uploaded. Save site settings to publish it.");
       }} /></span><span className="admin-field-note" /></label>
-    </div>
-    <div className="admin-panel-header"><h2>Partner brochure</h2></div>
-    <p className="admin-storage-note">Visitors who fill in the Become a partner form in the website footer download this file straight away. Their details are listed under Partner requests.</p>
-    <div className="admin-editor-grid">
-      <label className="admin-field"><span className="admin-field-label">Brochure file</span><span className="admin-field-control"><input value={brochure} onChange={(event) => setBrochure(event.target.value)} placeholder="/media/uploads/…/brochure.pdf" /></span><span className="admin-field-note">{brochure ? <a href={brochure} target="_blank" rel="noreferrer">Open the current brochure</a> : "No brochure yet. Visitors are told the team will email it."}</span></label>
-      <label className="admin-field"><span className="admin-field-label">Upload brochure</span><span className="admin-field-control"><input type="file" accept="application/pdf" onChange={async (event) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-        const body = new FormData();
-        body.set("file", file);
-        body.set("folder", "brochures");
-        const response = await fetch("/api/v1/admin/media/upload", { method: "POST", body });
-        const result = await response.json();
-        if (!response.ok) { setError(result.message || "Upload failed. Paste a brochure link instead."); return; }
-        setBrochure(result.data.url);
-        setNotice("Brochure uploaded. Save site settings to publish it.");
-      }} /></span><span className="admin-field-note">PDF, up to 25 MB.</span></label>
     </div>
     <div className="admin-panel-header"><h2>Featured players</h2></div>
     <p className="admin-storage-note">The row of player photos beside the headline on the homepage, on every screen size. Turn it off to hide the row, or tick up to {FEATURED_PLAYER_LIMIT} players to choose who appears. With nobody ticked, the first {FEATURED_PLAYER_LIMIT} players with a photo are shown in squad order.</p>

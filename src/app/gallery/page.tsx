@@ -35,7 +35,7 @@ export default async function GalleryPage() {
     <section className="inner-hero"><div className="wrap">
       <span className="eyebrow"><i className="eyebrow-dot" />THE TIGERS IN FRAME</span>
       <h1>GALLERY.</h1>
-      <p>Draft night, training, match day, travel and the fans. Every event has its own album.</p>
+      <p>Draft night and past matches. Every event has its own album.</p>
       {albums.length > 1 && <nav className="album-nav" aria-label="Albums">
         {albums.map((album) => <a key={album.slug} href={`#album-${album.slug}`}>{album.name} <b>{album.items.length}</b></a>)}
       </nav>}
