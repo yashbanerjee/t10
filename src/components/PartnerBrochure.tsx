@@ -56,7 +56,7 @@ export function PartnerRequestForm() {
     </div>;
   }
 
-  return <form className="contact-form" onSubmit={submit}>
+  return <form className="contact-form partner-form" onSubmit={submit}>
     <label>YOUR NAME<input name="name" autoComplete="name" required minLength={2} maxLength={100} placeholder="Full name" /></label>
     <label>EMAIL ADDRESS<input name="email" type="email" autoComplete="email" required maxLength={254} placeholder="you@example.com" /></label>
     <label>MOBILE NUMBER<span className="phone-row"><select name="dial" defaultValue="+971" aria-label="Country">{countries.map(([name, dial]) => <option value={dial} key={`${name}-${dial}`}>{name} {dial}</option>)}</select><input name="mobile" type="tel" inputMode="numeric" autoComplete="tel-national" required pattern="[0-9 ]{6,16}" title="Mobile number without the country code" maxLength={16} placeholder="50 000 0000" /></span></label>

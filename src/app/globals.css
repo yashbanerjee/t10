@@ -2384,7 +2384,7 @@ a.partner-item:hover {
 
 .phone-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   gap: 10px;
 }
 
@@ -2420,6 +2420,13 @@ a.partner-item:hover {
 
 .contact-form .button {
   justify-self: start;
+}
+
+.partner-form .button {
+  min-height: 34px;
+  height: 34px;
+  padding: 0 14px;
+  line-height: 1;
 }
 
 .form-status {
