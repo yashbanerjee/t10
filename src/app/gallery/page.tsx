@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { getGallery } from "@/lib/data";
 import { EmptyState } from "@/components/EmptyState";
+import { PhotoFrame } from "@/components/PhotoFrame";
 import { VideoPoster } from "@/components/VideoPoster";
 
 export const metadata: Metadata = { title: "Gallery", description: "Photo albums from United Tigers events: the draft, training, match days, travel and the fans." };
@@ -48,7 +48,7 @@ export default async function GalleryPage() {
             {album.items.map((item) => <figure className="gallery-item" key={item.id}>
               {item.type === "VIDEO"
                 ? <VideoPoster src={item.mediaUrl} label={item.altText || item.title} />
-                : <Image src={item.mediaUrl} alt={item.altText || item.title} fill sizes="(max-width: 760px) 50vw, 33vw" />}
+                : <PhotoFrame src={item.mediaUrl} label={item.altText || item.title} />}
               <figcaption className="gallery-caption">{item.title}</figcaption>
             </figure>)}
           </div>

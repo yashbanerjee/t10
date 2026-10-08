@@ -6,6 +6,7 @@ import { getGallery, getMatches, getPlayers, getPolls, getProducts, getPublicSet
 import { LiveScore } from "@/components/LiveScore";
 import { LeagueMark } from "@/components/LeagueMark";
 import { NationSignup } from "@/components/NationSignup";
+import { PhotoFrame } from "@/components/PhotoFrame";
 import { VideoPoster } from "@/components/VideoPoster";
 import { teamLogo, teamShortName } from "@/lib/league";
 import { featuredPlayers, getLivePollIntervalMs, homepageDefaults, readHomepageBanner } from "@/lib/site-settings";
@@ -47,8 +48,7 @@ export default async function HomePage() {
   const poll = [...polls].sort((left, right) => right.options.filter((option) => playerForLabel(option.label, players)).length - left.options.filter((option) => playerForLabel(option.label, players)).length)[0] ?? polls[0];
   const draftMedia = gallery.filter((item) => /draft/i.test(item.category));
   const draftClips = [...draftMedia.filter((item) => item.type === "VIDEO"), ...draftMedia.filter((item) => item.type !== "VIDEO")].slice(0, 3);
-  const draftAlbum = draftMedia[0] ? draftMedia[0].category.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : "";
-  const draftHref = draftAlbum ? `/gallery#album-${draftAlbum}` : "/gallery";
+  const draftHref = "/draft";
   // The board shows the most recent result and the next fixture, one row each.
   const listed = [...matches.filter((match) => match.status === "COMPLETED").slice(-1), ...matches.filter((match) => match.status === "UPCOMING" || match.status === "LIVE").slice(0, 1)];
 
@@ -181,7 +181,7 @@ export default async function HomePage() {
         {daily.length > 0 && <div>
           <div className="board-head"><h2>TIGERS DAILY</h2><Link href="/updates">View all <ArrowUpRight size={14} /></Link></div>
           <div className="daily-list">
-            {daily.map((update) => <Link href={`/updates/${update.slug}`} key={update.id}>
+            {daily.map((update) => <Link href={update.slug === "player-draft" ? "/draft" : `/updates/${update.slug}`} key={update.id}>
               <time dateTime={new Date(update.publishedAt).toISOString()}>{when(update.publishedAt).day}</time>
               <span className="update-category">{update.category.replaceAll("_", " ")}</span>
               <strong>{update.title}</strong>
@@ -193,9 +193,7 @@ export default async function HomePage() {
         {moments.length > 0 && <div>
           <div className="board-head"><h2>FEATURED MOMENTS</h2><Link href="/gallery">Gallery <ArrowUpRight size={14} /></Link></div>
           <div className={`moment-grid count-${moments.length}`}>
-            {moments.map((item) => <Link href="/gallery" key={item.id} aria-label={item.altText || item.title}>
-              <span style={{ backgroundImage: `url('${item.mediaUrl}')` }} /><strong>{item.title}</strong>
-            </Link>)}
+            {moments.map((item) => <PhotoFrame key={item.id} src={item.mediaUrl} label={item.altText || item.title} caption={item.title} />)}
           </div>
         </div>}
       </div>

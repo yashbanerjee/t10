@@ -1026,6 +1026,10 @@ a.partner-item:hover { border-color: rgba(209,190,125,.6); transform: translateY
 .video-popup-bar strong { min-width: 0; font-size: 13px; font-weight: 800; }
 .video-popup-bar button { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 999px; background: rgba(255,255,255,.1); color: #fff; cursor: pointer; }
 .highlight-row .video-popup video, .gallery-item .video-popup video, .video-popup video { position: static; inset: auto; z-index: auto; display: block; width: auto; height: auto; max-width: min(920px, calc(100vw - 32px)); max-height: min(78vh, 720px); background: #000; object-fit: contain; }
+.photo-frame-host { position: absolute; inset: 0; z-index: 1; }
+.photo-frame { position: absolute; inset: 0; display: block; width: 100%; height: 100%; padding: 0; border: 0; background: #241b3c; cursor: pointer; }
+.photo-frame img { object-fit: cover; }
+.gallery-item .photo-popup img, .moment-grid .photo-popup img, .photo-popup img { position: static; inset: auto; z-index: auto; display: block; width: auto; height: auto; max-width: min(920px, calc(100vw - 32px)); max-height: min(78vh, 720px); object-fit: contain; background: #000; }
 .highlight-row .video-popup svg { position: static; width: 16px; height: 16px; padding: 0; border-radius: 0; background: none; color: #fff; box-shadow: none; }
 .video-popup-player { position: relative; background: #000; }
 .video-popup-controls { position: absolute; right: 0; bottom: 0; left: 0; display: flex; align-items: center; gap: 8px; padding: 22px 10px 8px; background: linear-gradient(transparent, rgba(0,0,0,.72)); color: #fff; }
@@ -1075,14 +1079,15 @@ a.partner-item:hover { border-color: rgba(209,190,125,.6); transform: translateY
 .daily-list p { grid-column: 1; margin: 2px 0 0; color: rgba(255,255,255,.66); font-size: 14px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .daily-list .result-go { grid-column: 2; grid-row: 1 / span 4; align-self: center; color: #D1BE7D; }
 .moment-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.moment-grid a { position: relative; display: block; min-width: 0; overflow: hidden; border: 1px solid rgba(209,190,125,.3); border-radius: 12px; background: #3A2D61; }
-.moment-grid a span { display: block; aspect-ratio: 16 / 10; background: center / cover no-repeat; transition: transform .4s; }
-.moment-grid a:hover span { transform: scale(1.04); }
-.moment-grid a strong { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 10px 9px; background: linear-gradient(180deg, transparent, rgba(25,19,42,.85)); font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.moment-grid a, .moment-grid .photo-frame-host { position: relative; display: block; min-width: 0; overflow: hidden; border: 1px solid rgba(209,190,125,.3); border-radius: 12px; background: #3A2D61; }
+.moment-grid .photo-frame { position: relative; aspect-ratio: 16 / 10; }
+.moment-grid a span, .moment-grid .photo-frame img { display: block; aspect-ratio: 16 / 10; background: center / cover no-repeat; transition: transform .4s; }
+.moment-grid a:hover span, .moment-grid .photo-frame:hover img { transform: scale(1.04); }
+.moment-grid a strong, .moment-grid .photo-frame strong { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 10px 9px; background: linear-gradient(180deg, transparent, rgba(25,19,42,.85)); font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .moment-grid.count-1 { grid-template-columns: 1fr; }
-.moment-grid.count-1 a span { aspect-ratio: 16 / 9; }
-.moment-grid.count-3 a:first-child { grid-column: 1 / -1; }
-.moment-grid.count-3 a:first-child span { aspect-ratio: 16 / 7; }
+.moment-grid.count-1 a span, .moment-grid.count-1 .photo-frame { aspect-ratio: 16 / 9; }
+.moment-grid.count-3 a:first-child, .moment-grid.count-3 .photo-frame-host:first-child { grid-column: 1 / -1; }
+.moment-grid.count-3 a:first-child span, .moment-grid.count-3 .photo-frame-host:first-child .photo-frame { aspect-ratio: 16 / 7; }
 .kit-row a:hover strong { color: #E6DAA9; }
 .news-feature { display: grid; grid-template-columns: 1.4fr .8fr; gap: 14px; }
 .news-lead, .news-feature > div a, .kit-row a, .frame-row a { display: grid; gap: 8px; min-width: 0; }

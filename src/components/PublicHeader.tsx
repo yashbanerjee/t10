@@ -30,6 +30,7 @@ const searchPages = [
   ["Fan Zone", "/fan"],
   ["News", "/news"],
   ["Tigers Daily", "/updates"],
+  ["Player draft", "/draft"],
   ["Sponsors", "/partners"],
   ["Gallery", "/gallery"],
   ["About", "/about"],
