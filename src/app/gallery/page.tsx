@@ -43,7 +43,7 @@ export default async function GalleryPage() {
       {albums.length ? <div className="album-stack">
         {albums.map((album) => <section className="gallery-album" id={`album-${album.slug}`} key={album.slug}>
           <header className="album-head"><h2>{album.name}</h2><small>{albumSummary(album.items)}</small></header>
-          <div className="gallery-grid">
+          <div className={`gallery-grid count-${Math.min(album.items.length, 3)}`}>
             {album.items.map((item) => <figure className="gallery-item" key={item.id}>
               {item.type === "VIDEO"
                 ? <video src={item.mediaUrl} controls playsInline preload="metadata" aria-label={item.altText || item.title} />

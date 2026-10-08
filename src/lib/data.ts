@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { demoPlayers, sampleNews, sampleUpdates } from "@/lib/demo";
 import { PRIVATE_SETTING_KEYS } from "@/lib/site-settings";
+import { LEAGUE_TEAMS } from "@/lib/league";
 
 export async function getPlayers() {
   try {
@@ -130,10 +131,19 @@ export async function getPointsTable() {
       else if (/\b(loss|lost)\b/i.test(match.matchTeams[0]?.result || "")) { first.lost++; second.won++; second.points += 2; }
       else if (/\b(loss|lost)\b/i.test(match.matchTeams[1]?.result || "")) { second.lost++; first.won++; first.points += 2; }
     }
-    if (table.size) {
-      return [...table.values()].map((team) => ({ ...team, netRunRate: team.ballsFor && team.ballsAgainst ? Number((team.runsFor / (team.ballsFor / 6) - team.runsAgainst / (team.ballsAgainst / 6)).toFixed(3)) : 0 })).sort((a, b) => b.points - a.points || b.netRunRate - a.netRunRate || a.teamName.localeCompare(b.teamName)).map((team, index) => ({ ...team, position: index + 1 }));
-    }
-    return await prisma.pointsEntry.findMany({ where: { isDemo: false, season: { isCurrent: true } }, orderBy: { position: "asc" } });
+    type StandingRow = { teamName: string; played: number; won: number; lost: number; noResult: number; points: number; netRunRate: number; manual: boolean };
+    const calculated = new Map<string, StandingRow>([...table.values()].map((team) => [team.teamName.toLowerCase(), { ...team, netRunRate: team.ballsFor && team.ballsAgainst ? Number((team.runsFor / (team.ballsFor / 6) - team.runsAgainst / (team.ballsAgainst / 6)).toFixed(3)) : 0, manual: false }]));
+    // Rows entered in admin (Points table) override the calculated figures for that team.
+    const entered = await prisma.pointsEntry.findMany({ where: { isDemo: false, season: { isCurrent: true } } });
+    const manual = new Map<string, StandingRow & { position: number }>(entered.map((entry) => [entry.teamName.trim().toLowerCase(), { teamName: entry.teamName.trim(), played: entry.played, won: entry.won, lost: entry.lost, noResult: entry.noResult, points: entry.points, netRunRate: Number(entry.netRunRate), position: entry.position, manual: true }]));
+    // Every league team is listed, including those yet to play, so the table always shows the full competition.
+    const names = [...new Set([...LEAGUE_TEAMS.map((team) => team.name), ...entered.map((entry) => entry.teamName.trim()), ...[...table.values()].map((team) => team.teamName)].map((name) => name.toLowerCase()))];
+    const rows = names.map((key) => manual.get(key) ?? calculated.get(key) ?? { teamName: LEAGUE_TEAMS.find((team) => team.name.toLowerCase() === key)?.name ?? key, played: 0, won: 0, lost: 0, noResult: 0, points: 0, netRunRate: 0, manual: false });
+    const pinned = (row: StandingRow) => ("position" in row && typeof row.position === "number" && row.position > 0 ? row.position : 0);
+    // Teams without a pinned position are ranked on points, then net run rate; pinned teams are then slotted into the place set in admin.
+    const ordered = rows.filter((row) => !pinned(row)).sort((a, b) => b.points - a.points || b.netRunRate - a.netRunRate || b.won - a.won || a.teamName.localeCompare(b.teamName));
+    for (const row of rows.filter(pinned).sort((a, b) => pinned(a) - pinned(b))) ordered.splice(Math.min(pinned(row) - 1, ordered.length), 0, row);
+    return ordered.map((team, index) => ({ teamName: team.teamName, played: team.played, won: team.won, lost: team.lost, noResult: team.noResult, points: team.points, netRunRate: team.netRunRate, position: index + 1 }));
   } catch { return []; }
 }
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, Search, ShoppingBag, X } from "lucide-react";
 import { TeamMark } from "@/components/TeamMark";
+import { LeagueMark } from "@/components/LeagueMark";
 import { useCart } from "@/components/CartProvider";
 
 const links = [
@@ -59,7 +60,7 @@ export function PublicHeader() {
   return <header className="site-header">
     <div className="header-inner wrap">
       <TeamMark priority />
-      <span className="league-chip">ABU DHABI <b>T10</b></span>
+      <span className="league-chip"><LeagueMark height={14} priority /></span>
       <nav className="desktop-nav" aria-label="Main navigation">
         {links.map(([label, href]) => {
           const path = href.split("#")[0] || "/";
@@ -81,6 +82,7 @@ export function PublicHeader() {
     {open && <nav className="mobile-nav" aria-label="Mobile navigation">
       {links.map(([label, href], index) => <Link key={label} onClick={() => setOpen(false)} href={href}><span>0{index + 1}</span>{label}</Link>)}
       <Link className="mobile-match-link" onClick={() => setOpen(false)} href="/cart">BAG{cart.count > 0 ? ` (${cart.count})` : ""}</Link>
+      <p className="mobile-league"><LeagueMark height={14} /></p>
     </nav>}
   </header>;
 }

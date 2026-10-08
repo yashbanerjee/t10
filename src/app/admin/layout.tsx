@@ -3,12 +3,12 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, CalendarDays, Gift, Images, LayoutDashboard, LogOut, Mail, Megaphone, Newspaper, Settings, Shield, ShoppingBag, UserRound, Trophy, BriefcaseBusiness, Vote, Receipt } from "lucide-react";
+import { BarChart3, CalendarDays, Gift, Images, LayoutDashboard, ListOrdered, LogOut, Mail, Megaphone, Newspaper, Settings, Shield, ShoppingBag, UserRound, Trophy, BriefcaseBusiness, Vote, Receipt } from "lucide-react";
 import { TeamMark } from "@/components/TeamMark";
 
 const navGroups = [
   { label: "OVERVIEW", links: [{ title: "Dashboard", href: "/admin", icon: LayoutDashboard }] },
-  { label: "TEAM & MATCHES", links: [{ title: "Players", href: "/admin/players", icon: UserRound }, { title: "Coaching & staff", href: "/admin/staff", icon: BriefcaseBusiness }, { title: "Fixtures & matches", href: "/admin/matches", icon: CalendarDays }, { title: "Statistics", href: "/admin/records", icon: BarChart3 }] },
+  { label: "TEAM & MATCHES", links: [{ title: "Players", href: "/admin/players", icon: UserRound }, { title: "Coaching & staff", href: "/admin/staff", icon: BriefcaseBusiness }, { title: "Fixtures & matches", href: "/admin/matches", icon: CalendarDays }, { title: "Statistics", href: "/admin/records", icon: BarChart3 }, { title: "Points table", href: "/admin/standings", icon: ListOrdered }] },
   { label: "PUBLISHING", links: [{ title: "News", href: "/admin/news", icon: Newspaper }, { title: "Daily updates", href: "/admin/updates", icon: Megaphone }, { title: "Gallery", href: "/admin/gallery", icon: Images }, { title: "Partners", href: "/admin/sponsors", icon: Trophy }] },
   { label: "FANS", links: [{ title: "Merchandise", href: "/admin/products", icon: ShoppingBag }, { title: "Shop orders", href: "/admin/orders", icon: Receipt }, { title: "Polls", href: "/admin/polls", icon: Vote }, { title: "Contests", href: "/admin/contests", icon: Gift }] },
   { label: "ORGANIZATION", links: [{ title: "Messages", href: "/admin/contacts", icon: Mail }, { title: "Site settings", href: "/admin/settings", icon: Settings }, { title: "Audit log", href: "/admin/audit", icon: Shield }] },

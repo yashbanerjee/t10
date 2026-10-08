@@ -4,7 +4,9 @@ import type { Metadata } from "next";
 import { ArrowUpRight, Calendar, ChevronRight, CircleCheck, Clock, Globe, Instagram, MapPin, Shield, Users, Youtube } from "lucide-react";
 import { getGallery, getMatches, getNews, getPlayers, getPolls, getProducts, getPublicSettings, getSponsors, getUpdates } from "@/lib/data";
 import { LiveScore } from "@/components/LiveScore";
+import { LeagueMark } from "@/components/LeagueMark";
 import { NationSignup } from "@/components/NationSignup";
+import { teamLogo, teamShortName } from "@/lib/league";
 import { featuredPlayers, getLivePollIntervalMs, homepageDefaults, readHomepageBanner } from "@/lib/site-settings";
 
 export const metadata: Metadata = { title: "United Tigers | The Next Game Starts Here", description: "The official home of United Tigers. Fixtures, the squad, the vote and the Abu Dhabi T10." };
@@ -41,6 +43,7 @@ export default async function HomePage() {
   const cast = featuredPlayers([...players], banner);
   const upcoming = matches.find((match) => match.status === "UPCOMING" || match.status === "LIVE");
   const kickoff = upcoming ? when(upcoming.date) : null;
+  const opponentLogo = upcoming ? teamLogo(upcoming.opponent, upcoming.opponentLogoUrl) : null;
   const poll = [...polls].sort((left, right) => right.options.filter((option) => playerForLabel(option.label, players)).length - left.options.filter((option) => playerForLabel(option.label, players)).length)[0] ?? polls[0];
   const stories = news.slice(0, 3);
   const listed = [...matches.filter((match) => match.status === "COMPLETED").slice(-2).reverse(), ...matches.filter((match) => match.status === "UPCOMING" || match.status === "LIVE").slice(0, 1)];
@@ -55,7 +58,7 @@ export default async function HomePage() {
       </div>
       <div className="stage-top wrap">
         <div className="stage-copy">
-          <p className="stage-kicker">ABU DHABI T10</p>
+          <p className="stage-kicker"><LeagueMark height={18} priority /></p>
           <h1>{banner.title.trim().split(/\s+/).slice(0, -1).join(" ")}<br />{banner.title.trim().split(/\s+/).at(-1)}<span>{banner.accent}</span></h1>
           <p className="stage-tagline">{banner.tagline}</p>
           <Link className="button button-orange" href={banner.ctaHref}>{banner.ctaLabel} <ArrowUpRight size={16} /></Link>
@@ -67,12 +70,12 @@ export default async function HomePage() {
       </div>
       <div className="wrap dash-grid">
         <article className="dash-card">
-          <header><span className="is-gold">NEXT MATCH</span><small>ABU DHABI T10</small></header>
+          <header><span className="is-gold">NEXT MATCH</span><small><LeagueMark height={11} /></small></header>
           {upcoming && kickoff ? <>
             <div className="crest-row">
               <div><b className="has-crest"><Image src="/brand/tiger-gold.png" alt="" width={822} height={688} /></b><strong>United Tigers</strong><em>Abu Dhabi</em></div>
               <span>VS</span>
-              <div>{upcoming.opponentLogoUrl ? <b className="has-logo"><span><Image src={upcoming.opponentLogoUrl} alt="" fill sizes="64px" /></span></b> : <b>{(upcoming.opponentShort || upcoming.opponent).slice(0, 2).toUpperCase()}</b>}<strong>{upcoming.opponent}</strong><em>{upcoming.venue?.city || "Away"}</em></div>
+              <div>{opponentLogo ? <b className="has-logo"><span><Image src={opponentLogo} alt="" fill sizes="64px" /></span></b> : <b>{teamShortName(upcoming.opponent, upcoming.opponentShort)}</b>}<strong>{upcoming.opponent}</strong><em>{upcoming.venue?.city || "Away"}</em></div>
             </div>
             <p className="match-meta"><Calendar size={12} aria-hidden="true" /> {kickoff.day} · {kickoff.time}<br /><MapPin size={12} aria-hidden="true" /> {upcoming.venue?.name ?? "Venue TBC"}</p>
             {upcoming.status === "LIVE" && <LiveScore slug={upcoming.slug} pollIntervalMs={pollIntervalMs} initial={{ status: upcoming.status, liveState: upcoming.liveState as never, innings: upcoming.innings.map((entry) => ({ runs: entry.runs, wickets: entry.wickets, overs: entry.overs.toString() })) }} />}
@@ -144,9 +147,10 @@ export default async function HomePage() {
               const won = /united tigers won/i.test(match.result || "");
               const label = match.status === "LIVE" ? "LIVE" : match.status === "COMPLETED" ? (won ? "WIN" : "RESULT") : "UP NEXT";
               const score = match.innings.length ? match.innings.map((innings) => `${innings.runs}/${innings.wickets} (${innings.overs})`).join(" – ") : "";
+              const logo = teamLogo(match.opponent, match.opponentLogoUrl);
               return <Link href={`/matches/${match.slug}`} key={match.id}>
                 <b className={label === "WIN" ? "is-win" : label === "UP NEXT" || label === "LIVE" ? "is-next" : ""}>{label}</b>
-                <span>{match.opponentLogoUrl ? <i style={{ backgroundImage: `url('${match.opponentLogoUrl}')` }} aria-hidden="true" /> : null}vs {match.opponent}</span>
+                <span>{logo ? <i style={{ backgroundImage: `url('${logo}')` }} aria-hidden="true" /> : null}vs {match.opponent}</span>
                 <small>{when(match.date).day}</small>
                 <em>{score || (match.status === "UPCOMING" || match.status === "LIVE" ? when(match.date).time : match.result || match.competition || "Abu Dhabi T10")}</em>
                 <ChevronRight className="result-go" size={14} aria-hidden="true" />
