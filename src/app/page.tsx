@@ -46,7 +46,8 @@ export default async function HomePage() {
   const opponentLogo = upcoming ? teamLogo(upcoming.opponent, upcoming.opponentLogoUrl) : null;
   const poll = [...polls].sort((left, right) => right.options.filter((option) => playerForLabel(option.label, players)).length - left.options.filter((option) => playerForLabel(option.label, players)).length)[0] ?? polls[0];
   const stories = news.slice(0, 3);
-  const listed = [...matches.filter((match) => match.status === "COMPLETED").slice(-2).reverse(), ...matches.filter((match) => match.status === "UPCOMING" || match.status === "LIVE").slice(0, 1)];
+  // The board shows the most recent result and the next fixture, one row each.
+  const listed = [...matches.filter((match) => match.status === "COMPLETED").slice(-1), ...matches.filter((match) => match.status === "UPCOMING" || match.status === "LIVE").slice(0, 1)];
 
   return <>
     <section className="home-stage" style={{ "--banner": `url("${heroImage}")` } as React.CSSProperties}>
@@ -79,7 +80,6 @@ export default async function HomePage() {
             </div>
             <p className="match-meta"><Calendar size={12} aria-hidden="true" /> {kickoff.day} · {kickoff.time}<br /><MapPin size={12} aria-hidden="true" /> {upcoming.venue?.name ?? "Venue TBC"}</p>
             {upcoming.status === "LIVE" && <LiveScore slug={upcoming.slug} pollIntervalMs={pollIntervalMs} initial={{ status: upcoming.status, liveState: upcoming.liveState as never, innings: upcoming.innings.map((entry) => ({ runs: entry.runs, wickets: entry.wickets, overs: entry.overs.toString() })) }} />}
-            <Link className="button button-orange" href={`/matches/${upcoming.slug}`}>MATCH CENTRE <ArrowUpRight size={16} aria-hidden="true" /></Link>
           </> : <>
             <div className="crest-row"><div><b className="has-crest"><Image src="/brand/tiger-gold.png" alt="" width={822} height={688} /></b><strong>United Tigers</strong><em>Abu Dhabi</em></div><span>VS</span><div><b>T10</b><strong>The field</strong><em>Abu Dhabi</em></div></div>
             <p className="dash-empty">The next fixture will appear here as soon as it is confirmed.</p>
@@ -103,7 +103,7 @@ export default async function HomePage() {
           </div>
         </article>
 
-        <article className="dash-card">
+        <article className="dash-card dash-vote">
           <header><span>VOTE FOR <em>PLAYER OF THE MATCH</em></span></header>
           <p>{poll?.question ?? "Who lit up the game?"}<br />Cast your vote and make your voice count.</p>
           <div className="vote-faces">
