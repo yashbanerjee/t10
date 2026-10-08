@@ -6,10 +6,11 @@ import { failure, success } from "@/lib/api";
 import { normalizeSiteSetting, redactSettingRow, redactSettingValue } from "@/lib/site-settings";
 import { careerFromForm, careerRecordSchema } from "@/lib/career-record";
 import { personName, playerTextRules } from "@/lib/admin-validation";
-import { findLeagueTeam } from "@/lib/league";
+import { getHomeTeam, getTeams, opponentIdentity, setHomeTeam } from "@/lib/teams";
+import { getPointsTable } from "@/lib/data";
 
 const permissions: Record<string, { read: string; write: string }> = {
-  players: { read: "TEAM_READ", write: "TEAM_WRITE" }, staff: { read: "TEAM_READ", write: "TEAM_WRITE" }, matches: { read: "MATCH_READ", write: "MATCH_WRITE" },
+  players: { read: "TEAM_READ", write: "TEAM_WRITE" }, staff: { read: "TEAM_READ", write: "TEAM_WRITE" }, teams: { read: "TEAM_READ", write: "TEAM_WRITE" }, matches: { read: "MATCH_READ", write: "MATCH_WRITE" },
   news: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, updates: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
   contacts: { read: "MESSAGES_READ", write: "MESSAGES_READ" }, gallery: { read: "CONTENT_READ", write: "MEDIA_WRITE" },
   sponsors: { read: "CONTENT_READ", write: "SETTINGS_WRITE" }, records: { read: "STATS_READ", write: "STATS_WRITE" }, standings: { read: "STATS_READ", write: "STATS_WRITE" },
@@ -28,7 +29,9 @@ const sponsorInput = z.object({ name: z.string().trim().min(2).max(120), categor
 const galleryInput = z.object({ title: z.string().trim().min(2).max(160), category: z.string().trim().min(2).max(60), mediaUrl: z.string().trim().max(1000).regex(/^(https?:\/\/|\/)/), type: z.enum(["IMAGE", "VIDEO"]).default("IMAGE"), altText: z.string().trim().max(300).nullable().optional(), displayOrder: optionalInt(0, 9999), isFeatured: z.boolean().optional(), isPublished: z.boolean().optional() });
 const recordInput = z.object({ title: z.string().trim().min(2).max(160), value: z.string().trim().min(1).max(40), category: z.string().trim().min(2).max(60), scope: z.string().trim().min(2).max(40), playerName: z.string().trim().max(120).nullable().optional(), seasonYear: optionalInt(1990, 2100) });
 const tally = z.union([z.null(), z.literal(""), z.coerce.number().int().min(0).max(999)]).optional().transform((value) => (typeof value === "number" ? value : 0));
-const standingInput = z.object({ teamName: z.string().trim().min(2).max(120), played: tally, won: tally, lost: tally, noResult: tally, points: tally, netRunRate: z.union([z.null(), z.literal(""), z.coerce.number().min(-99).max(99)]).optional().transform((value) => (typeof value === "number" ? Number(value.toFixed(3)) : 0)), position: z.union([z.null(), z.literal(""), z.coerce.number().int().min(0).max(20)]).optional().transform((value) => (typeof value === "number" ? value : 0)) });
+const standingInput = z.object({ teamName: z.string().trim().min(2).max(120), played: tally, won: tally, lost: tally, noResult: tally, points: tally, netRunRate: z.union([z.null(), z.literal(""), z.coerce.number().min(-99).max(99)]).optional().transform((value) => (typeof value === "number" ? Number(value.toFixed(3)) : 0)) });
+const hexColour = z.union([z.null(), z.literal(""), z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "Use a 6-digit hex colour such as #3A2D61")]).optional();
+const teamInput = z.object({ name: z.string().trim().min(2).max(80), shortName: z.string().trim().min(1).max(8).transform((value) => value.toUpperCase()), slug: z.string().trim().max(120).nullable().optional(), logoUrl: assetUrl, primaryColor: hexColour, secondaryColor: hexColour, description: z.string().trim().max(500).nullable().optional(), isHome: z.boolean().optional() });
 const variantInput = z.object({ color: z.string().trim().min(1).max(40), size: z.string().trim().min(1).max(24), stock: z.coerce.number().int().min(0).max(9999), price: z.union([z.null(), z.coerce.number().min(0).max(100000)]).optional(), image: assetUrl });
 const productInput = z.object({ name: z.string().trim().min(2).max(120), slug: z.string().trim().max(140).optional(), description: z.string().trim().min(3).max(4000), price: z.coerce.number().positive().max(100000), image: assetUrl, category: z.enum(["JERSEY", "TRAINING", "CAP", "ACCESSORY"]), isFeatured: z.boolean().optional(), isPublished: z.boolean().optional(), variants: z.array(variantInput).min(1).max(40) });
 const pollInput = z.object({ title: z.string().trim().min(2).max(160), slug: z.string().trim().max(160).optional(), question: z.string().trim().min(3).max(240), description: z.string().trim().max(1000).nullable().optional(), closesAt: z.string().datetime().nullable().optional(), isPublished: z.boolean().optional(), options: z.array(z.object({ label: z.string().trim().min(1).max(80) })).min(2).max(8) });
@@ -37,6 +40,9 @@ const settingInput = z.object({ key: z.string().trim().min(2).max(100), value: z
 const slugify = (value: string) => value.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 async function list(collection: string) {
+  if (collection === "teams") return getTeams();
+  // One row per created team, in table order: the admin edits a team's figures rather than adding rows.
+  if (collection === "standings") return (await getPointsTable()).map((row) => ({ ...row, id: row.entryId ?? `team:${row.teamId}`, source: row.manual ? "Entered" : "Calculated" }));
   const db = prisma as unknown as Record<string, { findMany(args?: unknown): Promise<unknown> }>;
   const args: Record<string, unknown> = {
     players: { orderBy: [{ displayOrder: "asc" }, { fullName: "asc" }] }, staff: { orderBy: [{ category: "asc" }, { displayOrder: "asc" }] },
@@ -44,7 +50,6 @@ async function list(collection: string) {
     news: { orderBy: { updatedAt: "desc" } }, updates: { orderBy: { publishedAt: "desc" } },
     contacts: { orderBy: { createdAt: "desc" } }, gallery: { orderBy: { createdAt: "desc" } },
     sponsors: { orderBy: { displayOrder: "asc" } }, records: { orderBy: { createdAt: "desc" } },
-    standings: { where: { isDemo: false, season: { isCurrent: true } }, orderBy: [{ position: "asc" }, { points: "desc" }, { teamName: "asc" }] },
     products: { include: { _count: { select: { variants: true } } }, orderBy: { createdAt: "desc" } },
     polls: { include: { _count: { select: { votes: true, options: true } } }, orderBy: { createdAt: "desc" } },
     contests: { include: { _count: { select: { entries: true } } }, orderBy: { createdAt: "desc" } },
@@ -52,7 +57,7 @@ async function list(collection: string) {
     settings: { orderBy: { key: "asc" } }, audit: { include: { user: { select: { email: true, name: true } } }, orderBy: { createdAt: "desc" }, take: 100 },
   };
   if (!(collection in args)) throw new Error("NOT_FOUND");
-  const model = collection === "contacts" ? "contactSubmission" : collection === "updates" ? "teamUpdate" : collection === "news" ? "newsArticle" : collection === "gallery" ? "gallery" : collection === "sponsors" ? "sponsor" : collection === "records" ? "teamRecord" : collection === "standings" ? "pointsEntry" : collection === "settings" ? "siteSetting" : collection === "audit" ? "auditLog" : collection === "matches" ? "match" : collection === "staff" ? "staffMember" : collection === "products" ? "product" : collection === "polls" ? "poll" : collection === "contests" ? "contest" : collection === "orders" ? "order" : "player";
+  const model = collection === "contacts" ? "contactSubmission" : collection === "updates" ? "teamUpdate" : collection === "news" ? "newsArticle" : collection === "gallery" ? "gallery" : collection === "sponsors" ? "sponsor" : collection === "records" ? "teamRecord" : collection === "settings" ? "siteSetting" : collection === "audit" ? "auditLog" : collection === "matches" ? "match" : collection === "staff" ? "staffMember" : collection === "products" ? "product" : collection === "polls" ? "poll" : collection === "contests" ? "contest" : collection === "orders" ? "order" : "player";
   const rows = await db[model].findMany(args[collection]) as Array<Record<string, unknown>>;
   return rows.map((row) => {
     const count = row._count as { variants?: number; votes?: number; options?: number; entries?: number } | undefined;
@@ -84,12 +89,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const incoming = body && typeof body === "object" && !Array.isArray(body) ? { ...body as Record<string, unknown> } : {};
       const career = careerFromForm(incoming); if (!career.ok) return failure(career.message, 400);
       const parsed = playerInput.safeParse({ ...incoming, careerRecord: career.value }); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
-      const team = await prisma.team.findUnique({ where: { slug: "united-tigers" } }); if (!team) return failure("Run the database seed before adding players", 409);
+      const team = await getHomeTeam(); if (!team) return failure("Create our team in the Teams section before adding players", 409);
       const { dateOfBirth, slug, displayOrder, careerRecord, ...playerFields } = parsed.data; result = await prisma.player.create({ data: { ...playerFields, careerRecord: careerRecord ?? undefined, dateOfBirth: dateOfBirth ? new Date(`${dateOfBirth}T00:00:00.000Z`) : null, displayOrder: displayOrder ?? 0, slug: slug ? slugify(slug) : slugify(parsed.data.fullName), teamId: team.id } });
     } else if (collection === "staff") {
       const parsed = z.object({ fullName: z.string().trim().min(2).max(100), title: z.string().trim().min(2).max(100), category: z.enum(["COACHING", "SUPPORT", "MANAGEMENT"]), bio: z.string().trim().max(2500).nullable().optional(), profileImage: assetUrl, displayOrder: optionalInt(0, 9999), isActive: z.boolean().optional() }).safeParse(body);
       if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
-      const team = await prisma.team.findUnique({ where: { slug: "united-tigers" } }); if (!team) return failure("Run the database seed before adding staff", 409);
+      const team = await getHomeTeam(); if (!team) return failure("Create our team in the Teams section before adding staff", 409);
       result = await prisma.staffMember.create({ data: { ...parsed.data, displayOrder: parsed.data.displayOrder ?? 0, teamId: team.id } });
     } else if (collection === "news") {
       const parsed = articleInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
@@ -101,9 +106,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const parsed = matchInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
       const data = parsed.data; const season = await prisma.season.findFirst({ where: { isCurrent: true } }); if (!season) return failure("Create a current season before adding matches", 409);
       let venueId: string | undefined; if (data.venueName) { const existingVenue = await prisma.venue.findFirst({ where: { name: data.venueName } }); venueId = existingVenue?.id ?? (await prisma.venue.create({ data: { name: data.venueName } })).id; }
-      // A league opponent brings its official short code and crest with it, so the app and the site show the same identity.
-      const identity = findLeagueTeam(data.opponent);
-      result = await prisma.match.create({ data: { slug: slugify(`united-tigers-vs-${data.opponent}-${new Date(data.date).toISOString().slice(0, 10)}`), opponent: identity?.name ?? data.opponent, opponentShort: identity?.shortName ?? null, opponentLogoUrl: identity?.logo ?? null, date: new Date(data.date), status: data.status, competition: data.competition || null, matchNumber: data.matchNumber || null, result: data.result || null, venueId, seasonId: season.id, isDemo: false } });
+      // The opponent comes from the Teams section and brings its short code and crest with it, so the app and the site show the same identity.
+      const identity = await opponentIdentity(data.opponent); if (identity.isHome) return failure("Pick an opponent other than our own team", 400);
+      result = await prisma.match.create({ data: { slug: slugify(`united-tigers-vs-${identity.name}-${new Date(data.date).toISOString().slice(0, 10)}`), opponent: identity.name, opponentShort: identity.shortName, opponentLogoUrl: identity.logo, date: new Date(data.date), status: data.status, competition: data.competition || null, matchNumber: data.matchNumber || null, result: data.result || null, venueId, seasonId: season.id, isDemo: false } });
+    } else if (collection === "teams") {
+      const parsed = teamInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
+      const { isHome, slug, ...team } = parsed.data;
+      const created = await prisma.team.create({ data: { ...team, slug: slugify(slug || team.name), primaryColor: team.primaryColor || null, secondaryColor: team.secondaryColor || null, description: team.description || null } });
+      if (isHome) await setHomeTeam(created.id);
+      result = { ...created, isHome: Boolean(isHome) };
     } else if (collection === "sponsors") {
       const parsed = sponsorInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
       const data = parsed.data; result = await prisma.sponsor.create({ data: { ...data, website: data.website || null, displayOrder: data.displayOrder ?? 0 } });
@@ -117,7 +128,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const parsed = standingInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
       const season = await prisma.season.findFirst({ where: { isCurrent: true } }); if (!season) return failure("Create a current season before editing the points table", 409);
       // One row per team and season: saving a team again simply replaces its figures.
-      const { teamName, ...figures } = parsed.data; const name = findLeagueTeam(teamName)?.name ?? teamName;
+      const { teamName, ...figures } = parsed.data; const name = (await opponentIdentity(teamName)).name;
       result = await prisma.pointsEntry.upsert({ where: { seasonId_teamName: { seasonId: season.id, teamName: name } }, create: { seasonId: season.id, teamName: name, ...figures, isDemo: false }, update: { ...figures, isDemo: false } });
     } else if (collection === "products") {
       const parsed = productInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);

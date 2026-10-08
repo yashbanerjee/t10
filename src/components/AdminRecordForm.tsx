@@ -18,7 +18,7 @@ const constraints = (field: Field) => ({ pattern: field.pattern, title: field.ti
 
 function blankForm(section: string, fields: Field[]) {
   const values: Record<string, string | boolean> = {};
-  for (const field of fields) values[field.key] = field.type === "checkbox" ? ["isActive", "isPublished"].includes(field.key) : field.type === "select" ? (field.options?.[0] === "" ? "" : field.options?.[0] ?? "") : field.key === "publishedAt" || field.key === "date" ? inputDate(new Date()) : "";
+  for (const field of fields) values[field.key] = field.type === "checkbox" ? ["isActive", "isPublished"].includes(field.key) : field.type === "select" ? (field.optionsFrom || field.options?.[0] === "" ? "" : field.options?.[0] ?? "") : field.key === "publishedAt" || field.key === "date" ? inputDate(new Date()) : "";
   if (section === "users") values.role = "EDITOR";
   return values;
 }
@@ -60,6 +60,23 @@ export function AdminRecordForm({ section, recordId }: { section: string; record
   const [options, setOptions] = useState<OptionDraft[]>([{ label: "" }, { label: "" }]);
   const [entries, setEntries] = useState<EntryRow[]>([]);
   const [orderView, setOrderView] = useState<OrderView | null>(null);
+  const [teamChoices, setTeamChoices] = useState<{ teams: string[]; opponents: string[] } | null>(null);
+  const needsTeams = Boolean(definition?.fields?.some((field) => field.optionsFrom));
+
+  // Dropdowns that list teams read the Teams section, so a team added there is available straight away.
+  useEffect(() => {
+    if (!needsTeams) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch("/api/v1/admin/teams", { cache: "no-store" });
+        const result = await response.json();
+        const teams: Array<{ name: string; isHome: boolean }> = response.ok && Array.isArray(result.data) ? result.data : [];
+        if (!cancelled) setTeamChoices({ teams: teams.map((team) => team.name), opponents: teams.filter((team) => !team.isHome).map((team) => team.name) });
+      } catch { if (!cancelled) setTeamChoices({ teams: [], opponents: [] }); }
+    })();
+    return () => { cancelled = true; };
+  }, [needsTeams]);
 
   useEffect(() => {
     if (!definition?.fields) return;
@@ -89,6 +106,13 @@ export function AdminRecordForm({ section, recordId }: { section: string; record
   if (!definition.fields || (isNew && !definition.create) || (!isNew && !definition.edit)) return <div className="admin-content"><div className="admin-page-heading"><div><h1>{definition.title}</h1><p>This section does not use a record form.</p></div><Link className="admin-secondary-btn" href={`/admin/${section}`}>Back to list</Link></div></div>;
 
   function change(key: string, value: string | boolean) { setForm((current) => ({ ...current, [key]: value })); }
+  /** Choices for a select: fixed options, or team names from the Teams section plus the saved value if it is no longer a team. */
+  function choicesFor(field: Field): string[] {
+    if (!field.optionsFrom) return field.options ?? [];
+    const names = teamChoices?.[field.optionsFrom] ?? [];
+    const current = String(form[field.key] ?? "");
+    return ["", ...names, ...(current && !names.includes(current) ? [current] : [])];
+  }
   async function uploadFile(field: Field, file?: File) {
     if (!file) return;
     setUploading(true); setError(""); setNotice("");
@@ -101,6 +125,7 @@ export function AdminRecordForm({ section, recordId }: { section: string; record
     event.preventDefault(); setError(""); setNotice(""); setSaving(true);
     const body: Record<string, unknown> = {};
     for (const field of definition.fields ?? []) {
+      if (field.readOnly) continue;
       const value = form[field.key];
       if (field.type === "checkbox") body[field.key] = Boolean(value);
       else if (field.type === "number") body[field.key] = value === "" ? null : Number(value);
@@ -130,8 +155,8 @@ export function AdminRecordForm({ section, recordId }: { section: string; record
     {error && <div className="admin-demo-alert"><AlertTriangle size={14} />{error}</div>}{notice && <p className="admin-notice"><Check size={13} /> {notice}</p>}
     {loading ? <div className="admin-table-wrap"><div className="admin-loading-inline"><span className="admin-spinner" /> LOADING RECORD</div></div> : <form className="admin-editor" onSubmit={save}><div className="admin-editor-grid">{definition.fields.filter((field) => field.type !== "checkbox" && !field.group).map((field) => {
       const wide = field.type === "textarea" || field.type === "richtext";
-      const note = [field.type === "file" && form[field.key] ? `Attached: ${String(form[field.key])}` : "", field.type === "file" && uploading ? "Uploading…" : "", field.hint ?? ""].filter(Boolean).join(" ");
-      return <label key={field.key} className={`admin-field${wide ? " field-wide" : ""}`}><span className="admin-field-label">{field.label}</span><span className="admin-field-control">{field.type === "richtext" ? <RichTextEditor required={field.required} value={String(form[field.key] ?? "")} onChange={(value) => change(field.key, value)} /> : field.type === "textarea" ? <textarea required={field.required} maxLength={field.maxLength} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)} /> : field.type === "select" ? <select required={field.required} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)}>{field.options?.map((option) => <option value={option} key={option}>{option || "Select"}</option>)}</select> : field.type === "file" ? <input type="file" accept={field.accept} required={field.required && !form[field.key]} onChange={(event) => void uploadFile(field, event.currentTarget.files?.[0])} /> : <><input type={field.type === "date" ? "datetime-local" : field.type === "day" ? "date" : field.type === "number" ? "number" : field.type === "url" ? "url" : field.type === "password" ? "password" : "text"} step={field.step ?? (field.key === "price" ? "0.01" : undefined)} {...constraints(field)} required={field.key === "password" ? isNew : field.required} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)} autoComplete={field.type === "password" ? "new-password" : undefined} list={field.options ? `${field.key}-options` : undefined} />{field.options && <datalist id={`${field.key}-options`}>{field.options.map((option) => <option value={option} key={option} />)}</datalist>}</>}</span><span className="admin-field-note">{note}</span></label>;
+      const note = [field.type === "file" && form[field.key] ? `Attached: ${String(form[field.key])}` : "", field.type === "file" && uploading ? "Uploading…" : "", field.optionsFrom && teamChoices && !teamChoices[field.optionsFrom].length ? "No teams yet. Add them in the Teams section first." : "", field.hint ?? ""].filter(Boolean).join(" ");
+      return <label key={field.key} className={`admin-field${wide ? " field-wide" : ""}`}><span className="admin-field-label">{field.label}</span><span className="admin-field-control">{field.type === "richtext" ? <RichTextEditor required={field.required} value={String(form[field.key] ?? "")} onChange={(value) => change(field.key, value)} /> : field.type === "textarea" ? <textarea required={field.required} maxLength={field.maxLength} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)} /> : field.type === "select" ? <select required={field.required} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)}>{choicesFor(field).map((option) => <option value={option} key={option}>{option || (field.optionsFrom && !teamChoices ? "Loading teams…" : "Select")}</option>)}</select> : field.type === "file" ? <input type="file" accept={field.accept} required={field.required && !form[field.key]} onChange={(event) => void uploadFile(field, event.currentTarget.files?.[0])} /> : <><input type={field.type === "date" ? "datetime-local" : field.type === "day" ? "date" : field.type === "number" ? "number" : field.type === "url" ? "url" : field.type === "password" ? "password" : "text"} step={field.step ?? (field.key === "price" ? "0.01" : undefined)} {...constraints(field)} required={field.key === "password" ? isNew : field.required} readOnly={field.readOnly} aria-readonly={field.readOnly || undefined} value={String(form[field.key] ?? "")} onChange={(event) => change(field.key, event.target.value)} autoComplete={field.type === "password" ? "new-password" : undefined} list={field.options ? `${field.key}-options` : undefined} />{field.options && <datalist id={`${field.key}-options`}>{field.options.map((option) => <option value={option} key={option} />)}</datalist>}</>}</span><span className="admin-field-note">{note}</span></label>;
     })}</div>
       {section === "players" && <PlayerCareerFields fields={definition.fields} form={form} role={String(form.role ?? "")} onChange={change} />}
       {section === "products" && <VariantEditor rows={variants} onChange={setVariants} />}
