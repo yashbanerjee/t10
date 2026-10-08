@@ -28,7 +28,9 @@ export async function getPlayerBySlug(slug: string) {
 
 export async function getMatches() {
   try {
-    return await prisma.match.findMany({ where: { isDemo: false }, include: { venue: true, season: true, innings: { orderBy: { number: "asc" } } }, orderBy: { date: "asc" } });
+    const matches = await prisma.match.findMany({ where: { isDemo: false }, include: { venue: true, season: true, innings: { orderBy: { number: "asc" } } }, orderBy: { date: "asc" } });
+    // Overs are a Prisma Decimal; client components and JSON need the plain "9.4" form.
+    return matches.map((match) => ({ ...match, innings: match.innings.map((innings) => ({ ...innings, overs: innings.overs.toString() })) }));
   } catch {
     return [];
   }
