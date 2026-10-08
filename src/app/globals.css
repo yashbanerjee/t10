@@ -353,7 +353,7 @@ a.partner-item:hover { border-color: rgba(209,190,125,.6); transform: translateY
 .album-head small { color: rgba(255,255,255,.66); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .gallery-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
 .gallery-item { position: relative; min-height: 225px; overflow: hidden; border-radius: 12px; background: #2c2249; }
-.gallery-item video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.gallery-caption { pointer-events: none; z-index: 2; }
 .gallery-item:nth-child(3n + 1) { grid-row: span 2; min-height: 460px; }
 /* Small albums: one photo becomes a wide banner, two sit side by side, instead of a lone tall tile. */
 .gallery-grid.count-1 { grid-template-columns: 1fr; }
@@ -1016,7 +1016,22 @@ a.partner-item:hover { border-color: rgba(209,190,125,.6); transform: translateY
 .highlight-row span { position: relative; display: grid; place-items: center; aspect-ratio: 16 / 10; overflow: hidden; border: 1px solid rgba(209,190,125,.3); border-radius: 12px; background: #3A2D61 center / cover no-repeat; }
 .highlight-row span::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 50%, rgba(25,19,42,.7) 100%); }
 .highlight-row span.is-video::after { display: none; }
-.highlight-row video { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: cover; background: #241b3c; }
+.highlight-row video, .gallery-item video { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: cover; background: #241b3c; }
+.video-poster { position: absolute; inset: 0; z-index: 1; display: block; width: 100%; height: 100%; padding: 0; border: 0; background: #241b3c; cursor: pointer; }
+.video-poster i { position: absolute; left: 50%; top: 50%; z-index: 2; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 999px; background: rgba(25,19,42,.78); color: #fff; box-shadow: 0 0 0 1px rgba(209,190,125,.55); transform: translate(-50%, -50%); pointer-events: none; }
+.highlight-row .video-poster svg { position: static; width: 18px; height: 18px; padding: 0; border-radius: 0; background: none; color: #fff; box-shadow: none; }
+.video-popup { width: fit-content; max-width: calc(100vw - 32px); padding: 0; border: 1px solid rgba(209,190,125,.4); border-radius: 16px; background: #120c22; color: #fff; }
+.video-popup::backdrop { background: rgba(12,8,24,.78); }
+.video-popup-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; }
+.video-popup-bar strong { min-width: 0; font-size: 13px; font-weight: 800; }
+.video-popup-bar button { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 999px; background: rgba(255,255,255,.1); color: #fff; cursor: pointer; }
+.highlight-row .video-popup video, .gallery-item .video-popup video, .video-popup video { position: static; inset: auto; z-index: auto; display: block; width: auto; height: auto; max-width: min(920px, calc(100vw - 32px)); max-height: min(78vh, 720px); background: #000; object-fit: contain; }
+.highlight-row .video-popup svg { position: static; width: 16px; height: 16px; padding: 0; border-radius: 0; background: none; color: #fff; box-shadow: none; }
+.video-popup-player { position: relative; background: #000; }
+.video-popup-controls { position: absolute; right: 0; bottom: 0; left: 0; display: flex; align-items: center; gap: 8px; padding: 22px 10px 8px; background: linear-gradient(transparent, rgba(0,0,0,.72)); color: #fff; }
+.video-popup-controls button { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 0; background: transparent; color: #fff; cursor: pointer; }
+.video-popup-controls span { flex: none; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.video-popup-controls input[type="range"] { flex: 1; min-width: 40px; margin: 0; accent-color: #fff; cursor: pointer; }
 .highlight-row span svg { position: absolute; right: 8px; bottom: 8px; z-index: 1; width: 28px; height: 28px; padding: 7px; border-radius: 999px; background: var(--gold-surface); color: var(--gold-ink); box-shadow: var(--gold-shadow); transition: transform .25s; }
 .highlight-row a:hover span svg { transform: translate(2px, -2px); }
 .highlight-row span small { position: absolute; z-index: 2; left: 8px; bottom: 8px; padding: 3px 7px; border: 1px solid rgba(209,190,125,.4); border-radius: 6px; background: rgba(44,34,73,.9); color: #E6DAA9; font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; pointer-events: none; }

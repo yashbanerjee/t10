@@ -6,6 +6,7 @@ import { getGallery, getMatches, getPlayers, getPolls, getProducts, getPublicSet
 import { LiveScore } from "@/components/LiveScore";
 import { LeagueMark } from "@/components/LeagueMark";
 import { NationSignup } from "@/components/NationSignup";
+import { VideoPoster } from "@/components/VideoPoster";
 import { teamLogo, teamShortName } from "@/lib/league";
 import { featuredPlayers, getLivePollIntervalMs, homepageDefaults, readHomepageBanner } from "@/lib/site-settings";
 
@@ -138,7 +139,7 @@ export default async function HomePage() {
           <div className="highlight-row">
             {draftClips.length ? draftClips.map((item) => <article key={item.id}>
               <span className={item.type === "VIDEO" ? "is-video" : undefined} style={item.type === "VIDEO" ? undefined : { backgroundImage: `url('${item.mediaUrl}')` }}>
-                {item.type === "VIDEO" ? <video src={item.mediaUrl} controls playsInline preload="metadata" aria-label={item.altText || item.title} /> : <ArrowUpRight size={16} aria-hidden="true" />}
+                {item.type === "VIDEO" ? <VideoPoster src={item.mediaUrl} label={item.altText || item.title} /> : <ArrowUpRight size={16} aria-hidden="true" />}
                 <small>{item.type === "VIDEO" ? "VIDEO" : "GALLERY"}</small>
               </span>
               <strong><Link href={draftHref}>{item.title}</Link></strong>
