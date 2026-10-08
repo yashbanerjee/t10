@@ -1,4 +1,4 @@
-export type AnalyticsEvent = "page_view" | "player_profile_view" | "match_view" | "news_article_view" | "fixture_click" | "social_click" | "contact_submission";
+export type AnalyticsEvent = "page_view" | "player_profile_view" | "match_view" | "news_article_view" | "fixture_click" | "social_click" | "contact_submission" | "partner_brochure_request";
 export type AnalyticsPayload = { path?: string; id?: string; href?: string; [key: string]: string | number | boolean | undefined };
 
 /** Site event boundary. AnalyticsProvider forwards these to Firebase Analytics (GA4). */

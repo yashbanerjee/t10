@@ -18,6 +18,7 @@ export function SiteSettingsPanel() {
   const [smtp, setSmtp] = useState(smtpEmpty);
   const [banner, setBanner] = useState(bannerEmpty);
   const [roster, setRoster] = useState<PlayerOption[]>([]);
+  const [brochure, setBrochure] = useState("");
   const [savedSecrets, setSavedSecrets] = useState({ access: false, secret: false, mail: false });
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -52,6 +53,8 @@ export function SiteSettingsPanel() {
         showPlayers: savedBanner.showPlayers !== false,
         players: Array.isArray(savedBanner.players) ? savedBanner.players.filter((id): id is string => typeof id === "string").slice(0, FEATURED_PLAYER_LIMIT) : [],
       });
+      const savedBrochure = rows.find((row) => row.key === "partnerBrochure");
+      setBrochure(typeof savedBrochure?.value === "string" ? savedBrochure.value : "");
       const mail = rows.find((row) => row.key === "smtp");
       const mailValue = mail?.value && typeof mail.value === "object" && !Array.isArray(mail.value) ? mail.value as SmtpValue : {};
       const storageValue = storage?.value && typeof storage.value === "object" ? storage.value as StorageValue : {};
@@ -99,6 +102,7 @@ export function SiteSettingsPanel() {
       { key: "livePollIntervalMs", value: Number(form.livePollIntervalMs) },
       { key: "storage", value: { endpoint: form.endpoint.trim(), bucket: form.bucket.trim(), region: form.region.trim() || "auto", publicUrl: form.publicUrl.trim(), accessKey: form.accessKey, secretKey: form.secretKey } },
       { key: "homepage", value: banner },
+      { key: "partnerBrochure", value: brochure.trim() },
       { key: "smtp", value: { host: smtp.host.trim(), port: Number(smtp.port), secure: smtp.secure, user: smtp.user.trim(), password: smtp.password, fromEmail: smtp.fromEmail.trim(), fromName: smtp.fromName.trim(), adminEmail: smtp.adminEmail.trim() } },
     ];
     try {
@@ -168,6 +172,23 @@ export function SiteSettingsPanel() {
         setBanner((current) => ({ ...current, mode: "image", image: result.data.url }));
         setNotice("Banner image uploaded. Save site settings to publish it.");
       }} /></span><span className="admin-field-note" /></label>
+    </div>
+    <div className="admin-panel-header"><h2>Partner brochure</h2></div>
+    <p className="admin-storage-note">Visitors who fill in the Become a partner form in the website footer download this file straight away. Their details are listed under Partner requests.</p>
+    <div className="admin-editor-grid">
+      <label className="admin-field"><span className="admin-field-label">Brochure file</span><span className="admin-field-control"><input value={brochure} onChange={(event) => setBrochure(event.target.value)} placeholder="/media/uploads/…/brochure.pdf" /></span><span className="admin-field-note">{brochure ? <a href={brochure} target="_blank" rel="noreferrer">Open the current brochure</a> : "No brochure yet. Visitors are told the team will email it."}</span></label>
+      <label className="admin-field"><span className="admin-field-label">Upload brochure</span><span className="admin-field-control"><input type="file" accept="application/pdf" onChange={async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const body = new FormData();
+        body.set("file", file);
+        body.set("folder", "brochures");
+        const response = await fetch("/api/v1/admin/media/upload", { method: "POST", body });
+        const result = await response.json();
+        if (!response.ok) { setError(result.message || "Upload failed. Paste a brochure link instead."); return; }
+        setBrochure(result.data.url);
+        setNotice("Brochure uploaded. Save site settings to publish it.");
+      }} /></span><span className="admin-field-note">PDF, up to 25 MB.</span></label>
     </div>
     <div className="admin-panel-header"><h2>Featured players</h2></div>
     <p className="admin-storage-note">The row of player photos beside the headline on the homepage, on every screen size. Turn it off to hide the row, or tick up to {FEATURED_PLAYER_LIMIT} players to choose who appears. With nobody ticked, the first {FEATURED_PLAYER_LIMIT} players with a photo are shown in squad order.</p>

@@ -13,6 +13,6 @@ export default async function PartnersPage() {
   return sponsor.website
     ? <a className="partner-item" key={sponsor.id} href={sponsor.website} target="_blank" rel="noreferrer" aria-label={`${sponsor.name} website`}>{mark}</a>
     : <div className="partner-item partner-item-static" key={sponsor.id} title={sponsor.name}>{mark}</div>;
-})}</div> : <p className="muted-copy">Partner announcements will be shared here.</p>}</section>)}</div><div className="sponsor-cta"><div><span className="eyebrow"><i className="eyebrow-dot" />BUILD WITH THE TIGERS</span><h3>LET’S MAKE A MARK.</h3><p>Talk to our team about 2026 partnership opportunities.</p></div><Link className="button button-primary" href="/contact">GET IN TOUCH <ArrowUpRight size={15} /></Link></div></div></section></div>;
+})}</div> : <p className="muted-copy">Partner announcements will be shared here.</p>}</section>)}</div><div className="sponsor-cta"><div><span className="eyebrow"><i className="eyebrow-dot" />BUILD WITH THE TIGERS</span><h3>LET’S MAKE A MARK.</h3><p>Talk to our team about 2026 partnership opportunities.</p></div><Link className="button button-primary" href="/become-a-partner">BECOME A PARTNER <ArrowUpRight size={15} /></Link></div></div></section></div>;
 }
 

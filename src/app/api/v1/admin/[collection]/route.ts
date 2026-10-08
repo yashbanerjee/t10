@@ -9,11 +9,12 @@ import { linksFromForm } from "@/lib/player-links";
 import { personName, playerTextRules } from "@/lib/admin-validation";
 import { getHomeTeam, getTeams, opponentIdentity, setHomeTeam } from "@/lib/teams";
 import { getPointsTable } from "@/lib/data";
+import { PARTNER_REQUEST_SUBJECT } from "@/lib/partner-brochure";
 
 const permissions: Record<string, { read: string; write: string }> = {
   players: { read: "TEAM_READ", write: "TEAM_WRITE" }, staff: { read: "TEAM_READ", write: "TEAM_WRITE" }, teams: { read: "TEAM_READ", write: "TEAM_WRITE" }, matches: { read: "MATCH_READ", write: "MATCH_WRITE" },
   news: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, updates: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
-  contacts: { read: "MESSAGES_READ", write: "MESSAGES_READ" }, gallery: { read: "CONTENT_READ", write: "MEDIA_WRITE" },
+  contacts: { read: "MESSAGES_READ", write: "MESSAGES_READ" }, partnerRequests: { read: "MESSAGES_READ", write: "MESSAGES_READ" }, gallery: { read: "CONTENT_READ", write: "MEDIA_WRITE" },
   sponsors: { read: "CONTENT_READ", write: "SETTINGS_WRITE" }, records: { read: "STATS_READ", write: "STATS_WRITE" }, standings: { read: "STATS_READ", write: "STATS_WRITE" },
   products: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, polls: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
   contests: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, orders: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
@@ -53,7 +54,7 @@ async function list(collection: string) {
     players: { orderBy: [{ displayOrder: "asc" }, { fullName: "asc" }] }, staff: { orderBy: [{ category: "asc" }, { displayOrder: "asc" }] },
     matches: { include: { season: true, venue: true }, orderBy: { date: "desc" } },
     news: { orderBy: { updatedAt: "desc" } }, updates: { orderBy: { publishedAt: "desc" } },
-    contacts: { orderBy: { createdAt: "desc" } }, gallery: { orderBy: { createdAt: "desc" } },
+    contacts: { where: { subject: { not: PARTNER_REQUEST_SUBJECT } }, orderBy: { createdAt: "desc" } }, partnerRequests: { where: { subject: PARTNER_REQUEST_SUBJECT }, orderBy: { createdAt: "desc" } }, gallery: { orderBy: { createdAt: "desc" } },
     sponsors: { orderBy: { displayOrder: "asc" } }, franchises: { orderBy: [{ displayOrder: "asc" }, { name: "asc" }] }, records: { orderBy: { createdAt: "desc" } },
     products: { include: { _count: { select: { variants: true } } }, orderBy: { createdAt: "desc" } },
     polls: { include: { _count: { select: { votes: true, options: true } } }, orderBy: { createdAt: "desc" } },
@@ -62,7 +63,7 @@ async function list(collection: string) {
     settings: { orderBy: { key: "asc" } }, audit: { include: { user: { select: { email: true, name: true } } }, orderBy: { createdAt: "desc" }, take: 100 },
   };
   if (!(collection in args)) throw new Error("NOT_FOUND");
-  const model = collection === "contacts" ? "contactSubmission" : collection === "updates" ? "teamUpdate" : collection === "news" ? "newsArticle" : collection === "gallery" ? "gallery" : collection === "sponsors" ? "sponsor" : collection === "franchises" ? "franchise" : collection === "records" ? "teamRecord" : collection === "settings" ? "siteSetting" : collection === "audit" ? "auditLog" : collection === "matches" ? "match" : collection === "staff" ? "staffMember" : collection === "products" ? "product" : collection === "polls" ? "poll" : collection === "contests" ? "contest" : collection === "orders" ? "order" : "player";
+  const model = collection === "contacts" || collection === "partnerRequests" ? "contactSubmission" : collection === "updates" ? "teamUpdate" : collection === "news" ? "newsArticle" : collection === "gallery" ? "gallery" : collection === "sponsors" ? "sponsor" : collection === "franchises" ? "franchise" : collection === "records" ? "teamRecord" : collection === "settings" ? "siteSetting" : collection === "audit" ? "auditLog" : collection === "matches" ? "match" : collection === "staff" ? "staffMember" : collection === "products" ? "product" : collection === "polls" ? "poll" : collection === "contests" ? "contest" : collection === "orders" ? "order" : "player";
   const rows = await db[model].findMany(args[collection]) as Array<Record<string, unknown>>;
   return rows.map((row) => {
     const count = row._count as { variants?: number; votes?: number; options?: number; entries?: number } | undefined;

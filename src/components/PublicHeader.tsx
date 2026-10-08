@@ -33,6 +33,7 @@ const searchPages = [
   ["Player draft", "/draft"],
   ["Sponsors", "/partners"],
   ["Gallery", "/gallery"],
+  ["Become a partner", "/become-a-partner"],
   ["About", "/about"],
   ["Contact", "/contact"],
 ];

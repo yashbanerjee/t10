@@ -2378,10 +2378,17 @@ a.partner-item:hover {
   font-weight: 800;
 }
 
-.contact-form label>span {
+.contact-form label>span:not(.phone-row) {
   color: #8e7f9f;
 }
 
+.phone-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.contact-form select,
 .contact-form input,
 .contact-form textarea {
   width: 100%;
@@ -2394,7 +2401,13 @@ a.partner-item:hover {
   resize: vertical;
 }
 
+.contact-form select {
+  letter-spacing: normal;
+  font-weight: 500;
+}
+
 .contact-form input:focus,
+.contact-form select:focus,
 .contact-form textarea:focus {
   border-color: #D4317A;
   outline: none;
@@ -3611,6 +3624,72 @@ body:has(.login-page) .site-footer {
   font-size: 12px;
   letter-spacing: .12em;
   font-weight: 900;
+}
+
+.footer-callout > a.footer-partner-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: #D4317A;
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background .2s ease, transform .2s ease;
+}
+
+.footer-callout > a.footer-partner-btn:hover {
+  background: #e44a8f;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.partner-points {
+  display: grid;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.partner-points li {
+  padding: 16px 0 0;
+}
+
+.partner-points span {
+  display: block;
+  color: var(--primary);
+  font-size: 9px;
+  letter-spacing: .14em;
+  font-weight: 900;
+}
+
+.partner-points strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.partner-popup-done {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+}
+
+.partner-popup-done p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .footer-socials {
@@ -6664,6 +6743,30 @@ body:has(.login-page) .site-footer {
   border: 1px solid rgba(209, 190, 125, .3);
   border-radius: 12px;
   background: #3A2D61 center / cover no-repeat;
+}
+
+/* On the desktop board the draft videos grow with the fixtures column instead of staying a short 16:10 frame. */
+@media (min-width: 1181px) {
+  .board-grid>div {
+    align-content: stretch;
+    height: 100%;
+  }
+
+  .highlight-row {
+    height: 100%;
+  }
+
+  .highlight-row>* {
+    height: 100%;
+    align-content: stretch;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .highlight-row span {
+    aspect-ratio: auto;
+    height: 100%;
+    min-height: 140px;
+  }
 }
 
 .highlight-row span::after {

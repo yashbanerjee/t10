@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { readBrochureUrl } from "@/lib/partner-brochure";
 
 /** Settings that must never be sent to public pages. */
 export const PRIVATE_SETTING_KEYS = new Set(["storage", "smtp"]);
@@ -92,6 +93,12 @@ export function normalizeSiteSetting(key: string, value: unknown, previous?: unk
         password: parsed.data.password || (clearing ? "" : typeof prior.password === "string" ? prior.password : ""),
       },
     };
+  }
+  if (key === "partnerBrochure") {
+    if (value != null && typeof value !== "string") return { ok: false, message: "Partner brochure must be a site path or an http(s) URL." };
+    const url = readBrochureUrl(value);
+    if (typeof value === "string" && value.trim() && !url) return { ok: false, message: "Partner brochure must be a site path or an http(s) URL." };
+    return { ok: true, value: url };
   }
   if (key === "homepage") {
     const parsed = homepageSchema.safeParse(value ?? {});
