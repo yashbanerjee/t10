@@ -8,6 +8,7 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { ContestEntries, OptionEditor, OrderSummary, VariantEditor, type EntryRow, type OptionDraft, type OrderView, type VariantDraft } from "@/components/CatalogFields";
 import { adminSections, type Field } from "@/components/AdminWorkspace";
 import { flattenCareer } from "@/lib/career-record";
+import { flattenLinks } from "@/lib/player-links";
 import { describeIssues } from "@/lib/admin-validation";
 
 const inputDate = (value: unknown) => { if (!value) return ""; const date = new Date(String(value)); return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 16); };
@@ -89,7 +90,7 @@ export function AdminRecordForm({ section, recordId }: { section: string; record
         if (!response.ok) throw new Error(result.message || "Could not load this record.");
         if (!cancelled) {
           const item = result.data ?? {};
-          setForm(formFromRecord(section, definition.fields ?? [], section === "players" ? { ...item, ...flattenCareer(item.careerRecord) } : item));
+          setForm(formFromRecord(section, definition.fields ?? [], section === "players" ? { ...item, ...flattenCareer(item.careerRecord), ...flattenLinks(item.socialLinks) } : item));
           if (section === "products" && Array.isArray(item.variants)) setVariants(item.variants.map((variant: VariantDraft & { stock: number; price: number | null }) => ({ color: variant.color, size: variant.size, stock: String(variant.stock ?? 0), price: variant.price == null ? "" : String(variant.price), image: variant.image || "" })));
           if (section === "polls" && Array.isArray(item.options)) setOptions(item.options.map((option: OptionDraft) => ({ id: option.id, label: option.label })));
           if (section === "contests" && Array.isArray(item.entries)) setEntries(item.entries);

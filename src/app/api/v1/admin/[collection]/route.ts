@@ -5,6 +5,7 @@ import { getSession, hasPermission, recordAudit } from "@/lib/auth";
 import { failure, success } from "@/lib/api";
 import { normalizeSiteSetting, redactSettingRow, redactSettingValue } from "@/lib/site-settings";
 import { careerFromForm, careerRecordSchema } from "@/lib/career-record";
+import { linksFromForm } from "@/lib/player-links";
 import { personName, playerTextRules } from "@/lib/admin-validation";
 import { getHomeTeam, getTeams, opponentIdentity, setHomeTeam } from "@/lib/teams";
 import { getPointsTable } from "@/lib/data";
@@ -88,9 +89,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (collection === "players") {
       const incoming = body && typeof body === "object" && !Array.isArray(body) ? { ...body as Record<string, unknown> } : {};
       const career = careerFromForm(incoming); if (!career.ok) return failure(career.message, 400);
+      const links = linksFromForm(incoming); if (!links.ok) return failure(links.message, 400);
       const parsed = playerInput.safeParse({ ...incoming, careerRecord: career.value }); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
       const team = await getHomeTeam(); if (!team) return failure("Create our team in the Teams section before adding players", 409);
-      const { dateOfBirth, slug, displayOrder, careerRecord, ...playerFields } = parsed.data; result = await prisma.player.create({ data: { ...playerFields, careerRecord: careerRecord ?? undefined, dateOfBirth: dateOfBirth ? new Date(`${dateOfBirth}T00:00:00.000Z`) : null, displayOrder: displayOrder ?? 0, slug: slug ? slugify(slug) : slugify(parsed.data.fullName), teamId: team.id } });
+      const { dateOfBirth, slug, displayOrder, careerRecord, ...playerFields } = parsed.data; result = await prisma.player.create({ data: { ...playerFields, careerRecord: careerRecord ?? undefined, socialLinks: links.value ?? undefined, dateOfBirth: dateOfBirth ? new Date(`${dateOfBirth}T00:00:00.000Z`) : null, displayOrder: displayOrder ?? 0, slug: slug ? slugify(slug) : slugify(parsed.data.fullName), teamId: team.id } });
     } else if (collection === "staff") {
       const parsed = z.object({ fullName: z.string().trim().min(2).max(100), title: z.string().trim().min(2).max(100), category: z.enum(["COACHING", "SUPPORT", "MANAGEMENT"]), bio: z.string().trim().max(2500).nullable().optional(), profileImage: assetUrl, displayOrder: optionalInt(0, 9999), isActive: z.boolean().optional() }).safeParse(body);
       if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
