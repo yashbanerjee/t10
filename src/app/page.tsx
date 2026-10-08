@@ -39,7 +39,8 @@ export default async function HomePage() {
   const moments = gallery.filter((item) => item.isFeatured && item.type === "IMAGE").slice(0, 4);
   const kit = products.filter((product) => product.isFeatured).slice(0, 4);
   const heroImage = banner.mode === "image" && banner.image ? banner.image : "/images/stadium-hero.png";
-  const squad = players.slice(0, 4);
+  const meetOurTigers = ["fakhar-zaman", "faheem-ashraf", "azmatullah-omarzai", "nurul-hasan"];
+  const squad = meetOurTigers.flatMap((slug) => players.filter((player) => player.slug === slug));
   const cast = featuredPlayers([...players], banner);
   const upcoming = matches.find((match) => match.status === "UPCOMING" || match.status === "LIVE");
   const kickoff = upcoming ? when(upcoming.date) : null;
