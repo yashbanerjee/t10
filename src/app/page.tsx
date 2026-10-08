@@ -5,7 +5,6 @@ import { ArrowUpRight, Calendar, ChevronRight, CircleCheck, Clock, Facebook, Glo
 import { getGallery, getMatches, getPlayers, getPolls, getProducts, getPublicSettings, getSponsors, getUpdates } from "@/lib/data";
 import { LiveScore } from "@/components/LiveScore";
 import { LeagueMark } from "@/components/LeagueMark";
-import { NationSignup } from "@/components/NationSignup";
 import { PhotoFrame } from "@/components/PhotoFrame";
 import { VideoPoster } from "@/components/VideoPoster";
 import { teamLogo, teamShortName } from "@/lib/league";
@@ -126,8 +125,6 @@ export default async function HomePage() {
             <li><Globe size={16} aria-hidden="true" /><strong>30+</strong><span>T10 matches</span></li>
             <li><Clock size={16} aria-hidden="true" /><strong>90</strong><span>Minutes of thrill</span></li>
           </ul>
-          <p className="nation-join">JOIN THE TIGERS NATION</p>
-          <NationSignup />
         </article>
       </div>
     </section>
