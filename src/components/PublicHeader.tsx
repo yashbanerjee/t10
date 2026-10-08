@@ -3,9 +3,8 @@
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, Search, ShoppingBag, Ticket, X } from "lucide-react";
+import { Menu, Search, ShoppingBag, X } from "lucide-react";
 import { TeamMark } from "@/components/TeamMark";
-import { track } from "@/lib/analytics";
 import { useCart } from "@/components/CartProvider";
 
 const links = [
@@ -23,7 +22,6 @@ const links = [
 const searchPages = [
   ["Team", "/team"],
   ["Fixtures", "/fixtures"],
-  ["Tickets", "/tickets"],
   ["Stats centre", "/stats"],
   ["Records", "/records"],
   ["Shop", "/shop"],
@@ -73,7 +71,6 @@ export function PublicHeader() {
         <p className="header-slogan"><span>UNITED TIGERS</span><strong>Let’s Go Hunt</strong></p>
         <button className="header-icon" type="button" aria-label={searching ? "Close search" : "Search the site"} aria-expanded={searching} onClick={() => setSearching((value) => !value)}>{searching ? <X size={16} /> : <Search size={16} />}</button>
         <Link className="header-icon header-cart" href="/cart" aria-label={`Bag, ${cart.count} items`}><ShoppingBag size={16} />{cart.count > 0 && <b>{cart.count}</b>}</Link>
-        <Link className="header-tickets" href="/tickets" onClick={() => track("fixture_click", { href: "/tickets" })}><Ticket size={15} /> TICKETS</Link>
         <button className="menu-toggle" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
       </div>
     </div>
@@ -84,7 +81,6 @@ export function PublicHeader() {
     {open && <nav className="mobile-nav" aria-label="Mobile navigation">
       {links.map(([label, href], index) => <Link key={label} onClick={() => setOpen(false)} href={href}><span>0{index + 1}</span>{label}</Link>)}
       <Link className="mobile-match-link" onClick={() => setOpen(false)} href="/cart">BAG{cart.count > 0 ? ` (${cart.count})` : ""}</Link>
-      <Link className="mobile-match-link" onClick={() => setOpen(false)} href="/tickets">TICKETS</Link>
     </nav>}
   </header>;
 }

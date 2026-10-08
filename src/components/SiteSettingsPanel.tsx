@@ -6,17 +6,18 @@ import { Check } from "lucide-react";
 type SettingRow = { key: string; value: unknown };
 type StorageValue = { endpoint?: string; bucket?: string; region?: string; publicUrl?: string; hasAccessKey?: boolean; hasSecretKey?: boolean };
 type SmtpValue = { host?: string; port?: number; secure?: boolean; user?: string; fromEmail?: string; fromName?: string; adminEmail?: string; hasPassword?: boolean };
+type PlayerOption = { id: string; fullName: string; profileImage: string | null; isActive: boolean; isDemo: boolean };
 
+const FEATURED_PLAYER_LIMIT = 5;
 const empty = { siteUrl: "http://localhost:3000", livePollIntervalMs: "15000", endpoint: "", bucket: "", region: "auto", publicUrl: "", accessKey: "", secretKey: "" };
 const smtpEmpty = { host: "", port: "587", secure: false, user: "", password: "", fromEmail: "", fromName: "United Tigers", adminEmail: "" };
-const bannerEmpty = { mode: "static", title: "THE NEXT GAME", accent: "STARTS HERE", tagline: "BIGGER BOLDER TOGETHER", ctaLabel: "BACK OUR TIGERS", ctaHref: "/team", image: "", roar: "LET’S GO HUNT" };
-const ticketsEmpty = { url: "", label: "BUY TICKETS", note: "" };
+const bannerEmpty = { mode: "static", title: "THE NEXT GAME", accent: "STARTS HERE", tagline: "BIGGER BOLDER TOGETHER", ctaLabel: "BACK OUR TIGERS", ctaHref: "/team", image: "", roar: "LET’S GO HUNT", showPlayers: true, players: [] as string[] };
 
 export function SiteSettingsPanel() {
   const [form, setForm] = useState(empty);
   const [smtp, setSmtp] = useState(smtpEmpty);
   const [banner, setBanner] = useState(bannerEmpty);
-  const [tickets, setTickets] = useState(ticketsEmpty);
+  const [roster, setRoster] = useState<PlayerOption[]>([]);
   const [savedSecrets, setSavedSecrets] = useState({ access: false, secret: false, mail: false });
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -25,6 +26,11 @@ export function SiteSettingsPanel() {
   useEffect(() => {
     let active = true;
     void (async () => {
+      const playersResponse = await fetch("/api/v1/admin/players", { cache: "no-store" }).catch(() => null);
+      const playersResult = playersResponse ? await playersResponse.json().catch(() => null) : null;
+      if (active && playersResponse?.ok && Array.isArray(playersResult?.data)) {
+        setRoster((playersResult.data as Partial<PlayerOption>[]).filter((player) => typeof player.id === "string" && typeof player.fullName === "string").map((player) => ({ id: player.id!, fullName: player.fullName!, profileImage: typeof player.profileImage === "string" ? player.profileImage : null, isActive: player.isActive !== false, isDemo: player.isDemo === true })));
+      }
       const response = await fetch("/api/v1/admin/settings", { cache: "no-store" });
       const result = await response.json();
       if (!active || !response.ok || !Array.isArray(result.data)) return;
@@ -43,10 +49,9 @@ export function SiteSettingsPanel() {
         ctaHref: typeof savedBanner.ctaHref === "string" ? savedBanner.ctaHref : bannerEmpty.ctaHref,
         image: typeof savedBanner.image === "string" ? savedBanner.image : "",
         roar: typeof savedBanner.roar === "string" ? savedBanner.roar : bannerEmpty.roar,
+        showPlayers: savedBanner.showPlayers !== false,
+        players: Array.isArray(savedBanner.players) ? savedBanner.players.filter((id): id is string => typeof id === "string").slice(0, FEATURED_PLAYER_LIMIT) : [],
       });
-      const ticketRow = rows.find((row) => row.key === "tickets");
-      const savedTickets = ticketRow?.value && typeof ticketRow.value === "object" && !Array.isArray(ticketRow.value) ? ticketRow.value as Record<string, unknown> : {};
-      setTickets({ url: typeof savedTickets.url === "string" ? savedTickets.url : "", label: typeof savedTickets.label === "string" && savedTickets.label ? savedTickets.label : ticketsEmpty.label, note: typeof savedTickets.note === "string" ? savedTickets.note : "" });
       const mail = rows.find((row) => row.key === "smtp");
       const mailValue = mail?.value && typeof mail.value === "object" && !Array.isArray(mail.value) ? mail.value as SmtpValue : {};
       const storageValue = storage?.value && typeof storage.value === "object" ? storage.value as StorageValue : {};
@@ -79,6 +84,13 @@ export function SiteSettingsPanel() {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function togglePlayer(id: string, checked: boolean) {
+    setBanner((current) => ({ ...current, players: checked ? [...current.players.filter((entry) => entry !== id), id].slice(0, FEATURED_PLAYER_LIMIT) : current.players.filter((entry) => entry !== id) }));
+  }
+
+  const selectable = roster.filter((player) => player.isActive && !player.isDemo);
+  const limitReached = banner.players.length >= FEATURED_PLAYER_LIMIT;
+
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true); setError(""); setNotice("");
@@ -87,7 +99,6 @@ export function SiteSettingsPanel() {
       { key: "livePollIntervalMs", value: Number(form.livePollIntervalMs) },
       { key: "storage", value: { endpoint: form.endpoint.trim(), bucket: form.bucket.trim(), region: form.region.trim() || "auto", publicUrl: form.publicUrl.trim(), accessKey: form.accessKey, secretKey: form.secretKey } },
       { key: "homepage", value: banner },
-      { key: "tickets", value: { url: tickets.url.trim(), label: tickets.label.trim(), note: tickets.note.trim() } },
       { key: "smtp", value: { host: smtp.host.trim(), port: Number(smtp.port), secure: smtp.secure, user: smtp.user.trim(), password: smtp.password, fromEmail: smtp.fromEmail.trim(), fromName: smtp.fromName.trim(), adminEmail: smtp.adminEmail.trim() } },
     ];
     try {
@@ -134,13 +145,6 @@ export function SiteSettingsPanel() {
       <label className="admin-field"><span className="admin-field-label">Admin email</span><span className="admin-field-control"><input type="email" value={smtp.adminEmail} onChange={(event) => setSmtp((current) => ({ ...current, adminEmail: event.target.value }))} placeholder="info@vedha.ae" /></span><span className="admin-field-note">Receives contact, booking, vote and contest mail.</span></label>
       <label className="admin-field"><span className="admin-field-label">Use SSL</span><span className="admin-field-control"><input type="checkbox" checked={smtp.secure} onChange={(event) => setSmtp((current) => ({ ...current, secure: event.target.checked }))} /></span><span className="admin-field-note">Turn on for port 465.</span></label>
     </div>
-    <div className="admin-panel-header"><h2>Tickets</h2></div>
-    <p className="admin-storage-note">The Buy Tickets buttons on the match centre, homepage and header open this link. Leave it blank until sales open and fans see the tickets page with an on-sale-soon notice instead.</p>
-    <div className="admin-editor-grid">
-      <label className="admin-field"><span className="admin-field-label">Ticket link</span><span className="admin-field-control"><input value={tickets.url} onChange={(event) => setTickets((current) => ({ ...current, url: event.target.value }))} placeholder="https://tickets.example.com/united-tigers" /></span><span className="admin-field-note">The official ticket seller page, or a site path such as /contact.</span></label>
-      <label className="admin-field"><span className="admin-field-label">Button label</span><span className="admin-field-control"><input value={tickets.label} onChange={(event) => setTickets((current) => ({ ...current, label: event.target.value }))} maxLength={40} required /></span><span className="admin-field-note" /></label>
-      <label className="admin-field field-wide"><span className="admin-field-label">Ticket note</span><span className="admin-field-control"><input value={tickets.note} onChange={(event) => setTickets((current) => ({ ...current, note: event.target.value }))} maxLength={200} placeholder="Gates open 90 minutes before the first ball." /></span><span className="admin-field-note">Optional line shown under the button on the match centre and tickets page.</span></label>
-    </div>
     <div className="admin-panel-header"><h2>Homepage banner</h2></div>
     <p className="admin-storage-note">The homepage hero uses one wide picture as its background. The headline sits on the left. Upload a new image here to replace the built-in stadium.</p>
     <div className="admin-editor-grid">
@@ -165,6 +169,19 @@ export function SiteSettingsPanel() {
         setNotice("Banner image uploaded. Save site settings to publish it.");
       }} /></span><span className="admin-field-note" /></label>
     </div>
+    <div className="admin-panel-header"><h2>Featured players</h2></div>
+    <p className="admin-storage-note">The row of player photos beside the headline on the homepage, on every screen size. Turn it off to hide the row, or tick up to {FEATURED_PLAYER_LIMIT} players to choose who appears. With nobody ticked, the first {FEATURED_PLAYER_LIMIT} players with a photo are shown in squad order.</p>
+    <div className="admin-editor-grid">
+      <label className="admin-field"><span className="admin-field-label">Show featured players</span><span className="admin-field-control"><input type="checkbox" checked={banner.showPlayers} onChange={(event) => setBanner((current) => ({ ...current, showPlayers: event.target.checked }))} /></span><span className="admin-field-note">{banner.showPlayers ? "The row is visible on the homepage." : "The row is hidden on the homepage."}</span></label>
+    </div>
+    {selectable.length > 0 && <div className="admin-checks" aria-label="Featured players">
+      {selectable.map((player) => {
+        const checked = banner.players.includes(player.id);
+        const disabled = !banner.showPlayers || !player.profileImage || (!checked && limitReached);
+        return <label key={player.id} title={!player.profileImage ? "Add a profile photo to feature this player" : undefined}><input type="checkbox" checked={checked} disabled={disabled} onChange={(event) => togglePlayer(player.id, event.target.checked)} /><span>{player.fullName}{!player.profileImage ? " (no photo yet)" : ""}</span></label>;
+      })}
+    </div>}
+    <p className="admin-field-note">{banner.players.length ? `${banner.players.length} of ${FEATURED_PLAYER_LIMIT} chosen. Players appear in squad order; the middle one stands tallest.` : `Nobody chosen yet, so the first ${FEATURED_PLAYER_LIMIT} players with a photo are used.`}</p>
     <div className="admin-editor-actions"><button className="admin-primary-btn" type="submit" disabled={busy}>{busy ? "SAVING…" : "SAVE SITE SETTINGS"}</button></div>
   </form>;
 }

@@ -5,9 +5,7 @@ import { ArrowUpRight, Calendar, ChevronRight, CircleCheck, Clock, Globe, Instag
 import { getGallery, getMatches, getNews, getPlayers, getPolls, getProducts, getPublicSettings, getSponsors, getUpdates } from "@/lib/data";
 import { LiveScore } from "@/components/LiveScore";
 import { NationSignup } from "@/components/NationSignup";
-import { TicketButton } from "@/components/TicketButton";
-import { homepageDefaults, readHomepageBanner, readTickets } from "@/lib/site-settings";
-import { getLivePollIntervalMs } from "@/lib/site-settings";
+import { featuredPlayers, getLivePollIntervalMs, homepageDefaults, readHomepageBanner } from "@/lib/site-settings";
 
 export const metadata: Metadata = { title: "United Tigers | The Next Game Starts Here", description: "The official home of United Tigers. Fixtures, the squad, the vote and the Abu Dhabi T10." };
 
@@ -35,13 +33,12 @@ function playerForLabel(label: string, roster: { fullName: string; profileImage:
 export default async function HomePage() {
   const [players, matches, news, sponsors, settings, polls, pollIntervalMs, updates, gallery, products] = await Promise.all([getPlayers(), getMatches(), getNews(), getSponsors(), getPublicSettings(), getPolls(), getLivePollIntervalMs(), getUpdates(), getGallery(), getProducts()]);
   const banner = readHomepageBanner(settings.homepage ?? homepageDefaults);
-  const tickets = readTickets(settings.tickets);
   const daily = updates.filter((update) => !update.isDemo).slice(0, 3);
   const moments = gallery.filter((item) => item.isFeatured && item.type === "IMAGE").slice(0, 4);
   const kit = products.filter((product) => product.isFeatured).slice(0, 4);
   const heroImage = banner.mode === "image" && banner.image ? banner.image : "/images/stadium-hero.png";
   const squad = players.slice(0, 4);
-  const cast = players.filter((player) => player.profileImage).slice(0, 5);
+  const cast = featuredPlayers([...players], banner);
   const upcoming = matches.find((match) => match.status === "UPCOMING" || match.status === "LIVE");
   const kickoff = upcoming ? when(upcoming.date) : null;
   const poll = [...polls].sort((left, right) => right.options.filter((option) => playerForLabel(option.label, players)).length - left.options.filter((option) => playerForLabel(option.label, players)).length)[0] ?? polls[0];
@@ -64,7 +61,7 @@ export default async function HomePage() {
           <Link className="button button-orange" href={banner.ctaHref}>{banner.ctaLabel} <ArrowUpRight size={16} /></Link>
         </div>
         {cast.length > 0 && <div className="stage-cast">
-          {cast.map((player) => <span key={player.id}><Image src={player.profileImage!} alt="" fill sizes="200px" /></span>)}
+          {cast.map((player, index) => <span key={player.id} className={`rank-${Math.floor(Math.abs(index - (cast.length - 1) / 2))}`}><Image src={player.profileImage!} alt="" fill sizes="(max-width: 760px) 100px, 200px" /></span>)}
         </div>}
         {banner.roar ? <p className="stage-roar">{banner.roar}</p> : null}
       </div>
@@ -79,11 +76,11 @@ export default async function HomePage() {
             </div>
             <p className="match-meta"><Calendar size={12} aria-hidden="true" /> {kickoff.day} · {kickoff.time}<br /><MapPin size={12} aria-hidden="true" /> {upcoming.venue?.name ?? "Venue TBC"}</p>
             {upcoming.status === "LIVE" && <LiveScore slug={upcoming.slug} pollIntervalMs={pollIntervalMs} initial={{ status: upcoming.status, liveState: upcoming.liveState as never, innings: upcoming.innings.map((entry) => ({ runs: entry.runs, wickets: entry.wickets, overs: entry.overs.toString() })) }} />}
-            <TicketButton tickets={tickets} />
+            <Link className="button button-orange" href={`/matches/${upcoming.slug}`}>MATCH CENTRE <ArrowUpRight size={16} aria-hidden="true" /></Link>
           </> : <>
             <div className="crest-row"><div><b className="has-crest"><Image src="/brand/tiger-gold.png" alt="" width={822} height={688} /></b><strong>United Tigers</strong><em>Abu Dhabi</em></div><span>VS</span><div><b>T10</b><strong>The field</strong><em>Abu Dhabi</em></div></div>
             <p className="dash-empty">The next fixture will appear here as soon as it is confirmed.</p>
-            <TicketButton tickets={tickets} />
+            <Link className="button button-orange" href="/fixtures">ALL FIXTURES <ArrowUpRight size={16} aria-hidden="true" /></Link>
           </>}
         </article>
 

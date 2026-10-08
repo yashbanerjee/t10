@@ -93,13 +93,6 @@ export function normalizeSiteSetting(key: string, value: unknown, previous?: unk
       },
     };
   }
-  if (key === "tickets") {
-    const parsed = ticketsSchema.safeParse(value ?? {});
-    if (!parsed.success) return { ok: false, message: "Ticket settings are invalid." };
-    const url = parsed.data.url.trim();
-    if (url && !/^https?:\/\//.test(url) && !url.startsWith("/")) return { ok: false, message: "Ticket link must start with / or be an http(s) URL." };
-    return { ok: true, value: { url, label: parsed.data.label.trim() || ticketsDefaults.label, note: parsed.data.note.trim() } };
-  }
   if (key === "homepage") {
     const parsed = homepageSchema.safeParse(value ?? {});
     if (!parsed.success) return { ok: false, message: "Homepage banner settings are invalid." };
@@ -107,10 +100,12 @@ export function normalizeSiteSetting(key: string, value: unknown, previous?: unk
     if (parsed.data.image.trim() && !image) return { ok: false, message: "Banner image must be a site path or an http(s) URL." };
     const href = parsed.data.ctaHref.trim() || "/team";
     if (!href.startsWith("/") && !/^https?:\/\//.test(href)) return { ok: false, message: "Banner button link must start with / or be an http(s) URL." };
-    return { ok: true, value: { ...parsed.data, image, ctaHref: href, mode: parsed.data.mode === "image" && image ? "image" : parsed.data.mode === "image" ? "static" : parsed.data.mode } };
+    return { ok: true, value: { ...parsed.data, image, ctaHref: href, players: uniquePlayers(parsed.data.players), mode: parsed.data.mode === "image" && image ? "image" : parsed.data.mode === "image" ? "static" : parsed.data.mode } };
   }
   return { ok: true, value };
 }
+
+export const FEATURED_PLAYER_LIMIT = 5;
 
 const homepageSchema = z.object({
   mode: z.enum(["static", "image"]).default("static"),
@@ -121,6 +116,10 @@ const homepageSchema = z.object({
   ctaHref: z.string().trim().max(300).default("/team"),
   image: z.string().trim().max(500).default(""),
   roar: z.string().trim().max(40).default("LET’S GO HUNT"),
+  /** Show the featured-player strip beside the headline. */
+  showPlayers: z.boolean().default(true),
+  /** Player ids chosen for the strip, in squad order. Empty means the first five players with a photo. */
+  players: z.array(z.string().trim().min(1).max(120)).max(FEATURED_PLAYER_LIMIT).default([]),
 });
 
 export type HomepageBanner = z.infer<typeof homepageSchema>;
@@ -134,7 +133,21 @@ export const homepageDefaults: HomepageBanner = {
   ctaHref: "/team",
   image: "",
   roar: "LET’S GO HUNT",
+  showPlayers: true,
+  players: [],
 };
+
+function uniquePlayers(ids: string[]) {
+  return [...new Set(ids)].slice(0, FEATURED_PLAYER_LIMIT);
+}
+
+/** Players shown in the homepage hero strip: the admin's picks, or the first five with a photo when nothing is picked. */
+export function featuredPlayers<T extends { id: string; profileImage: string | null }>(players: T[], banner: Pick<HomepageBanner, "showPlayers" | "players">) {
+  if (!banner.showPlayers) return [];
+  const withPhoto = players.filter((player) => player.profileImage);
+  const picked = withPhoto.filter((player) => banner.players.includes(player.id));
+  return (picked.length ? picked : withPhoto).slice(0, FEATURED_PLAYER_LIMIT);
+}
 
 function safeAsset(value: string) {
   const trimmed = value.trim();
@@ -143,38 +156,11 @@ function safeAsset(value: string) {
   return "";
 }
 
-const ticketsSchema = z.object({
-  url: z.string().trim().max(500).default(""),
-  label: z.string().trim().max(40).default("BUY TICKETS"),
-  note: z.string().trim().max(200).default(""),
-});
-
-export type TicketSettings = z.infer<typeof ticketsSchema>;
-
-export const ticketsDefaults: TicketSettings = { url: "", label: "BUY TICKETS", note: "" };
-
-/** Ticket link shown on the match centre, homepage and header. An empty URL sends fans to the /tickets page. */
-export function readTickets(value: unknown): TicketSettings {
-  const parsed = ticketsSchema.safeParse(value ?? {});
-  if (!parsed.success) return ticketsDefaults;
-  const url = parsed.data.url.trim();
-  return { url: /^https?:\/\//.test(url) || url.startsWith("/") ? url : "", label: parsed.data.label.trim() || ticketsDefaults.label, note: parsed.data.note.trim() };
-}
-
-export async function getTicketSettings() {
-  try {
-    const row = await prisma.siteSetting.findUnique({ where: { key: "tickets" } });
-    return readTickets(row?.value);
-  } catch {
-    return ticketsDefaults;
-  }
-}
-
 export function readHomepageBanner(value: unknown): HomepageBanner {
   const parsed = homepageSchema.safeParse(value ?? {});
   if (!parsed.success) return homepageDefaults;
   const image = safeAsset(parsed.data.image);
-  return { ...homepageDefaults, ...parsed.data, image, mode: parsed.data.mode === "image" && image ? "image" : "static" };
+  return { ...homepageDefaults, ...parsed.data, image, players: uniquePlayers(parsed.data.players), mode: parsed.data.mode === "image" && image ? "image" : "static" };
 }
 
 const smtpSchema = z.object({
@@ -201,6 +187,8 @@ export function redactSettingValue(key: string, value: unknown) {
     const { password, ...rest } = source;
     return { ...rest, hasPassword: Boolean(password) };
   }
+  // The admin form shows exactly what the homepage renders, so saving never changes copy by surprise.
+  if (key === "homepage") return readHomepageBanner(value);
   return value;
 }
 
