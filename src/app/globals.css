@@ -5520,6 +5520,184 @@ body:has(.login-page) .site-footer {
   }
 }
 
+/* Scroll reveal. Uses the individual translate/scale properties so hover transforms keep working. */
+html.motion-ready main .is-revealed {
+  animation: motion-rise .85s cubic-bezier(.2, .75, .25, 1) var(--reveal-delay, 0ms) both;
+}
+
+html.motion-ready main :is(.franchise-grid, .partner-grid, .product-grid, .gallery-grid, .moment-grid, .kit-row, .player-grid)>.is-revealed {
+  animation-name: motion-pop;
+}
+
+@keyframes motion-rise {
+  from {
+    opacity: 0;
+    translate: 0 34px;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes motion-pop {
+  from {
+    opacity: 0;
+    translate: 0 26px;
+    scale: .94;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@keyframes motion-fallback {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Ambient motion. */
+.eyebrow-dot {
+  animation: dot-pulse 2.4s ease-out infinite;
+}
+
+@keyframes dot-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(212, 49, 122, .65);
+  }
+
+  70%,
+  100% {
+    box-shadow: 0 0 0 7px rgba(212, 49, 122, 0);
+  }
+}
+
+:where(.button) {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .35) 50%, transparent 70%);
+  translate: -120% 0;
+  transition: translate .7s ease;
+  pointer-events: none;
+}
+
+.button:hover::after {
+  translate: 120% 0;
+}
+
+.stage-tiger {
+  animation: tiger-breathe 7s ease-in-out infinite;
+}
+
+@keyframes tiger-breathe {
+
+  0%,
+  100% {
+    opacity: .16;
+    scale: 1;
+  }
+
+  50% {
+    opacity: .28;
+    scale: 1.04;
+  }
+}
+
+.stage-glow {
+  animation: glow-drift 9s ease-in-out infinite alternate;
+}
+
+@keyframes glow-drift {
+  from {
+    opacity: .8;
+    translate: -2% 0;
+  }
+
+  to {
+    opacity: 1;
+    translate: 2% -1%;
+  }
+}
+
+.stage-cast span {
+  animation: cast-rise .9s cubic-bezier(.2, .75, .25, 1) both, cast-float 6s ease-in-out infinite;
+  animation-delay: calc(.35s + var(--cast-i, 0) * .12s), calc(1.4s + var(--cast-i, 0) * .6s);
+}
+
+.stage-cast span:nth-child(2) {
+  --cast-i: 1;
+}
+
+.stage-cast span:nth-child(3) {
+  --cast-i: 2;
+}
+
+.stage-cast span:nth-child(4) {
+  --cast-i: 3;
+}
+
+.stage-cast span:nth-child(5) {
+  --cast-i: 4;
+}
+
+@keyframes cast-rise {
+  from {
+    opacity: 0;
+    translate: 0 60px;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes cast-float {
+
+  0%,
+  100% {
+    translate: 0 0;
+  }
+
+  50% {
+    translate: 0 -8px;
+  }
+}
+
+.board-head h2 {
+  position: relative;
+}
+
+.board-head h2::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #E6DAA9, #D4317A);
+  transition: width .9s cubic-bezier(.2, .75, .25, 1) .25s;
+}
+
+html:not(.motion-ready) .board-head h2::after,
+.board-head.is-revealed h2::after {
+  width: 44px;
+}
+
 @media (prefers-reduced-motion: reduce) {
 
   *,

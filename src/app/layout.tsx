@@ -7,6 +7,8 @@ import { CartProvider } from "@/components/CartProvider";
 import { theme } from "@/config/theme";
 import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 import { getSiteUrl } from "@/lib/site-settings";
+import { MotionLayer } from "@/components/MotionLayer";
+import { motionBootScript, motionCss } from "@/lib/motion";
 
 // Both families ship as single-weight faces, so each is declared across the full weight range
 // and the browser never synthesises a smeared faux bold on top of them.
@@ -41,6 +43,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en" className={`${colosseon.variable} ${fulham.variable}`} style={theme as unknown as React.CSSProperties}><body><a className="skip-link" href="#main">Skip to content</a><AnalyticsProvider /><CartProvider><PublicHeader /><main id="main">{children}</main><PublicFooter /></CartProvider></body></html>;
+  return <html lang="en" className={`${colosseon.variable} ${fulham.variable}`} style={theme as unknown as React.CSSProperties} suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: motionBootScript }} /><style dangerouslySetInnerHTML={{ __html: motionCss }} /></head><body><a className="skip-link" href="#main">Skip to content</a><AnalyticsProvider /><MotionLayer /><CartProvider><PublicHeader /><main id="main">{children}</main><PublicFooter /></CartProvider></body></html>;
 }
 
