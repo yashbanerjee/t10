@@ -33,22 +33,28 @@ class HomePage extends StatelessWidget {
         ];
         final poll = api.featuredPoll;
         final featuredKit = catalog.products.where((product) => product.isFeatured).toList();
-        final kit = (featuredKit.isEmpty ? catalog.products : featuredKit).take(3);
-        final photos = catalog.gallery.where((item) => !item.isVideo).toList();
-        final featuredPhotos = photos.where((item) => item.isFeatured).toList();
-        final gallery = (featuredPhotos.isEmpty ? photos : featuredPhotos).take(6).toList();
-        final highlights = [
-          ...catalog.news.where((story) => story.isFeatured),
-          ...catalog.news.where((story) => !story.isFeatured),
-        ].take(3);
+        final kit = (featuredKit.isEmpty ? catalog.products : featuredKit).take(4);
+        const tigerOrder = ['fakhar-zaman', 'faheem-ashraf', 'azmatullah-omarzai', 'nurul-hasan'];
+        final squad = [
+          for (final slug in tigerOrder) ...catalog.players.where((player) => player.slug == slug),
+        ];
+        final roster = squad.isEmpty ? catalog.players.take(4).toList() : squad;
+        final pastMatches = catalog.gallery.where((item) => (item.category ?? '').toLowerCase().contains('past match')).toList();
+        final pastPhotos = pastMatches.where((item) => !item.isVideo).toList();
+        final clips = [...pastMatches.where((item) => item.isVideo), ...pastPhotos].take(3).toList();
+        final shown = clips.map((item) => item.mediaUrl).toSet();
+        final moments = pastPhotos.where((item) => !shown.contains(item.mediaUrl)).take(4).toList();
 
         return Scaffold(
           body: RefreshIndicator(
             onRefresh: api.refresh,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
               children: [
-                HomeHero(banner: api.banner),
+                Transform.translate(
+                  offset: const Offset(-16, 0),
+                  child: SizedBox(width: MediaQuery.sizeOf(context).width, child: HomeHero(banner: api.banner)),
+                ),
                 const SectionTitle('NEXT MATCH'),
                 if (upcoming == null)
                   const ClubCard(child: Text('The next fixture will appear here as soon as it is confirmed.'))
@@ -59,10 +65,10 @@ class HomePage extends StatelessWidget {
                   height: 214,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
-                    itemCount: catalog.players.take(4).length,
+                    itemCount: roster.length,
                     separatorBuilder: (_, _) => const SizedBox(width: 10),
                     itemBuilder: (context, index) {
-                      final player = catalog.players[index];
+                      final player = roster[index];
                       final name = _splitName(player.fullName);
                       return GestureDetector(
                         onTap: () => openPlayer(context, player),
@@ -74,7 +80,7 @@ class HomePage extends StatelessWidget {
                               children: [
                                 RemoteImage(api.media(player.profileImage), height: 88, radius: 40),
                                 const SizedBox(height: 8),
-                                Text('${player.jerseyNumber ?? 'UT'}', style: const TextStyle(color: gold, fontWeight: FontWeight.w800)),
+                                GoldText('${player.jerseyNumber ?? 'UT'}', style: const TextStyle(fontWeight: FontWeight.w800)),
                                 Text(name.$1, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: Colors.white70)),
                                 Text(name.$2, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
                               ],
@@ -124,30 +130,47 @@ class HomePage extends StatelessWidget {
                   child: Column(
                     children: [
                       Row(children: [Expanded(child: _Stat(Icons.groups_outlined, '30K+', 'Fans worldwide')), Expanded(child: _Stat(Icons.shield_outlined, '6', 'Franchise teams'))]),
-                      Row(children: [Expanded(child: _Stat(Icons.public, '30+', 'T10 nations')), Expanded(child: _Stat(Icons.timer_outlined, '90', 'Minutes of thrill'))]),
+                      Row(children: [Expanded(child: _Stat(Icons.public, '30+', 'T10 matches')), Expanded(child: _Stat(Icons.timer_outlined, '90', 'Minutes of thrill'))]),
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
-                const NationSignup(),
-                SectionTitle('LATEST HIGHLIGHTS', action: 'View all', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewsPage()))),
-                ...highlights.map(
-                  (story) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: ClubCard(
-                      onTap: () => openStory(context, story),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          RemoteImage(api.media(story.coverImage)),
-                          const SizedBox(height: 8),
-                          Text(story.category ?? '', style: const TextStyle(color: gold, fontSize: 11)),
-                          Text(story.title, style: const TextStyle(fontWeight: FontWeight.w800)),
-                        ],
-                      ),
+                if (clips.isNotEmpty) ...[
+                  SectionTitle('PAST MATCHES', action: 'View all', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GalleryPage()))),
+                  SizedBox(
+                    height: 168,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: clips.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 10),
+                      itemBuilder: (context, index) {
+                        final item = clips[index];
+                        return SizedBox(
+                          width: index == 0 ? 260 : 150,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      RemoteImage(api.media(item.isVideo ? null : item.mediaUrl), height: 140, radius: 0),
+                                      if (item.isVideo) const Center(child: Icon(Icons.play_circle_fill, color: goldLight, size: 36)),
+                                      Positioned(left: 8, bottom: 8, child: MediaBadge(label: item.isVideo ? 'VIDEO' : 'PHOTO')),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700)),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ),
-                ),
+                ],
                 SectionTitle('FIXTURES & RESULTS', action: 'View all', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FixturesPage()))),
                 ...listed.map(
                   (match) => Padding(
@@ -155,7 +178,28 @@ class HomePage extends StatelessWidget {
                     child: ClubCard(onTap: () => openMatch(context, match), child: _FixtureRow(match: match)),
                   ),
                 ),
-                SectionTitle('FEATURED KIT', action: 'Shop all', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ShopPage()))),
+                if (moments.isNotEmpty)
+                  SectionTitle('FEATURED MOMENTS', action: 'Gallery', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GalleryPage()))),
+                if (moments.isNotEmpty)
+                  SizedBox(
+                    height: 120,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: moments.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 8),
+                      itemBuilder: (context, index) => SizedBox(
+                        width: 160,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            RemoteImage(api.media(moments[index].mediaUrl), height: 120),
+                            Positioned(left: 8, bottom: 8, child: MediaBadge(label: moments[index].isVideo ? 'VIDEO' : 'PHOTO')),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                SectionTitle('OFFICIAL KIT', action: 'Shop all', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ShopPage()))),
                 ...kit.map(
                   (product) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
@@ -177,16 +221,6 @@ class HomePage extends StatelessWidget {
                         ],
                       ),
                     ),
-                  ),
-                ),
-                SectionTitle('IN THE FRAME', action: 'Gallery', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GalleryPage()))),
-                SizedBox(
-                  height: 120,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: gallery.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 8),
-                    itemBuilder: (context, index) => SizedBox(width: 160, child: RemoteImage(api.media(gallery[index].mediaUrl), height: 120)),
                   ),
                 ),
                 if (catalog.updates.isNotEmpty) ...[
@@ -225,15 +259,18 @@ class HomePage extends StatelessWidget {
                 ],
                 const SectionTitle('STAY CONNECTED'),
                 ClubCard(
-                  onTap: () => openExternal('https://www.instagram.com/unitedtigers.ae/'),
-                  child: const Column(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('#UnitedTigers', style: TextStyle(color: gold, fontWeight: FontWeight.w800)),
-                      SizedBox(height: 4),
-                      Text('Once a Tiger always a Tiger'),
-                      SizedBox(height: 8),
-                      Text('INSTAGRAM', style: TextStyle(color: orange, fontWeight: FontWeight.w800)),
+                      Row(
+                        children: [
+                          IconButton(onPressed: () => openExternal('https://www.facebook.com/share/1Bxhkk4L97/?mibextid=wwXIfr'), icon: const Icon(Icons.facebook), color: const Color(0xFF1877F2)),
+                          IconButton(onPressed: () => openExternal('https://www.instagram.com/unitedtigers.ae'), icon: const Icon(Icons.camera_alt_outlined), color: pink),
+                        ],
+                      ),
+                      const GoldText('#LetsGoHunt', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1)),
+                      const SizedBox(height: 4),
+                      const Text('Once a Tiger always a Tiger'),
                     ],
                   ),
                 ),
@@ -261,32 +298,140 @@ class HomeHero extends StatelessWidget {
   const HomeHero({super.key, required this.banner});
   final HomeBanner banner;
 
+  static const _cast = [
+    '/images/hero-cast/01-neon-champion.webp',
+    '/images/hero-cast/02-cricketer.webp',
+    '/images/hero-cast/03-neon-portrait.webp',
+    '/images/hero-cast/04-cricket-star.webp',
+    '/images/hero-cast/05-confident.webp',
+  ];
+
   @override
   Widget build(BuildContext context) {
     final api = ClubScope.of(context).api;
-    final lines = banner.titleLines;
-    return Padding(
-      padding: const EdgeInsets.only(top: 28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (banner.isImage) ...[
-            RemoteImage(api.media(banner.image), height: 180, radius: 18),
-            const SizedBox(height: 14),
+    final art = banner.isImage ? api.media(banner.image) : api.media('/images/hero-art.webp');
+    final title = const TextStyle(fontSize: 32, height: 0.94, fontWeight: FontWeight.w800);
+    return GestureDetector(
+      onTap: () => openClubPath(context, banner.ctaHref),
+      child: SizedBox(
+        height: 460,
+        width: double.infinity,
+        child: Stack(
+          clipBehavior: Clip.hardEdge,
+          fit: StackFit.expand,
+          children: [
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 543,
+              child: Image.network(
+                art,
+                height: 543,
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
+                errorBuilder: (_, _, _) => const ColoredBox(color: page),
+              ),
+            ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Colors.transparent, Color(0xCC120318)],
+                  stops: [0, 0.55, 1],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const GoldText('ABU DHABI T10', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.4)),
+                  const SizedBox(height: 8),
+                  GoldText(banner.title, style: title),
+                  GoldText(banner.accent, style: title),
+                  const SizedBox(height: 8),
+                  Text(banner.tagline, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.6)),
+                  const SizedBox(height: 10),
+                  const GoldText('United', style: TextStyle(fontSize: 28, fontStyle: FontStyle.italic, fontWeight: FontWeight.w800, height: 0.95)),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 28),
+                    child: GoldText('AS ONE', style: TextStyle(fontSize: 15, fontStyle: FontStyle.italic, fontWeight: FontWeight.w800)),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              top: 124,
+              right: 10,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  for (final word in banner.roar.split(RegExp(r'\s+')))
+                    if (word.isNotEmpty) GoldText(word, style: const TextStyle(fontSize: 22, fontStyle: FontStyle.italic, fontWeight: FontWeight.w800, height: 0.9)),
+                ],
+              ),
+            ),
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: 96,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.network(api.media('/brand/tiger-gold.png'), width: 42, height: 36, errorBuilder: (_, _, _) => const SizedBox(width: 42, height: 36)),
+                  const SizedBox(width: 8),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      GoldText('UNITED TIGERS', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, height: 1)),
+                      GoldText('ABU DHABI', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 2.4)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (banner.showPlayers)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 8,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    for (var index = 0; index < _cast.length; index++)
+                      _Arch(url: api.media(_cast[index]), height: index == 2 ? 72 : index == 1 || index == 3 ? 60 : 50),
+                  ],
+                ),
+              ),
           ],
-          const Text('ABU DHABI T10', style: TextStyle(color: orange, fontWeight: FontWeight.w800, letterSpacing: 1.6, fontSize: 12)),
-          const SizedBox(height: 8),
-          if (lines[0].isNotEmpty) Text(lines[0], style: const TextStyle(fontSize: 40, height: 0.92, fontWeight: FontWeight.w800)),
-          if (lines[1].isNotEmpty) Text(lines[1], style: const TextStyle(fontSize: 40, height: 0.92, fontWeight: FontWeight.w800)),
-          Text(banner.accent, style: const TextStyle(fontSize: 40, height: 0.92, fontWeight: FontWeight.w800, color: gold)),
-          const SizedBox(height: 8),
-          Text(banner.tagline, style: const TextStyle(letterSpacing: 1.4, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 6),
-          Text(banner.roar, style: const TextStyle(color: gold, fontWeight: FontWeight.w800, letterSpacing: 2)),
-          const SizedBox(height: 16),
-          FilledButton(onPressed: () => openClubPath(context, banner.ctaHref), child: Text(banner.ctaLabel)),
-        ],
+        ),
       ),
+    );
+  }
+}
+
+class _Arch extends StatelessWidget {
+  const _Arch({required this.url, required this.height});
+  final String url;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 38,
+      height: height,
+      margin: const EdgeInsets.only(left: 4),
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24), bottom: Radius.circular(8)),
+        border: Border.all(color: const Color(0xFFEEC873), width: 1.4),
+        gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFFFF7DBE), Color(0xFFC9177E), Color(0xFF6E2660)]),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Image.network(url, fit: BoxFit.cover, alignment: const Alignment(0, -0.2), errorBuilder: (_, _, _) => const SizedBox.shrink()),
     );
   }
 }
@@ -444,56 +589,3 @@ class _FixtureRow extends StatelessWidget {
   }
 }
 
-class NationSignup extends StatefulWidget {
-  const NationSignup({super.key});
-
-  @override
-  State<NationSignup> createState() => _NationSignupState();
-}
-
-class _NationSignupState extends State<NationSignup> {
-  final email = TextEditingController();
-  bool busy = false;
-
-  @override
-  void dispose() {
-    email.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ClubCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('JOIN THE TIGERS NATION', style: TextStyle(fontWeight: FontWeight.w800)),
-          const SizedBox(height: 10),
-          ClubField(label: 'Email address', controller: email, email: true),
-          FilledButton(
-            onPressed: busy ? null : _submit,
-            child: Text(busy ? 'SENDING…' : 'SIGN UP'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _submit() async {
-    setState(() => busy = true);
-    try {
-      final message = await ClubScope.of(context).api.sendContact({
-        'name': 'Tigers Nation',
-        'email': email.text.trim(),
-        'subject': 'Tigers Nation signup',
-        'message': 'Please add this email to Tigers Nation updates.',
-      });
-      if (mounted) await showClubMessage(context, message);
-      email.clear();
-    } catch (reason) {
-      if (mounted) await showClubMessage(context, '$reason'.replaceFirst('Exception: ', ''));
-    } finally {
-      if (mounted) setState(() => busy = false);
-    }
-  }
-}

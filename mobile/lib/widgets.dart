@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-const night = Color(0xFF0B0016);
-const purple = Color(0xFF21003E);
-const glow = Color(0xFF4D087F);
-const gold = Color(0xFFE8B53A);
-const orange = Color(0xFFFF6A14);
+const night = Color(0xFF1C0432);
+const page = Color(0xFF390966);
+const purple = Color(0xFF2B074D);
+const glow = Color(0xFF460B7D);
+const gold = Color(0xFFD2A95A);
+const goldLight = Color(0xFFF4DB96);
+const pink = Color(0xFFC9177E);
+const orange = pink;
+
+const goldColors = [Color(0xFFFFE8AC), Color(0xFFEEC873), Color(0xFFD2A95A), Color(0xFFAC884A)];
 
 class ClubAtmosphere extends StatelessWidget {
   const ClubAtmosphere({super.key, required this.child});
@@ -18,7 +23,7 @@ class ClubAtmosphere extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF4D087F), Color(0xFF21003E), Color(0xFF0B0016)],
+          colors: [Color(0xFF3D096D), Color(0xFF390966), Color(0xFF35085E)],
           stops: [0, 0.34, 1],
         ),
       ),
@@ -37,19 +42,19 @@ class ClubCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         child: Ink(
           width: double.infinity,
           padding: padding,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(12),
             gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xD921003E), Color(0xF20B0016)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFF2F0755), Color(0xFF260644)],
             ),
             border: Border.all(color: gold.withValues(alpha: 0.28)),
           ),
@@ -77,6 +82,41 @@ class SectionTitle extends StatelessWidget {
           if (action != null) TextButton(onPressed: onAction, child: Text(action!, style: const TextStyle(color: gold, fontWeight: FontWeight.w800))),
         ],
       ),
+    );
+  }
+}
+
+class GoldText extends StatelessWidget {
+  const GoldText(this.text, {super.key, required this.style, this.textAlign});
+  final String text;
+  final TextStyle style;
+  final TextAlign? textAlign;
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderMask(
+      shaderCallback: (bounds) => const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: goldColors).createShader(bounds),
+      child: Text(text, textAlign: textAlign, style: style.copyWith(color: Colors.white)),
+    );
+  }
+}
+
+class MediaBadge extends StatelessWidget {
+  const MediaBadge({super.key, required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 21,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: const Color(0xE62B074D),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: gold.withValues(alpha: 0.4)),
+      ),
+      child: Text(label, style: const TextStyle(color: goldLight, fontSize: 11, fontWeight: FontWeight.w800, height: 1, letterSpacing: 0.8)),
     );
   }
 }

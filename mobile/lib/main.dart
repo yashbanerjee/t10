@@ -47,7 +47,7 @@ class _UnitedTigersAppState extends State<UnitedTigersApp> {
           iconTheme: const IconThemeData(color: gold),
           appBarTheme: const AppBarTheme(backgroundColor: Colors.transparent, foregroundColor: Colors.white, elevation: 0, centerTitle: false),
           navigationBarTheme: NavigationBarThemeData(
-            backgroundColor: const Color(0xF20B0016),
+            backgroundColor: const Color(0xF21C0432),
             indicatorColor: glow,
             labelTextStyle: WidgetStateProperty.resolveWith((states) {
               final selected = states.contains(WidgetState.selected);

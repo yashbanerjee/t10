@@ -522,6 +522,7 @@ class HomeBanner {
     required this.ctaHref,
     required this.image,
     required this.roar,
+    this.showPlayers = true,
   });
 
   final String mode;
@@ -532,6 +533,7 @@ class HomeBanner {
   final String ctaHref;
   final String image;
   final String roar;
+  final bool showPlayers;
 
   bool get isImage => mode == 'image' && image.isNotEmpty;
 
@@ -549,7 +551,7 @@ class HomeBanner {
     ctaLabel: 'BACK OUR TIGERS',
     ctaHref: '/team',
     image: '',
-    roar: 'UNITED TIGERS',
+    roar: "LET'S GO HUNT",
   );
 
   factory HomeBanner.fromJson(dynamic value) {
@@ -564,6 +566,7 @@ class HomeBanner {
       ctaHref: asText(json['ctaHref']) ?? fallback.ctaHref,
       image: asText(json['image']) ?? '',
       roar: asText(json['roar']) ?? fallback.roar,
+      showPlayers: json['showPlayers'] == false ? false : true,
     );
   }
 }
