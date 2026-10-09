@@ -24,7 +24,7 @@ export function VariantEditor({ rows, onChange }: { rows: VariantDraft[]; onChan
       <input aria-label="Size" placeholder="Size" required value={row.size} onChange={(event) => onChange(rows.map((item, itemIndex) => itemIndex === index ? { ...item, size: event.target.value } : item))} />
       <input aria-label="Stock" placeholder="Stock" type="number" min={0} required value={row.stock} onChange={(event) => onChange(rows.map((item, itemIndex) => itemIndex === index ? { ...item, stock: event.target.value } : item))} />
       <input aria-label="Variant price" placeholder="Price" type="number" min={0} step="0.01" value={row.price} onChange={(event) => onChange(rows.map((item, itemIndex) => itemIndex === index ? { ...item, price: event.target.value } : item))} />
-      <label className="variant-file">{row.image ? "Image added" : "Image"}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void upload(index, event.currentTarget.files?.[0]).catch(() => undefined)} /></label>
+      <label className={`variant-file${row.image ? " has-image" : ""}`}>{row.image ? <img src={row.image} alt="" /> : "Image"}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void upload(index, event.currentTarget.files?.[0]).catch(() => undefined)} /></label>
       <button type="button" aria-label="Remove variant" disabled={rows.length === 1} onClick={() => onChange(rows.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={14} /></button>
     </div>)}
   </div>;

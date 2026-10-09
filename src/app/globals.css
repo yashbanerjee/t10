@@ -4353,6 +4353,17 @@ body:has(.login-page) .site-footer {
   padding-right: 28px;
 }
 
+.admin-upload-preview {
+  display: block;
+  width: 96px;
+  height: 72px;
+  margin-bottom: 6px;
+  object-fit: cover;
+  border: 1px solid #DFE1E6;
+  border-radius: 4px;
+  background: #F4F5F7;
+}
+
 .admin-field-note,
 .admin-editor-grid>label>small {
   min-height: 16px;
@@ -5847,6 +5858,16 @@ body:has(.login-page) .site-footer {
   position: relative;
   overflow: hidden;
   font-size: 14px;
+}
+
+.variant-file.has-image {
+  padding: 0;
+}
+
+.variant-file img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .variant-file input {
@@ -8170,6 +8191,25 @@ body:has(.login-page) .site-footer {
   .mini-squad a {
     flex: 1 0 136px;
     scroll-snap-align: start;
+    grid-template-rows: auto 14px auto auto auto;
+  }
+
+  .mini-squad b {
+    grid-row: 3 / span 2;
+  }
+
+  .mini-squad small {
+    grid-row: 3;
+    margin-top: 0;
+  }
+
+  .mini-squad strong {
+    grid-row: 4;
+  }
+
+  .mini-squad em {
+    grid-row: 5;
+    margin-top: 2px;
   }
 
   .mini-squad a:last-child {
