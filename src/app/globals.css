@@ -5522,37 +5522,163 @@ body:has(.login-page) .site-footer {
 
 /* Scroll reveal. Uses the individual translate/scale properties so hover transforms keep working. */
 html.motion-ready main .is-revealed {
-  animation: motion-rise .85s cubic-bezier(.2, .75, .25, 1) var(--reveal-delay, 0ms) both;
+  animation: motion-rise 1s cubic-bezier(.16, 1, .3, 1) var(--reveal-delay, 0ms) backwards;
 }
 
-html.motion-ready main :is(.franchise-grid, .partner-grid, .product-grid, .gallery-grid, .moment-grid, .kit-row, .player-grid)>.is-revealed {
-  animation-name: motion-pop;
+html.motion-ready main .is-revealed[data-motion="slide"] {
+  animation-name: motion-slide;
+}
+
+html.motion-ready main .is-revealed[data-motion="left"] {
+  animation-name: motion-left;
+  animation-duration: 1.1s;
+}
+
+html.motion-ready main .is-revealed[data-motion="right"] {
+  animation-name: motion-right;
+  animation-duration: 1.1s;
+}
+
+html.motion-ready main .is-revealed[data-motion="zoom"] {
+  animation-name: motion-zoom;
+  animation-duration: 1.2s;
+}
+
+html.motion-ready main .is-revealed[data-motion="flip"] {
+  transform-origin: 50% 0;
+  animation-name: motion-flip;
+  animation-duration: 1.05s;
+}
+
+html.motion-ready main .is-revealed[data-motion="wipe"] {
+  animation-name: motion-wipe;
+  animation-duration: 1.15s;
 }
 
 @keyframes motion-rise {
   from {
     opacity: 0;
-    translate: 0 34px;
+    translate: 0 48px;
+    filter: blur(6px);
   }
 
   to {
     opacity: 1;
     translate: 0 0;
+    filter: none;
   }
 }
 
-@keyframes motion-pop {
+@keyframes motion-slide {
   from {
     opacity: 0;
-    translate: 0 26px;
-    scale: .94;
+    translate: -48px 0;
+    filter: blur(8px);
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+    filter: none;
+  }
+}
+
+@keyframes motion-left {
+  from {
+    opacity: 0;
+    translate: -80px 0;
+    filter: blur(6px);
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+    filter: none;
+  }
+}
+
+@keyframes motion-right {
+  from {
+    opacity: 0;
+    translate: 80px 0;
+    filter: blur(6px);
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+    filter: none;
+  }
+}
+
+@keyframes motion-zoom {
+  from {
+    opacity: 0;
+    scale: .9;
+    filter: blur(10px) brightness(1.4);
+  }
+
+  to {
+    opacity: 1;
+    scale: 1;
+    filter: none;
+  }
+}
+
+@keyframes motion-flip {
+  from {
+    opacity: 0;
+    translate: 0 56px;
+    scale: .9;
+    rotate: x 28deg;
+    filter: blur(4px);
+  }
+
+  60% {
+    opacity: 1;
   }
 
   to {
     opacity: 1;
     translate: 0 0;
     scale: 1;
+    rotate: x 0deg;
+    filter: none;
   }
+}
+
+@keyframes motion-wipe {
+  from {
+    opacity: 0;
+    clip-path: inset(100% 0 0 0 round 16px);
+    translate: 0 30px;
+    scale: 1.06;
+  }
+
+  25% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 1;
+    clip-path: inset(-60px);
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #E6DAA9, #D1BE7D 40%, #D4317A);
+  box-shadow: 0 0 12px rgba(212, 49, 122, .6);
+  transform: scaleX(var(--scroll, 0));
+  transform-origin: 0 50%;
+  pointer-events: none;
 }
 
 @keyframes motion-fallback {
