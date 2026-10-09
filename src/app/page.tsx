@@ -104,9 +104,9 @@ export default async function HomePage() {
           <div className="mini-squad">
             {squad.map((player) => {
               const name = splitName(player.fullName);
-              return <Link href={`/players/${player.slug}`} key={player.id}>
+              return <Link href={`/players/${player.slug}`} key={player.id} className={player.jerseyNumber ? undefined : "no-number"}>
                 <i>{player.profileImage ? <Image src={player.profileImage} alt="" fill sizes="80px" /> : name.last.slice(0, 1)}</i>
-                <b>{player.jerseyNumber ?? "UT"}</b>
+                {player.jerseyNumber ? <b>{player.jerseyNumber}</b> : null}
                 <small>{name.first}</small>
                 <strong>{name.last}</strong>
                 <em>{(player.role || "Player").replaceAll("_", " ")}</em>
