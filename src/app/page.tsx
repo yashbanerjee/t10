@@ -8,7 +8,7 @@ import { LeagueMark } from "@/components/LeagueMark";
 import { PhotoFrame } from "@/components/PhotoFrame";
 import { VideoPoster } from "@/components/VideoPoster";
 import { teamLogo, teamShortName } from "@/lib/league";
-import { featuredPlayers, getLivePollIntervalMs, homepageDefaults, readHomepageBanner } from "@/lib/site-settings";
+import { getLivePollIntervalMs, homepageDefaults, readHomepageBanner } from "@/lib/site-settings";
 
 export const metadata: Metadata = { title: "United Tigers | The Next Game Starts Here", description: "The official home of United Tigers. Fixtures, the squad, the vote and the Abu Dhabi T10." };
 
@@ -47,7 +47,13 @@ export default async function HomePage() {
   const heroImage = banner.mode === "image" && banner.image ? banner.image : "/images/stadium-hero.png";
   const meetOurTigers = ["fakhar-zaman", "faheem-ashraf", "azmatullah-omarzai", "nurul-hasan"];
   const squad = meetOurTigers.flatMap((slug) => players.filter((player) => player.slug === slug));
-  const cast = featuredPlayers([...players], banner);
+  const heroCast = [
+    "/images/hero-cast/01-neon-champion.webp",
+    "/images/hero-cast/02-cricketer.webp",
+    "/images/hero-cast/03-neon-portrait.webp",
+    "/images/hero-cast/04-cricket-star.webp",
+    "/images/hero-cast/05-confident.webp",
+  ];
   const upcoming = matches.find((match) => match.status === "UPCOMING" || match.status === "LIVE");
   const kickoff = upcoming ? when(upcoming.date) : null;
   const opponentLogo = upcoming ? teamLogo(upcoming.opponent, upcoming.opponentLogoUrl) : null;
@@ -70,8 +76,8 @@ export default async function HomePage() {
           <p className="stage-tagline">{banner.tagline}</p>
           <Link className="button button-orange" href={banner.ctaHref}>{banner.ctaLabel} <ArrowUpRight size={16} /></Link>
         </div>
-        {cast.length > 0 && <div className="stage-cast">
-          {cast.map((player, index) => <span key={player.id} className={`rank-${Math.floor(Math.abs(index - (cast.length - 1) / 2))}`}><Image src={player.profileImage!} alt="" fill sizes="(max-width: 760px) 100px, 200px" /></span>)}
+        {banner.showPlayers && <div className="stage-cast">
+          {heroCast.map((src, index) => <span key={src} className={`rank-${Math.floor(Math.abs(index - (heroCast.length - 1) / 2))}`}><Image src={src} alt="" fill sizes="(max-width: 760px) 100px, 200px" priority={index === 2} /></span>)}
         </div>}
         {banner.roar ? <p className="stage-roar">{banner.roar}</p> : null}
       </div>
