@@ -35,7 +35,14 @@ export default async function HomePage() {
   const [players, matches, sponsors, settings, polls, pollIntervalMs, updates, gallery, products] = await Promise.all([getPlayers(), getMatches(), getSponsors(), getPublicSettings(), getPolls(), getLivePollIntervalMs(), getUpdates(), getGallery(), getProducts()]);
   const banner = readHomepageBanner(settings.homepage ?? homepageDefaults);
   const daily = updates.filter((update) => !update.isDemo).slice(0, 3);
-  const moments = gallery.filter((item) => item.isFeatured && item.type === "IMAGE").slice(0, 4);
+  const pastMatches = gallery.filter((item) => /past match/i.test(item.category));
+  const pastPhotos = pastMatches.filter((item) => item.type !== "VIDEO");
+  const matchClips = [...pastMatches.filter((item) => item.type === "VIDEO"), ...pastPhotos].slice(0, 3);
+  const matchHref = "/gallery#album-past-matches";
+  const onTheBoard = new Set(matchClips.map((item) => item.id));
+  const moments = pastPhotos.filter((item) => !onTheBoard.has(item.id)).slice(0, 4);
+  const stayPhoto = pastPhotos.find((item) => !onTheBoard.has(item.id) && !moments.some((moment) => moment.id === item.id) && /crowd|champions|podium|title night/i.test(item.title))?.mediaUrl
+    ?? pastPhotos.find((item) => !onTheBoard.has(item.id) && !moments.some((moment) => moment.id === item.id))?.mediaUrl;
   const kit = products.filter((product) => product.isFeatured).slice(0, 4);
   const heroImage = banner.mode === "image" && banner.image ? banner.image : "/images/stadium-hero.png";
   const meetOurTigers = ["fakhar-zaman", "faheem-ashraf", "azmatullah-omarzai", "nurul-hasan"];
@@ -45,9 +52,6 @@ export default async function HomePage() {
   const kickoff = upcoming ? when(upcoming.date) : null;
   const opponentLogo = upcoming ? teamLogo(upcoming.opponent, upcoming.opponentLogoUrl) : null;
   const poll = [...polls].sort((left, right) => right.options.filter((option) => playerForLabel(option.label, players)).length - left.options.filter((option) => playerForLabel(option.label, players)).length)[0] ?? polls[0];
-  const draftMedia = gallery.filter((item) => /draft/i.test(item.category));
-  const draftClips = [...draftMedia.filter((item) => item.type === "VIDEO"), ...draftMedia.filter((item) => item.type !== "VIDEO")].slice(0, 3);
-  const draftHref = "/draft";
   // The board shows the most recent result and the next fixture, one row each.
   const listed = [...matches.filter((match) => match.status === "COMPLETED").slice(-1), ...matches.filter((match) => match.status === "UPCOMING" || match.status === "LIVE").slice(0, 1)];
 
@@ -132,15 +136,15 @@ export default async function HomePage() {
     <section className="home-board">
       <div className="wrap board-grid">
         <div>
-          <div className="board-head"><h2>DRAFT</h2><Link href={draftHref}>View all <ArrowUpRight size={14} /></Link></div>
+          <div className="board-head"><h2>PAST MATCHES</h2><Link href={matchHref}>View all <ArrowUpRight size={14} /></Link></div>
           <div className="highlight-row">
-            {draftClips.length ? draftClips.map((item) => <article key={item.id}>
-              <span className={item.type === "VIDEO" ? "is-video" : undefined} style={item.type === "VIDEO" ? undefined : { backgroundImage: `url('${item.mediaUrl}')` }}>
-                {item.type === "VIDEO" ? <VideoPoster src={item.mediaUrl} label={item.altText || item.title} /> : <ArrowUpRight size={16} aria-hidden="true" />}
-                <small>{item.type === "VIDEO" ? "VIDEO" : "GALLERY"}</small>
+            {matchClips.length ? matchClips.map((item) => <article key={item.id}>
+              <span className={item.type === "VIDEO" ? "is-video" : undefined}>
+                {item.type === "VIDEO" ? <VideoPoster src={item.mediaUrl} label={item.altText || item.title} /> : <PhotoFrame src={item.mediaUrl} label={item.altText || item.title} />}
+                <small>{item.type === "VIDEO" ? "VIDEO" : "PHOTO"}</small>
               </span>
-              <strong><Link href={draftHref}>{item.title}</Link></strong>
-            </article>) : <p className="dash-empty">Draft videos and the draft gallery will appear here once they are published.</p>}
+              <strong><Link href={matchHref}>{item.title}</Link></strong>
+            </article>) : <p className="dash-empty">Previous match photos and videos will appear here once they are published.</p>}
           </div>
         </div>
         <div>
@@ -168,7 +172,7 @@ export default async function HomePage() {
             <a className="is-instagram" href="https://www.instagram.com/unitedtigers.ae?stkn=MXVlMjRrM24yZDMxbQ==" target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram size={16} /></a>
           </div>
           <p>#LetsGoHunt</p>
-          <div className="stay-photo" style={{ backgroundImage: "url('/images/demo/gallery-stadium.jpg')" }}><strong>Once a Tiger<br />always a Tiger</strong></div>
+          <div className="stay-photo" style={stayPhoto ? { backgroundImage: `url('${stayPhoto}')` } : undefined}><strong>Once a Tiger<br />always a Tiger</strong></div>
         </aside>
       </div>
     </section>
@@ -200,11 +204,14 @@ export default async function HomePage() {
       <div className="wrap">
         <div className="board-head"><h2>OFFICIAL KIT</h2><Link href="/shop">Shop all <ArrowUpRight size={14} /></Link></div>
         <div className={`kit-row count-${kit.length}`}>
-          {kit.map((product) => <Link href={`/shop/${product.slug}`} key={product.id}>
-            <span className={product.image ? undefined : "is-empty"} style={product.image ? { backgroundImage: `url('${product.image}')` } : undefined}>{product.category}</span>
+          {kit.map((product) => {
+            const photo = product.image && !product.image.includes("/images/demo/") ? product.image : null;
+            return <Link href={`/shop/${product.slug}`} key={product.id}>
+            <span className={photo ? undefined : "is-empty"} style={photo ? { backgroundImage: `url('${photo}')` } : undefined}>{product.category}</span>
             <strong>{product.name}</strong>
             <em>AED {product.price.toLocaleString("en-AE", { maximumFractionDigits: 0 })}</em>
-          </Link>)}
+          </Link>;
+          })}
         </div>
       </div>
     </section>}
@@ -213,7 +220,10 @@ export default async function HomePage() {
       <div className="wrap">
         <span>OUR PARTNERS</span>
         <div>
-          {sponsors.length ? sponsors.map((sponsor) => sponsor.website ? <a key={sponsor.id} href={sponsor.website} target="_blank" rel="noreferrer">{sponsor.logoUrl ? <Image src={sponsor.logoUrl} alt={sponsor.name} width={120} height={36} /> : sponsor.name}</a> : <span key={sponsor.id}>{sponsor.logoUrl ? <Image src={sponsor.logoUrl} alt={sponsor.name} width={120} height={36} /> : sponsor.name}</span>) : <Link href="/partners">Partner with the Tigers</Link>}
+          {sponsors.length ? sponsors.map((sponsor) => {
+            const logo = sponsor.logoUrl && !sponsor.logoUrl.includes("/images/demo/") ? sponsor.logoUrl : null;
+            return sponsor.website ? <a key={sponsor.id} href={sponsor.website} target="_blank" rel="noreferrer">{logo ? <Image src={logo} alt={sponsor.name} width={120} height={36} /> : sponsor.name}</a> : <span key={sponsor.id}>{logo ? <Image src={logo} alt={sponsor.name} width={120} height={36} /> : sponsor.name}</span>;
+          }) : <Link href="/partners">Partner with the Tigers</Link>}
         </div>
         <em>CRICKET UNITES PEOPLE</em>
       </div>
