@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { BLOCK_FALLBACK, COUNT_SELECTORS, MOTION_EXCLUDE, MOTION_GROUPS, type MotionVariant } from "@/lib/motion";
+import { BLOCK_FALLBACK, COUNT_SELECTORS, MOTION_EXCLUDE, MOTION_GROUPS, moodFor, type MotionVariant } from "@/lib/motion";
 
 const STEP_MS = 75;
 const MAX_STEPS = 10;
@@ -36,6 +36,7 @@ export function MotionLayer() {
 
   useEffect(() => {
     const root = document.documentElement;
+    root.dataset.mood = moodFor(pathname);
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!enabled || reduced) {
       root.classList.remove("motion-ready", "motion-live");

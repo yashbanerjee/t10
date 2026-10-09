@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Menu, Search, ShoppingBag, X } from "lucide-react";
 import { TeamMark } from "@/components/TeamMark";
 import { LeagueMark } from "@/components/LeagueMark";
+import { LightTrail } from "@/components/LightTrail";
 import { useCart } from "@/components/CartProvider";
 
 const links = [
@@ -86,5 +87,6 @@ export function PublicHeader() {
       <Link className="mobile-match-link" onClick={() => setOpen(false)} href="/cart">BAG{cart.count > 0 ? ` (${cart.count})` : ""}</Link>
       <p className="mobile-league"><LeagueMark height={14} /></p>
     </nav>}
+    <LightTrail edge="bottom" />
   </header>;
 }

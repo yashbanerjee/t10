@@ -5,6 +5,7 @@ import { ArrowUpRight, Calendar, ChevronRight, CircleCheck, Clock, Facebook, Glo
 import { getGallery, getMatches, getPlayers, getPolls, getProducts, getPublicSettings, getSponsors, getUpdates } from "@/lib/data";
 import { LiveScore } from "@/components/LiveScore";
 import { LeagueMark } from "@/components/LeagueMark";
+import { LightTrail } from "@/components/LightTrail";
 import { PhotoFrame } from "@/components/PhotoFrame";
 import { VideoPoster } from "@/components/VideoPoster";
 import { teamLogo, teamShortName } from "@/lib/league";
@@ -44,7 +45,7 @@ export default async function HomePage() {
   const stayPhoto = pastPhotos.find((item) => !onTheBoard.has(item.id) && !moments.some((moment) => moment.id === item.id) && /crowd|champions|podium|title night/i.test(item.title))?.mediaUrl
     ?? pastPhotos.find((item) => !onTheBoard.has(item.id) && !moments.some((moment) => moment.id === item.id))?.mediaUrl;
   const kit = products.filter((product) => product.isFeatured).slice(0, 4);
-  const heroImage = banner.mode === "image" && banner.image ? banner.image : "/images/stadium-hero.png";
+  const customBanner = banner.mode === "image" && banner.image ? banner.image : null;
   const meetOurTigers = ["fakhar-zaman", "faheem-ashraf", "azmatullah-omarzai", "nurul-hasan"];
   const squad = meetOurTigers.flatMap((slug) => players.filter((player) => player.slug === slug));
   const heroCast = [
@@ -54,6 +55,9 @@ export default async function HomePage() {
     "/images/hero-cast/04-cricket-star.webp",
     "/images/hero-cast/05-confident.webp",
   ];
+  const cast = banner.showPlayers ? <span className="banner-cast" aria-hidden="true">
+    {heroCast.map((src, index) => <i key={src} className={`rank-${Math.floor(Math.abs(index - (heroCast.length - 1) / 2))}`} style={{ "--cast-i": index } as React.CSSProperties}><Image src={src} alt="" fill sizes="(max-width: 760px) 120px, 200px" quality={85} /></i>)}
+  </span> : null;
   const upcoming = matches.find((match) => match.status === "UPCOMING" || match.status === "LIVE");
   const kickoff = upcoming ? when(upcoming.date) : null;
   const opponentLogo = upcoming ? teamLogo(upcoming.opponent, upcoming.opponentLogoUrl) : null;
@@ -62,25 +66,34 @@ export default async function HomePage() {
   const listed = [...matches.filter((match) => match.status === "COMPLETED").slice(-1), ...matches.filter((match) => match.status === "UPCOMING" || match.status === "LIVE").slice(0, 1)];
 
   return <>
-    <section className="home-stage" style={{ "--banner": `url("${heroImage}")` } as React.CSSProperties}>
-      <div className="stage-scene" aria-hidden="true">
-        <div className="stage-sky" />
-        <div className="stage-photo" />
-        <div className="stage-glow" />
-        <div className="stage-tiger" />
-      </div>
-      <div className="stage-top wrap">
-        <div className="stage-copy">
-          <p className="stage-kicker"><LeagueMark height={18} priority /></p>
-          <h1>{banner.title.trim().split(/\s+/).slice(0, -1).join(" ")}<br />{banner.title.trim().split(/\s+/).at(-1)}<span>{banner.accent}</span></h1>
-          <p className="stage-tagline">{banner.tagline}</p>
-          <Link className="button button-orange" href={banner.ctaHref}>{banner.ctaLabel} <ArrowUpRight size={16} /></Link>
-        </div>
-        {banner.showPlayers && <div className="stage-cast">
-          {heroCast.map((src, index) => <span key={src} className={`rank-${Math.floor(Math.abs(index - (heroCast.length - 1) / 2))}`}><Image src={src} alt="" fill sizes="(max-width: 760px) 100px, 200px" priority={index === 2} /></span>)}
-        </div>}
-        {banner.roar ? <p className="stage-roar">{banner.roar}</p> : null}
-      </div>
+    <section className="home-stage" style={customBanner ? { "--banner": `url("${customBanner}")` } as React.CSSProperties : undefined}>
+      {customBanner ? <Link className="stage-banner" href={banner.ctaHref} aria-label={banner.ctaLabel}>
+        <Image src={customBanner} alt="" fill priority sizes="(min-width: 1600px) 1600px, 100vw" quality={90} unoptimized={!customBanner.startsWith("/")} />
+        <span className="banner-embers" aria-hidden="true" />
+        {cast}
+      </Link> : <Link className="hero-poster" href={banner.ctaHref} aria-label={banner.ctaLabel}>
+        <span className="poster-art" aria-hidden="true"><Image src="/images/hero-art.webp" alt="" fill priority sizes="100vw" quality={85} /></span>
+        <span className="banner-embers" aria-hidden="true" />
+        <span className="banner-flare" aria-hidden="true" />
+        <span className="poster-copy">
+          <span className="poster-league"><LeagueMark height={24} priority /></span>
+          <h1 className="poster-title"><span>{banner.title}</span><strong>{banner.accent}</strong></h1>
+          <span className="poster-tagline">{banner.tagline.split(/\s+/).map((word, index) => <span key={`${word}-${index}`}>{word}</span>)}</span>
+          <span className="poster-unity" aria-hidden="true"><b>United</b><em>as one</em></span>
+        </span>
+        {banner.roar ? <span className="poster-roar">{banner.roar.split(/\s+/).map((word, index) => <span key={`${word}-${index}`}>{word}</span>)}</span> : null}
+        <span className="poster-crest">
+          <Image src="/brand/tiger-gold.png" alt="" width={822} height={688} sizes="120px" />
+          <span><strong>United Tigers</strong><small>Abu Dhabi</small></span>
+          <span className="banner-glint" aria-hidden="true" />
+        </span>
+        {cast}
+        <span className="poster-strip" aria-hidden="true">
+          <span>Cricket<i />Beyond boundaries<i />A stronger tomorrow</span>
+          <span>Players<i />Fans<i />Community<i />Impact</span>
+        </span>
+      </Link>}
+      {customBanner ? <h1 className="sr-only">United Tigers: {banner.title} {banner.accent}. {banner.tagline}. {banner.roar}</h1> : null}
       <div className="wrap dash-grid">
         <article className="dash-card">
           <header><span className="is-gold">NEXT MATCH</span><small><LeagueMark height={11} /></small></header>
@@ -223,6 +236,7 @@ export default async function HomePage() {
     </section>}
 
     <section className="partner-rail">
+      <LightTrail edge="top" />
       <div className="wrap">
         <span>OUR PARTNERS</span>
         <div>

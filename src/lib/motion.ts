@@ -125,4 +125,20 @@ export const MOTION_TARGETS = [...Object.values(MOTION_GROUPS).flat(), ...BLOCK_
 const targets = `main :is(${MOTION_TARGETS.join(",")}):not(${MOTION_EXCLUDE}):not(.is-revealed)`;
 export const motionCss = `html.motion-ready ${targets}{opacity:0;animation:motion-fallback 0s 3s forwards}html.motion-ready.motion-live ${targets}{animation:none}`;
 
-export const motionBootScript = `(function(){try{var d=document.documentElement;if(location.pathname.indexOf("/admin")===0)return;if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;d.classList.add("motion-ready")}catch(e){}})();`;
+/** Each area of the site carries its own neon colour pair, read by CSS through html[data-mood]. */
+export const MOODS: Record<string, string> = {
+  team: "magenta", players: "magenta", draft: "magenta",
+  fixtures: "cyan", matches: "cyan", season: "cyan", "points-table": "cyan",
+  stats: "amber", records: "amber",
+  news: "violet", updates: "violet",
+  gallery: "sunset",
+  shop: "gold", cart: "gold", checkout: "gold",
+  vote: "electric", polls: "electric", fan: "electric",
+  partners: "royal", "become-a-partner": "royal", franchises: "royal", about: "royal", contact: "royal",
+};
+
+export function moodFor(pathname: string) {
+  return MOODS[pathname.split("/")[1] ?? ""] ?? "home";
+}
+
+export const motionBootScript = `(function(){try{var d=document.documentElement;var m=${JSON.stringify(MOODS)};d.setAttribute("data-mood",m[location.pathname.split("/")[1]||""]||"home");if(location.pathname.indexOf("/admin")===0)return;if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;d.classList.add("motion-ready")}catch(e){}})();`;

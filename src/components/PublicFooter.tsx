@@ -2,12 +2,14 @@ import Link from "next/link";
 import { ArrowUpRight, Facebook, Handshake, Instagram } from "lucide-react";
 import { TeamMark } from "@/components/TeamMark";
 import { LeagueMark } from "@/components/LeagueMark";
+import { LightTrail } from "@/components/LightTrail";
 
 const facebook = "https://www.facebook.com/share/1Bxhkk4L97/?mibextid=wwXIfr";
 const instagram = "https://www.instagram.com/unitedtigers.ae?stkn=MXVlMjRrM24yZDMxbQ==";
 
 export function PublicFooter() {
   return <footer className="site-footer">
+    <LightTrail edge="top" />
     <div className="footer-top wrap">
       <div className="footer-brand">
         <TeamMark stacked />

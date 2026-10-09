@@ -25,7 +25,7 @@ export const LEAGUE_TEAMS: LeagueTeam[] = [
   { name: "Emirates Eagles", shortName: "EE", slug: "emirates-eagles", logo: "/brand/teams/emirates-eagles.png", colors: ["#EC5E08", "#0B2C5B", "#E10500"] },
   { name: "Royal Desert Champions", shortName: "RDC", slug: "royal-desert-champions", logo: "/brand/teams/royal-desert-champions.png", colors: ["#E50B0A", "#EED1AA", "#4D175F"] },
   { name: "UAE Bulls", shortName: "UAB", slug: "uae-bulls", logo: "/brand/teams/uae-bulls.png", colors: ["#D8FF00", "#E33A27", "#1307AA"] },
-  { name: "United Tigers", shortName: "UT", slug: "united-tigers", logo: "/brand/teams/united-tigers.png", colors: ["#3A2D61", "#E5D9A8", "#D3317A"] },
+  { name: "United Tigers", shortName: "UT", slug: "united-tigers", logo: "/brand/teams/united-tigers.png", colors: ["#390966", "#F4DB96", "#C9177E"] },
   { name: "Yas Lions", shortName: "YL", slug: "yas-lions", logo: "/brand/teams/yas-lions.png", colors: ["#01368C", "#2168C2", "#EAAA00"] },
 ];
 

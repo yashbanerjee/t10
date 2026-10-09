@@ -1,21 +1,21 @@
 /**
- * United Tigers brand palette (brand guide "Color Palette" sheet):
- * Purple Heart #3A2D61 · Deluge #8065A6 · Beeswax #E6DAA9 · Muted Gold #D1BE7D ·
- * Medium Violet Red #D4317A · White #FCFCFC.
- * The page background is Purple Heart itself; cards sit slightly darker on top of it.
+ * United Tigers palette, sampled from the "The Next Game" hero banner:
+ * gold #FFE8AC → #EEC873 → #D2A95A → #AC884A, pink #FB3BA6 → #C9177E → #8D135E,
+ * purples at hue 271 (#8830DB accent, #390966 page, #2B074D cards). White #FCFCFC.
+ * Cards sit slightly darker than the page background.
  */
 export const theme = {
-  "--primary": "#D1BE7D",
-  "--primary-light": "#E6DAA9",
-  "--secondary": "#3A2D61",
-  "--accent": "#D4317A",
-  "--deluge": "#8065A6",
-  "--background": "#3A2D61",
-  "--surface": "#2c2249",
-  "--surface-raised": "#473777",
+  "--primary": "#D2A95A",
+  "--primary-light": "#F4DB96",
+  "--secondary": "#390966",
+  "--accent": "#C9177E",
+  "--deluge": "#8830DB",
+  "--background": "#390966",
+  "--surface": "#2B074D",
+  "--surface-raised": "#460B7D",
   "--text": "#FCFCFC",
   "--muted": "#d3c8e6",
-  "--border": "rgba(209,190,125,.3)",
+  "--border": "rgba(210, 169, 90,.3)",
   "--success": "#16c784",
   "--danger": "#e86d60",
   "--warning": "#e8b53a",

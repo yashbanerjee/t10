@@ -19,8 +19,8 @@ export function TeamMark({ compact = false, stacked = false, tone = "dark", prio
   return <Link className={className} href="/" aria-label="United Tigers home">
     <span className="mark-icon" aria-hidden="true"><Image src={light ? "/brand/tiger-purple.png" : "/brand/tiger-gold.png"} alt="" width={822} height={688} priority={priority} /></span>
     <span className="mark-type" aria-hidden="true">
-      <Image src={light ? "/brand/wordmark-united-purple.png" : "/brand/wordmark-united-white.png"} alt="" width={790} height={200} priority={priority} />
-      <Image src={light ? "/brand/wordmark-tigers-purple.png" : "/brand/wordmark-tigers-gold.png"} alt="" width={742} height={248} priority={priority} />
+      <span className="mark-word mark-united"><Image src={light ? "/brand/wordmark-united-purple.png" : "/brand/wordmark-united-white.png"} alt="" width={790} height={200} priority={priority} /></span>
+      <span className="mark-word mark-tigers"><Image src={light ? "/brand/wordmark-tigers-purple.png" : "/brand/wordmark-tigers-gold.png"} alt="" width={742} height={248} priority={priority} /></span>
     </span>
   </Link>;
 }
