@@ -136,7 +136,7 @@ img {
   align-items: center;
   gap: 9px;
   color: var(--primary);
-  font-size: 10px;
+  font-size: 13px;
   line-height: 1.2;
   letter-spacing: .16em;
   font-weight: 800;
@@ -363,7 +363,7 @@ img {
 
 .header-slogan span {
   color: rgba(255, 255, 255, .62);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .16em;
 }
@@ -408,7 +408,7 @@ img {
   align-items: center;
   gap: 10px;
   color: var(--primary);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 850;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -480,7 +480,7 @@ img {
   min-height: 42px;
   padding: 0 16px;
   border: 1px solid transparent;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -642,7 +642,7 @@ img {
   border: 1px solid rgba(209, 190, 125, .38);
   padding: 3px 6px;
   color: #D1BE7D;
-  font-size: 8px;
+  font-size: 12px;
   line-height: 1.2;
   letter-spacing: .12em;
   font-weight: 800;
@@ -655,7 +655,7 @@ img {
   align-items: center;
   gap: 6px;
   color: #b3a4c0;
-  font-size: 9px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .11em;
   text-transform: uppercase;
@@ -715,7 +715,7 @@ img {
   align-items: center;
   gap: 12px;
   color: #e6deee;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .19em;
   text-transform: uppercase;
@@ -782,7 +782,7 @@ img {
   gap: 12px;
   color: rgba(255, 255, 255, .7);
   writing-mode: vertical-rl;
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .23em;
   font-weight: 800;
 }
@@ -801,7 +801,7 @@ img {
   align-items: center;
   gap: 12px;
   color: rgba(255, 255, 255, .55);
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .18em;
   font-weight: 800;
   text-transform: uppercase;
@@ -911,7 +911,7 @@ img {
 
 .match-caption small {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
   letter-spacing: .08em;
   text-transform: uppercase;
 }
@@ -947,7 +947,7 @@ img {
 
 .fixture-placeholder {
   color: #b9aac6;
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: .15em;
   text-transform: uppercase;
 }
@@ -965,12 +965,12 @@ img {
   justify-content: space-between;
   gap: 14px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .detail-line strong {
   color: var(--text);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 800;
   text-align: right;
   text-transform: uppercase;
@@ -1003,7 +1003,7 @@ img {
 .last-match-card p {
   margin: 0;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .first-match-mark {
@@ -1035,7 +1035,7 @@ img {
   justify-content: space-between;
   gap: 12px;
   color: #ee806f;
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .12em;
   font-weight: 900;
 }
@@ -1048,7 +1048,7 @@ img {
 
 .live-score-heading small {
   color: #8e7f9c;
-  font-size: 8px;
+  font-size: 12px;
 }
 
 .live-score-numbers {
@@ -1069,7 +1069,7 @@ img {
 
 .live-score-numbers>span {
   color: var(--muted);
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .09em;
 }
 
@@ -1085,7 +1085,7 @@ img {
   flex-wrap: wrap;
   gap: 7px 18px;
   color: #b6a7c4;
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .05em;
   text-transform: uppercase;
 }
@@ -1130,7 +1130,7 @@ img {
 .season-stat span {
   display: block;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .13em;
   text-transform: uppercase;
 }
@@ -1147,7 +1147,7 @@ img {
   display: block;
   margin-top: 5px;
   color: #90819f;
-  font-size: 9px;
+  font-size: 13px;
 }
 
 /* Players */
@@ -1262,7 +1262,7 @@ img {
   left: 17px;
   bottom: 18px;
   color: var(--primary);
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: .15em;
 }
@@ -1287,7 +1287,7 @@ img {
 .player-card-info p {
   margin: 7px 0 0;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .09em;
   text-transform: uppercase;
 }
@@ -1380,7 +1380,7 @@ img {
   padding: 8px 11px;
   background: var(--gold-surface);
   color: var(--gold-ink);
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: .12em;
 }
@@ -1391,7 +1391,7 @@ img {
   align-items: center;
   margin-top: 16px;
   color: #9b8cae;
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .1em;
   text-transform: uppercase;
 }
@@ -1482,7 +1482,7 @@ img {
 
 .update-category {
   color: var(--primary);
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .12em;
   font-weight: 900;
   text-transform: uppercase;
@@ -1490,7 +1490,7 @@ img {
 
 .update-time {
   color: #90819f;
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .update-card h3 {
@@ -1504,7 +1504,7 @@ img {
 .update-card p {
   margin: 0 0 22px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .update-card-bottom {
@@ -1516,7 +1516,7 @@ img {
   align-items: center;
   gap: 6px;
   color: #e7dfef;
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: .1em;
 }
@@ -1530,7 +1530,7 @@ img {
 .timeline-day {
   margin: 32px 0 15px;
   color: var(--primary);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 900;
   letter-spacing: .17em;
 }
@@ -1566,7 +1566,7 @@ img {
 
 .timeline-item time {
   color: #b3a4c0;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .05em;
 }
@@ -1629,7 +1629,7 @@ img {
 
 .fixture-date small {
   color: var(--muted);
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .1em;
   text-transform: uppercase;
 }
@@ -1670,7 +1670,7 @@ img {
 
 .fixture-meta {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .fixture-score {
@@ -1686,7 +1686,7 @@ img {
 .fixture-link {
   justify-self: end;
   color: var(--primary);
-  font-size: 9px;
+  font-size: 13px;
   font-weight: 900;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -1705,7 +1705,7 @@ img {
   border-bottom: 2px solid transparent;
   background: transparent;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 900;
   letter-spacing: .13em;
 }
@@ -1731,7 +1731,7 @@ img {
   padding: 14px 16px;
   background: #3A2D61;
   color: #D1BE7D;
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: .11em;
   font-weight: 900;
   text-transform: uppercase;
@@ -1781,7 +1781,7 @@ img {
 
   .points-table th {
     letter-spacing: .06em;
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .points-table .table-team {
@@ -1853,7 +1853,7 @@ img {
   flex-wrap: wrap;
   gap: 15px;
   color: #c5b7d2;
-  font-size: 10px;
+  font-size: 13px;
   letter-spacing: .13em;
   text-transform: uppercase;
 }
@@ -1876,7 +1876,7 @@ img {
 .player-profile-facts span {
   display: block;
   color: var(--primary);
-  font-size: 10px;
+  font-size: 13px;
   letter-spacing: .12em;
   font-weight: 800;
   text-transform: uppercase;
@@ -1921,7 +1921,7 @@ img {
   padding: 11px 0;
   background: transparent;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 13px;
   font-weight: 900;
   letter-spacing: .12em;
 }
@@ -1944,7 +1944,7 @@ img {
 .stats-group h3 {
   margin: 0 0 18px;
   color: var(--primary);
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .16em;
 }
 
@@ -1963,7 +1963,7 @@ img {
 
 .player-stat span {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .player-stat strong {
@@ -2012,7 +2012,7 @@ img {
 .report-score small {
   color: var(--muted);
   font-family: var(--font-body);
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .report-metrics {
@@ -2027,13 +2027,13 @@ img {
   align-items: center;
   gap: 10px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 13px;
 }
 
 .report-metric strong {
   color: var(--text);
   text-align: right;
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .report-track {
@@ -2051,7 +2051,7 @@ img {
   margin: 15px 0 0;
   padding-top: 13px;
   border-top: 1px solid var(--border);
-  font-size: 9px;
+  font-size: 13px;
   line-height: 1.6;
 }
 
@@ -2112,7 +2112,7 @@ img {
 .franchise-card p {
   margin: 0;
   color: #E6DAA9;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -2198,7 +2198,7 @@ a.partner-item:hover {
   border-radius: 999px;
   background: rgba(44, 34, 73, .55);
   color: #E6DAA9;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -2210,7 +2210,7 @@ a.partner-item:hover {
   border-radius: 999px;
   background: rgba(209, 190, 125, .18);
   color: #F3EEDC;
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .album-nav a:hover {
@@ -2249,7 +2249,7 @@ a.partner-item:hover {
 
 .album-head small {
   color: rgba(255, 255, 255, .66);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -2315,7 +2315,7 @@ a.partner-item:hover {
   inset: auto 0 0;
   padding: 28px 17px 15px;
   background: linear-gradient(0deg, rgba(25, 19, 42, .82), transparent);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   text-transform: uppercase;
 }
@@ -2347,7 +2347,7 @@ a.partner-item:hover {
 .contact-detail span {
   display: block;
   color: var(--primary);
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .14em;
   font-weight: 900;
 }
@@ -2373,7 +2373,7 @@ a.partner-item:hover {
   display: grid;
   gap: 7px;
   color: #d0c5dc;
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .12em;
   font-weight: 800;
 }
@@ -2502,7 +2502,7 @@ a.partner-item:hover {
 }
 
 .announcement-band span {
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -2567,7 +2567,7 @@ a.partner-item:hover {
 .content-image figcaption {
   margin-top: 7px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .content-inline-image img {
@@ -2624,7 +2624,7 @@ a.partner-item:hover {
   margin: 0;
   padding: 0 10px 9px;
   color: #82857c;
-  font-size: 9px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: normal;
   text-transform: none;
@@ -2641,7 +2641,7 @@ a.partner-item:hover {
   justify-items: center;
   gap: 15px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .18em;
   font-weight: 900;
 }
@@ -2797,7 +2797,7 @@ a.partner-item:hover {
 .team-roster-note p {
   margin: 0;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .back-link {
@@ -2806,7 +2806,7 @@ a.partner-item:hover {
   gap: 8px;
   margin-bottom: 30px;
   color: #c3b5d0;
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .12em;
   font-weight: 900;
 }
@@ -2877,7 +2877,7 @@ a.partner-item:hover {
   gap: 15px;
   margin-top: 28px;
   color: #b6a7c4;
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .1em;
   font-weight: 800;
   text-transform: uppercase;
@@ -2910,7 +2910,7 @@ a.partner-item:hover {
   margin-top: 38px !important;
   padding-top: 18px;
   border-top: 1px solid var(--border);
-  font-size: 10px !important;
+  font-size: 13px !important;
   text-transform: uppercase;
   letter-spacing: .1em;
 }
@@ -2944,7 +2944,7 @@ a.partner-item:hover {
   border: 0;
   outline: 0;
   background: transparent;
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .search-box:focus-within {
@@ -2954,7 +2954,7 @@ a.partner-item:hover {
 .result-count {
   margin: -8px 0 17px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .1em;
   font-weight: 800;
 }
@@ -2974,7 +2974,7 @@ a.partner-item:hover {
   align-items: center;
   justify-content: space-between;
   color: #a997b8;
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .13em;
 }
 
@@ -3057,7 +3057,7 @@ a.partner-item:hover {
   margin: 0;
   color: #d1c5dc;
   text-align: center;
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: .1em;
   text-transform: uppercase;
 }
@@ -3069,7 +3069,7 @@ a.partner-item:hover {
   gap: 11px 24px;
   margin-top: 27px;
   color: #a9aba4;
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .match-centre-details span {
@@ -3109,7 +3109,7 @@ a.partner-item:hover {
   margin-left: 7px;
   color: var(--muted);
   font-family: var(--font-body);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 500;
 }
 
@@ -3141,7 +3141,7 @@ a.partner-item:hover {
   padding: 7px 10px;
   border: 1px solid var(--border);
   color: #b6a7c4;
-  font-size: 9px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .12em;
 }
@@ -3164,7 +3164,7 @@ a.partner-item:hover {
 .stats-footnote,
 .muted-copy {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .stats-empty p {
@@ -3189,7 +3189,7 @@ a.partner-item:hover {
 
 .leader-card span {
   color: var(--primary);
-  font-size: 9px;
+  font-size: 13px;
   font-weight: 900;
   letter-spacing: .13em;
 }
@@ -3205,7 +3205,7 @@ a.partner-item:hover {
 .leader-card p {
   margin: 8px 0 0;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .season-leaders,
@@ -3239,7 +3239,7 @@ a.partner-item:hover {
 
 .record-card>span {
   color: var(--primary);
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: .12em;
   font-weight: 900;
 }
@@ -3254,14 +3254,14 @@ a.partner-item:hover {
 
 .record-card h3 {
   margin: 0;
-  font-size: 11px;
+  font-size: 13px;
   text-transform: uppercase;
 }
 
 .record-card p {
   margin: 5px 0 0;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .partner-category {
@@ -3273,7 +3273,7 @@ a.partner-item:hover {
   padding-bottom: 10px;
   border-bottom: 1px solid var(--border);
   color: var(--primary);
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .15em;
 }
 
@@ -3306,7 +3306,7 @@ a.partner-item:hover {
 .about-pillars p {
   margin: 0;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .admin-section-label {
@@ -3481,7 +3481,7 @@ a.partner-item:hover {
   border: 0;
   background: none;
   color: #0C66E4;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
 }
 
@@ -3607,7 +3607,7 @@ body:has(.login-page) .site-footer {
 
 .footer-col .eyebrow,
 .footer-callout .eyebrow {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .footer-col a:hover {
@@ -3628,7 +3628,7 @@ body:has(.login-page) .site-footer {
   align-items: center;
   gap: 9px;
   color: var(--primary);
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: .12em;
   font-weight: 900;
 }
@@ -3644,7 +3644,7 @@ body:has(.login-page) .site-footer {
   background: #D4317A;
   color: #fff;
   font: inherit;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 900;
   letter-spacing: .12em;
   cursor: pointer;
@@ -3672,7 +3672,7 @@ body:has(.login-page) .site-footer {
 .partner-points span {
   display: block;
   color: var(--primary);
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: .14em;
   font-weight: 900;
 }
@@ -3736,7 +3736,7 @@ body:has(.login-page) .site-footer {
   min-height: 58px;
   border-top: 1px solid var(--border);
   color: #b9aacf;
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: .06em;
 }
 
@@ -4456,13 +4456,13 @@ body:has(.login-page) .site-footer {
   gap: 6px;
   min-width: 0;
   color: #44546F;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .stats-field small {
   color: #626F86;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 400;
   line-height: 1.4;
 }
@@ -4545,7 +4545,7 @@ body:has(.login-page) .site-footer {
 
 .stats-head {
   color: #626F86;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -4634,7 +4634,7 @@ body:has(.login-page) .site-footer {
 .login-product {
   margin: 0 0 8px;
   color: #626F86;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -4664,7 +4664,7 @@ body:has(.login-page) .site-footer {
   display: grid;
   gap: 4px;
   color: #44546F;
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 0;
   font-weight: 600;
   text-transform: none;
@@ -4745,12 +4745,12 @@ body:has(.login-page) .site-footer {
   }
 
   .desktop-nav a {
-    font-size: 9px;
+    font-size: 13px;
   }
 
   .header-cta {
     padding: 10px;
-    font-size: 8px;
+    font-size: 12px;
   }
 
   .player-grid {
@@ -4833,7 +4833,7 @@ body:has(.login-page) .site-footer {
   .mobile-nav>a>span {
     color: var(--primary);
     font-family: var(--font-body);
-    font-size: 8px;
+    font-size: 12px;
   }
 
   .mobile-nav svg {
@@ -4849,7 +4849,7 @@ body:has(.login-page) .site-footer {
     background: var(--gold-surface);
     color: var(--gold-ink);
     box-shadow: var(--gold-shadow);
-    font-size: 9px;
+    font-size: 13px;
     letter-spacing: .11em;
     font-weight: 900;
   }
@@ -4878,7 +4878,7 @@ body:has(.login-page) .site-footer {
 
   .hero-kicker {
     margin-top: 25px;
-    font-size: 10px;
+    font-size: 13px;
   }
 
   .hero-subtitle {
@@ -4927,7 +4927,7 @@ body:has(.login-page) .site-footer {
   }
 
   .section-heading .text-link {
-    font-size: 8px;
+    font-size: 12px;
     gap: 3px;
   }
 
@@ -5002,7 +5002,7 @@ body:has(.login-page) .site-footer {
   }
 
   .player-card-info p {
-    font-size: 8px;
+    font-size: 12px;
   }
 
   .player-feature {
@@ -5050,7 +5050,7 @@ body:has(.login-page) .site-footer {
   }
 
   .news-card>p {
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .update-grid {
@@ -5078,7 +5078,7 @@ body:has(.login-page) .site-footer {
   .fixture-meta {
     grid-column: 2;
     grid-row: 2;
-    font-size: 9px;
+    font-size: 13px;
   }
 
   .fixture-score {
@@ -5134,7 +5134,7 @@ body:has(.login-page) .site-footer {
   }
 
   .stats-switch button {
-    font-size: 8px;
+    font-size: 12px;
   }
 
   .partner-grid,
@@ -5401,7 +5401,7 @@ body:has(.login-page) .site-footer {
   .hero-actions .button {
     min-height: 43px;
     padding: 0 14px;
-    font-size: 8px;
+    font-size: 12px;
   }
 
   .player-stat-grid {
@@ -5441,7 +5441,7 @@ body:has(.login-page) .site-footer {
   border-radius: 99px;
   background: #D4317A;
   color: white;
-  font-size: 10px;
+  font-size: 13px;
   line-height: 16px;
   text-align: center;
 }
@@ -5474,7 +5474,7 @@ body:has(.login-page) .site-footer {
 
 .fan-launch span {
   color: var(--primary);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .16em;
 }
@@ -5520,7 +5520,7 @@ body:has(.login-page) .site-footer {
 .product-card-photo span,
 .fan-card span {
   color: var(--primary);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .14em;
 }
@@ -5596,7 +5596,7 @@ body:has(.login-page) .site-footer {
 .field-label {
   margin: 14px 0 8px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .14em;
 }
@@ -5638,7 +5638,7 @@ body:has(.login-page) .site-footer {
   align-items: center;
   gap: 8px;
   color: var(--primary);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .12em;
 }
@@ -5660,7 +5660,7 @@ body:has(.login-page) .site-footer {
   display: grid;
   gap: 6px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -5846,7 +5846,7 @@ body:has(.login-page) .site-footer {
   place-items: center;
   position: relative;
   overflow: hidden;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .variant-file input {
@@ -6357,7 +6357,7 @@ body:has(.login-page) .site-footer {
 .crest-row em,
 .crest-row small {
   color: rgba(255, 255, 255, .62);
-  font-size: 11px;
+  font-size: 13px;
   font-style: normal;
 }
 
@@ -6390,7 +6390,7 @@ body:has(.login-page) .site-footer {
 
 .dash-card dt {
   color: rgba(255, 255, 255, .55);
-  font-size: 10px;
+  font-size: 13px;
   letter-spacing: .12em;
 }
 
@@ -6476,7 +6476,7 @@ body:has(.login-page) .site-footer {
   overflow: hidden;
   color: #fff;
   font-family: var(--font-body);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   line-height: 1.15;
   white-space: nowrap;
@@ -6511,7 +6511,7 @@ body:has(.login-page) .site-footer {
   margin-top: 5px;
   overflow: hidden;
   color: #E6DAA9;
-  font-size: 9px;
+  font-size: 13px;
   font-style: normal;
   letter-spacing: .06em;
   line-height: 1.2;
@@ -6602,12 +6602,12 @@ body:has(.login-page) .site-footer {
 .nation-stats span,
 .nation-join {
   color: rgba(255, 255, 255, .7);
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: .08em;
 }
 
 .nation-stats li span {
-  font-size: 9px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .08em;
   line-height: 1.25;
@@ -6642,7 +6642,7 @@ body:has(.login-page) .site-footer {
   border-radius: 8px;
   background: #D4317A;
   color: white;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .06em;
   transition: background .2s;
@@ -6698,7 +6698,7 @@ body:has(.login-page) .site-footer {
   .mini-squad em {
     grid-row: 5;
     margin-top: 2px;
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .nation-stats {
@@ -6727,7 +6727,7 @@ body:has(.login-page) .site-footer {
   }
 
   .nation-stats li span {
-    font-size: 10px;
+    font-size: 13px;
     overflow-wrap: anywhere;
   }
 }
@@ -7006,7 +7006,7 @@ body:has(.login-page) .site-footer {
 
 .video-popup-controls span {
   flex: none;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -7049,7 +7049,7 @@ body:has(.login-page) .site-footer {
   border-radius: 6px;
   background: rgba(44, 34, 73, .9);
   color: #E6DAA9;
-  font-size: 9px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -7070,7 +7070,7 @@ body:has(.login-page) .site-footer {
 
 .highlight-row small {
   color: rgba(255, 255, 255, .62);
-  font-size: 11px;
+  font-size: 13px;
   font-style: normal;
 }
 
@@ -7165,7 +7165,7 @@ body:has(.login-page) .site-footer {
   border-radius: 8px;
   background: #8065A6;
   font-family: "Segoe UI", Arial, sans-serif;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: .04em;
@@ -7310,7 +7310,7 @@ body:has(.login-page) .site-footer {
 .daily-list time {
   grid-column: 1;
   color: #E6DAA9;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .1em;
 }
@@ -7392,7 +7392,7 @@ body:has(.login-page) .site-footer {
   bottom: 0;
   padding: 26px 10px 9px;
   background: linear-gradient(180deg, transparent, rgba(25, 19, 42, .85));
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -7508,7 +7508,7 @@ body:has(.login-page) .site-footer {
   min-height: 160px;
   padding: 12px;
   color: #E6DAA9;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .12em;
   border: 1px solid rgba(209, 190, 125, .3);
@@ -7563,7 +7563,7 @@ body:has(.login-page) .site-footer {
 }
 
 .contest-band span {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .16em;
 }
@@ -7607,7 +7607,7 @@ body:has(.login-page) .site-footer {
 .partner-rail span,
 .partner-rail em {
   color: rgba(255, 255, 255, .62);
-  font-size: 11px;
+  font-size: 13px;
   font-style: normal;
   font-weight: 800;
   letter-spacing: .12em;
@@ -7697,7 +7697,7 @@ body:has(.login-page) .site-footer {
   .mobile-nav>a>span {
     color: #D4317A;
     font-family: var(--font-body);
-    font-size: 9px;
+    font-size: 13px;
     font-weight: 800;
   }
 
@@ -7717,7 +7717,7 @@ body:has(.login-page) .site-footer {
     background: rgba(44, 34, 73, .5);
     color: #E6DAA9;
     box-shadow: inset 0 0 0 1px rgba(209, 190, 125, .55);
-    font-size: 10px;
+    font-size: 13px;
     letter-spacing: .11em;
     font-weight: 900;
   }
@@ -7965,7 +7965,7 @@ body:has(.login-page) .site-footer {
 
   .mini-squad small,
   .mini-squad strong {
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .result-list a {
@@ -8124,7 +8124,7 @@ body:has(.login-page) .site-footer {
 
   .stage-tagline {
     margin-top: 12px;
-    font-size: 11px;
+    font-size: 13px;
     letter-spacing: .2em;
   }
 
@@ -8199,7 +8199,7 @@ body:has(.login-page) .site-footer {
   }
 
   .crest-row em {
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .crest-row small {
@@ -8241,7 +8241,7 @@ body:has(.login-page) .site-footer {
     left: 6px;
     bottom: 6px;
     padding: 2px 5px;
-    font-size: 8px;
+    font-size: 12px;
   }
 
   .partner-rail .wrap {
@@ -8322,7 +8322,7 @@ body:has(.login-page) .site-footer {
   }
 
   .product-card small {
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .fixture-score.is-tbc {
@@ -8436,7 +8436,7 @@ body:has(.login-page) .site-footer {
   .kit-row a span {
     min-height: 150px;
     padding: 10px;
-    font-size: 10px;
+    font-size: 13px;
   }
 
   .kit-row strong {
