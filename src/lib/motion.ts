@@ -119,11 +119,11 @@ export const COUNT_SELECTORS = [".nation-stats strong", ".season-stat strong", "
 export const MOTION_TARGETS = [...Object.values(MOTION_GROUPS).flat(), ...BLOCK_FALLBACK];
 
 /**
- * Hides targets before first paint so they can animate in without a flash. The fallback keyframe
- * shows everything after three seconds in case the script never runs.
+ * A first visit hides targets briefly so they can enter. Later visits stay visible, so the page
+ * never waits on the animation script. The fallback shows anything still hidden after 1.2s.
  */
 const targets = `main :is(${MOTION_TARGETS.join(",")}):not(${MOTION_EXCLUDE}):not(.is-revealed)`;
-export const motionCss = `html.motion-ready ${targets}{opacity:0;animation:motion-fallback 0s 3s forwards}html.motion-ready.motion-live ${targets}{animation:none}`;
+export const motionCss = `html.is-welcome.motion-ready ${targets}{opacity:0;animation:motion-fallback 0s 1.2s forwards}html.is-welcome.motion-ready.motion-live ${targets}{animation:none}`;
 
 /** Each area of the site carries its own neon colour pair, read by CSS through html[data-mood]. */
 export const MOODS: Record<string, string> = {
@@ -141,4 +141,4 @@ export function moodFor(pathname: string) {
   return MOODS[pathname.split("/")[1] ?? ""] ?? "home";
 }
 
-export const motionBootScript = `(function(){try{var d=document.documentElement;var m=${JSON.stringify(MOODS)};d.setAttribute("data-mood",m[location.pathname.split("/")[1]||""]||"home");if(location.pathname.indexOf("/admin")===0)return;if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;d.classList.add("motion-ready")}catch(e){}})();`;
+export const motionBootScript = `(function(){try{var d=document.documentElement;var m=${JSON.stringify(MOODS)};d.setAttribute("data-mood",m[location.pathname.split("/")[1]||""]||"home");if(location.pathname.indexOf("/admin")===0)return;var seen=false;try{seen=localStorage.getItem("ut-welcome")==="1"}catch(err){}d.classList.add(seen?"is-return":"is-welcome");if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;d.classList.add("motion-ready")}catch(e){}})();`;
