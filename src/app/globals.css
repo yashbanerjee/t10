@@ -6360,40 +6360,35 @@ html[data-mood="royal"] {
   border-bottom-color: color-mix(in srgb, var(--mood-a) 45%, transparent);
 }
 
-.inner-hero::before,
-.inner-hero::after {
-  bottom: 0;
-  border: 2px solid var(--mood-a);
-  border-bottom: 0;
-  border-radius: 999px 999px 0 0;
-  box-shadow: 0 0 18px color-mix(in srgb, var(--mood-a) 70%, transparent), inset 0 0 22px color-mix(in srgb, var(--mood-a) 45%, transparent);
-}
-
 .inner-hero::before {
+  top: 50%;
   right: 9%;
-  width: clamp(120px, 15vw, 210px);
+  width: clamp(130px, 14vw, 190px);
   height: 82%;
-  animation: arch-glow 4s ease-in-out infinite alternate;
+  translate: 0 -50%;
+  background: url("/brand/teams/united-tigers.png") center / contain no-repeat;
+  filter: drop-shadow(0 0 18px color-mix(in srgb, var(--mood-a) 70%, transparent));
+  animation: logo-glow 4s ease-in-out infinite alternate;
 }
 
 .inner-hero::after {
-  right: calc(9% + clamp(120px, 15vw, 210px) + 18px);
-  width: clamp(80px, 10vw, 140px);
-  height: 60%;
-  border-color: var(--mood-b);
-  box-shadow: 0 0 18px color-mix(in srgb, var(--mood-b) 70%, transparent), inset 0 0 22px color-mix(in srgb, var(--mood-b) 45%, transparent);
-  animation: arch-glow 4s ease-in-out 2s infinite alternate;
+  top: 50%;
+  right: calc(9% + clamp(130px, 14vw, 190px) / 2);
+  width: clamp(220px, 24vw, 320px);
+  aspect-ratio: 1;
+  translate: 50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--mood-b) 40%, transparent), transparent 68%);
+  animation: logo-glow 4s ease-in-out 2s infinite alternate;
 }
 
-@keyframes arch-glow {
+@keyframes logo-glow {
   from {
-    opacity: .35;
-    translate: 0 6px;
+    opacity: .55;
   }
 
   to {
-    opacity: .95;
-    translate: 0 0;
+    opacity: 1;
   }
 }
 
@@ -6453,10 +6448,11 @@ html[data-mood="royal"] {
   }
 
   .inner-hero::before {
-    right: 5%;
-    width: 90px;
-    height: 58%;
-    opacity: .6;
+    right: 4%;
+    width: 84px;
+    height: 62%;
+    opacity: .45;
+    animation: none;
   }
 }
 

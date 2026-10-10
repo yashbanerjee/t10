@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { failure, success } from "@/lib/api";
 import { notifyAdminAndUser } from "@/lib/mail";
+import { renderEmail } from "@/lib/email-template";
 
 const voteInput = z.object({
   optionId: z.string().min(1),
@@ -22,13 +23,28 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     const vote = await prisma.pollVote.create({ data: { pollId: poll.id, optionId: parsed.data.optionId, name: parsed.data.name, email: parsed.data.email.toLowerCase(), phone: parsed.data.phone } });
     const choice = poll.options.find((option) => option.id === vote.optionId)?.label ?? "Your choice";
-    const summary = [`Poll: ${poll.question}`, `Choice: ${choice}`, `Name: ${vote.name}`, `Email: ${vote.email}`, `Phone: ${vote.phone}`].join("\n");
     await notifyAdminAndUser({
-      adminSubject: `Vote: ${poll.title}`,
-      adminText: summary,
+      admin: await renderEmail({
+        subject: `New vote: ${poll.title}`,
+        preheader: `${vote.name} voted for ${choice}.`,
+        eyebrow: "Fan vote",
+        title: "New vote received",
+        intro: `A fan has voted in “${poll.title}”.`,
+        details: [{ label: "Question", value: poll.question }, { label: "Choice", value: choice }, { label: "Name", value: vote.name }, { label: "Email", value: vote.email }, { label: "Phone", value: vote.phone }],
+        cta: { label: "Open in admin", href: "/admin/polls" },
+      }),
       userEmail: vote.email,
-      userSubject: `Your United Tigers vote`,
-      userText: `Hello ${vote.name},\n\nYour vote has been counted.\n\n${summary}`,
+      user: await renderEmail({
+        subject: "Your United Tigers vote is in",
+        preheader: `You voted for ${choice}. Thanks for backing the Tigers.`,
+        eyebrow: "Vote confirmed",
+        title: "Your vote counts",
+        greeting: `Hello ${vote.name},`,
+        intro: "Thanks for voting. Your choice has been counted, and only one vote is kept for each email address.",
+        details: [{ label: "Question", value: poll.question }, { label: "Your choice", value: choice }],
+        cta: { label: "See more polls", href: "/vote" },
+        note: "Follow the Tigers for match nights, results and the next vote.",
+      }),
     });
     return success({ ok: true }, "Vote counted", { status: 201 });
   } catch (error) {

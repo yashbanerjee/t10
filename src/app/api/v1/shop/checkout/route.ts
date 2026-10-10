@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { failure, success } from "@/lib/api";
 import { notifyAdminAndUser } from "@/lib/mail";
+import { renderEmail } from "@/lib/email-template";
 import { formatMoney } from "@/lib/money";
 
 const checkoutInput = z.object({
@@ -53,14 +54,38 @@ export async function POST(request: NextRequest) {
         include: { items: true },
       });
     });
-    const itemLines = order.items.map((item) => `${item.quantity} × ${item.productName} (${[item.color, item.size].filter(Boolean).join(", ")}) — ${formatMoney(Number(item.unitPrice))}`).join("\n");
-    const summary = [`Order: ${order.number}`, `Name: ${order.name}`, `Email: ${order.email}`, `Phone: ${order.phone}`, `Address: ${order.address}, ${order.city}, ${order.country}`, order.notes ? `Notes: ${order.notes}` : "", "", itemLines, "", `Total: ${formatMoney(Number(order.total))}`, "Payment is confirmed by the club."].filter(Boolean).join("\n");
+    const items = order.items.map((item) => ({
+      label: `${item.quantity} × ${item.productName}${item.color || item.size ? ` (${[item.color, item.size].filter(Boolean).join(", ")})` : ""}`,
+      value: formatMoney(Number(item.unitPrice) * item.quantity),
+    }));
+    const total = { label: "Total", value: formatMoney(Number(order.total)) };
+    const delivery = { label: "Delivery", value: `${order.address}\n${order.city}, ${order.country}` };
     await notifyAdminAndUser({
-      adminSubject: `Booking ${order.number}`,
-      adminText: summary,
+      admin: await renderEmail({
+        subject: `New shop booking ${order.number}`,
+        preheader: `${order.name} booked ${order.items.length} item${order.items.length === 1 ? "" : "s"} for ${total.value}.`,
+        eyebrow: "Shop booking",
+        title: `Booking ${order.number}`,
+        intro: "A fan has booked merchandise. Contact them to confirm payment and delivery.",
+        details: [{ label: "Name", value: order.name }, { label: "Email", value: order.email }, { label: "Phone", value: order.phone }, delivery, ...(order.notes ? [{ label: "Notes", value: order.notes }] : [])],
+        items,
+        total,
+        cta: { label: "Open orders", href: "/admin/orders" },
+      }),
       userEmail: order.email,
-      userSubject: `Your United Tigers booking ${order.number}`,
-      userText: `Hello ${order.name},\n\nWe have your booking. The club will confirm payment by phone or email.\n\n${summary}`,
+      user: await renderEmail({
+        subject: `Your United Tigers booking ${order.number}`,
+        preheader: `We have your booking ${order.number}. The club will confirm payment with you.`,
+        eyebrow: "Booking received",
+        title: "Your kit is reserved",
+        greeting: `Hello ${order.name},`,
+        intro: "Thanks for backing the Tigers. We have reserved your items, and the club will contact you by phone or email to confirm payment and delivery.",
+        details: [{ label: "Booking number", value: order.number }, delivery, ...(order.notes ? [{ label: "Your notes", value: order.notes }] : [])],
+        items,
+        total,
+        cta: { label: "Visit the shop", href: "/shop" },
+        note: "Payment is confirmed by the club. Keep this email and quote your booking number if you get in touch.",
+      }),
     });
     return success({ number: order.number }, "Order booked", { status: 201 });
   } catch (error) {

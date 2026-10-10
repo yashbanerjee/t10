@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { failure, success } from "@/lib/api";
 import { notifyAdminAndUser } from "@/lib/mail";
+import { renderEmail } from "@/lib/email-template";
 
 const entryInput = z.object({
   name: z.string().trim().min(2).max(120),
@@ -20,13 +21,30 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (contest.closesAt && contest.closesAt.getTime() < Date.now()) return failure("This contest has closed", 409);
   try {
     const entry = await prisma.contestEntry.create({ data: { contestId: contest.id, name: parsed.data.name, email: parsed.data.email.toLowerCase(), phone: parsed.data.phone, answer: parsed.data.answer } });
-    const summary = [`Contest: ${contest.title}`, contest.prize ? `Prize: ${contest.prize}` : "", `Name: ${entry.name}`, `Email: ${entry.email}`, `Phone: ${entry.phone}`, "", entry.answer].filter(Boolean).join("\n");
+    const prize = contest.prize ? [{ label: "Prize", value: contest.prize }] : [];
     await notifyAdminAndUser({
-      adminSubject: `Contest entry: ${contest.title}`,
-      adminText: summary,
+      admin: await renderEmail({
+        subject: `New contest entry: ${contest.title}`,
+        preheader: `${entry.name} entered ${contest.title}.`,
+        eyebrow: "Fan contest",
+        title: "New contest entry",
+        intro: `A fan has entered “${contest.title}”.`,
+        details: [{ label: "Contest", value: contest.title }, ...prize, { label: "Name", value: entry.name }, { label: "Email", value: entry.email }, { label: "Phone", value: entry.phone }],
+        message: { label: "Their answer", body: entry.answer },
+        cta: { label: "Open contests", href: "/admin/contests" },
+      }),
       userEmail: entry.email,
-      userSubject: `Your United Tigers contest entry`,
-      userText: `Hello ${entry.name},\n\nWe have your entry. One entry is kept for this email address.\n\n${summary}`,
+      user: await renderEmail({
+        subject: `You're in: ${contest.title}`,
+        preheader: "Your United Tigers contest entry has been received. Good luck!",
+        eyebrow: "Entry confirmed",
+        title: "You’re in the hunt",
+        greeting: `Hello ${entry.name},`,
+        intro: "Thanks for entering. We have your entry, and one entry is kept for each email address. Good luck!",
+        details: [{ label: "Contest", value: contest.title }, ...prize],
+        message: { label: "Your answer", body: entry.answer },
+        cta: { label: "Visit the Fan Zone", href: "/fan" },
+      }),
     });
     return success({ ok: true }, "Entry received", { status: 201 });
   } catch (error) {
