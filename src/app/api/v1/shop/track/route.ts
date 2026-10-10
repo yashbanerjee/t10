@@ -21,6 +21,8 @@ export async function POST(request: NextRequest) {
     return success({
       number: order.number,
       status: order.status,
+      paymentStatus: order.paymentStatus,
+      paidAt: order.paidAt,
       name: order.name.split(" ")[0],
       createdAt: order.createdAt,
       city: order.city,

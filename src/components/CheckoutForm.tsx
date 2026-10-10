@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
 import { formatMoney } from "@/lib/money";
@@ -14,8 +14,23 @@ const fields = [
   ["country", "Country", "text"],
 ] as const;
 
-export function CheckoutForm() {
+export function CheckoutForm({ onlinePayment = false, cancelledOrderId = "" }: { onlinePayment?: boolean; cancelledOrderId?: string }) {
   const cart = useCart();
+  const [notice, setNotice] = useState("");
+  const cancelHandled = useRef(false);
+
+  useEffect(() => {
+    if (!cancelledOrderId || cancelHandled.current) return;
+    cancelHandled.current = true;
+    window.history.replaceState(null, "", "/checkout");
+    void fetch("/api/v1/shop/checkout/cancel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ orderId: cancelledOrderId }) })
+      .then((response) => response.json().catch(() => null))
+      .then((result) => {
+        if (result?.data?.paymentStatus === "PAID") setNotice(`Order ${result.data.number} is already paid. Check your email for the confirmation.`);
+        else setNotice("Payment was not completed, so nothing was charged. Your bag is still here when you are ready.");
+      })
+      .catch(() => setNotice("Payment was not completed. Your bag is still here when you are ready."));
+  }, [cancelledOrderId]);
   const [form, setForm] = useState({ name: "", email: "", phone: "", address: "", city: "", country: "United Arab Emirates", notes: "" });
   const [error, setError] = useState("");
   const [number, setNumber] = useState("");
@@ -30,6 +45,10 @@ export function CheckoutForm() {
       const response = await fetch("/api/v1/shop/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...form, items: cart.lines.map((line) => ({ variantId: line.variantId, quantity: line.quantity })) }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "The order could not be booked.");
+      if (typeof result.data.checkoutUrl === "string") {
+        window.location.assign(result.data.checkoutUrl);
+        return;
+      }
       setBookedEmail(form.email.trim());
       setNumber(result.data.number);
       cart.clear();
@@ -58,9 +77,10 @@ export function CheckoutForm() {
     <aside className="checkout-summary">
       {cart.lines.map((line) => <p key={line.variantId}><span>{line.name}<small>{[line.color, line.size].filter(Boolean).join(" · ")} · {line.quantity}</small></span><strong>{formatMoney(line.price * line.quantity)}</strong></p>)}
       <p className="checkout-total"><span>Total</span><strong>{formatMoney(total)}</strong></p>
-      <p>Booking holds the stock. Payment is confirmed with you by phone or email.</p>
+      <p>{onlinePayment ? "You will pay securely by card on Stripe. Your items are held while you pay." : "Booking holds the stock. Payment is confirmed with you by phone or email."}</p>
+      {notice && <p className="form-status">{notice}</p>}
       {error && <p className="form-error">{error}</p>}
-      <button className="button button-primary" type="submit" disabled={saving}>{saving ? "BOOKING…" : "BOOK THIS ORDER"}</button>
+      <button className="button button-primary" type="submit" disabled={saving}>{saving ? (onlinePayment ? "OPENING PAYMENT…" : "BOOKING…") : onlinePayment ? `PAY ${formatMoney(total)} SECURELY` : "BOOK THIS ORDER"}</button>
     </aside>
   </form>;
 }

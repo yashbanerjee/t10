@@ -1,0 +1,10 @@
+DO $$ BEGIN
+  CREATE TYPE "PaymentStatus" AS ENUM ('UNPAID', 'PAID', 'FAILED');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "paymentStatus" "PaymentStatus" NOT NULL DEFAULT 'UNPAID';
+ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "paymentMethod" TEXT;
+ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "stripeSessionId" TEXT;
+ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "paidAt" TIMESTAMP(3);
+CREATE UNIQUE INDEX IF NOT EXISTS "Order_stripeSessionId_key" ON "Order"("stripeSessionId");

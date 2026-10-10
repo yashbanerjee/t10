@@ -8,6 +8,8 @@ import { formatMoney } from "@/lib/money";
 type TrackedOrder = {
   number: string;
   status: "PENDING" | "CONFIRMED" | "CANCELLED";
+  paymentStatus: "UNPAID" | "PAID" | "FAILED";
+  paidAt: string | null;
   name: string;
   createdAt: string;
   city: string;
@@ -81,6 +83,7 @@ export function TrackOrderForm({ initialNumber = "", initialEmail = "" }: { init
       <dl className="track-meta">
         <div><dt>Booked on</dt><dd>{new Date(order.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</dd></div>
         <div><dt>Deliver to</dt><dd>{order.city}, {order.country}</dd></div>
+        <div><dt>Payment</dt><dd>{order.paymentStatus === "PAID" ? `Paid${order.paidAt ? ` on ${new Date(order.paidAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}` : ""}` : order.paymentStatus === "FAILED" ? "Not completed" : "Awaiting payment"}</dd></div>
       </dl>
       <div className="checkout-summary">
         {order.items.map((item, index) => <p key={`${item.productName}-${index}`}><span>{item.productName}<small> {[item.color, item.size].filter(Boolean).join(" · ")} · {item.quantity}</small></span><strong>{formatMoney(item.unitPrice * item.quantity)}</strong></p>)}

@@ -40,7 +40,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setLines((current) => quantity < 1 ? current.filter((item) => item.variantId !== variantId) : current.map((item) => item.variantId === variantId ? { ...item, quantity: Math.min(10, quantity) } : item));
     },
     remove(variantId) { setLines((current) => current.filter((item) => item.variantId !== variantId)); },
-    clear() { setLines([]); },
+    clear() {
+      try { localStorage.removeItem("ut-cart"); } catch { /* storage unavailable */ }
+      setLines([]);
+    },
   }), [lines]);
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

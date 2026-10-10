@@ -2,9 +2,8 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { failure, success } from "@/lib/api";
-import { notifyAdminAndUser } from "@/lib/mail";
-import { renderEmail } from "@/lib/email-template";
-import { formatMoney } from "@/lib/money";
+import { sendBookingEmails } from "@/lib/order-mail";
+import { activeStripe, createCheckoutSession, releaseUnpaidOrder } from "@/lib/stripe";
 
 const checkoutInput = z.object({
   name: z.string().trim().min(2).max(120),
@@ -49,44 +48,22 @@ export async function POST(request: NextRequest) {
           country: data.country,
           notes: data.notes || null,
           total,
-          items: { create: lines.map((line) => ({ productName: line.variant.product.name, color: line.variant.color, size: line.variant.size, quantity: line.quantity, unitPrice: line.unitPrice })) },
+          items: { create: lines.map((line) => ({ variantId: line.variant.id, productName: line.variant.product.name, color: line.variant.color, size: line.variant.size, quantity: line.quantity, unitPrice: line.unitPrice })) },
         },
         include: { items: true },
       });
     });
-    const items = order.items.map((item) => ({
-      label: `${item.quantity} × ${item.productName}${item.color || item.size ? ` (${[item.color, item.size].filter(Boolean).join(", ")})` : ""}`,
-      value: formatMoney(Number(item.unitPrice) * item.quantity),
-    }));
-    const total = { label: "Total", value: formatMoney(Number(order.total)) };
-    const delivery = { label: "Delivery", value: `${order.address}\n${order.city}, ${order.country}` };
-    await notifyAdminAndUser({
-      admin: await renderEmail({
-        subject: `New shop booking ${order.number}`,
-        preheader: `${order.name} booked ${order.items.length} item${order.items.length === 1 ? "" : "s"} for ${total.value}.`,
-        eyebrow: "Shop booking",
-        title: `Booking ${order.number}`,
-        intro: "A fan has booked merchandise. Contact them to confirm payment and delivery.",
-        details: [{ label: "Tracking number", value: order.number }, { label: "Name", value: order.name }, { label: "Email", value: order.email }, { label: "Phone", value: order.phone }, delivery, ...(order.notes ? [{ label: "Notes", value: order.notes }] : [])],
-        items,
-        total,
-        cta: { label: "Open orders", href: "/admin/orders" },
-      }),
-      userEmail: order.email,
-      user: await renderEmail({
-        subject: `Your United Tigers booking ${order.number}`,
-        preheader: `Your tracking number is ${order.number}. The club will confirm payment with you.`,
-        eyebrow: "Booking received",
-        title: "Your kit is reserved",
-        greeting: `Hello ${order.name},`,
-        intro: "Thanks for backing the Tigers. We have reserved your items, and the club will contact you by phone or email to confirm payment and delivery.",
-        details: [{ label: "Tracking number", value: order.number }, { label: "Status", value: "Booked — awaiting confirmation" }, delivery, ...(order.notes ? [{ label: "Your notes", value: order.notes }] : [])],
-        items,
-        total,
-        cta: { label: "Track your booking", href: `/track-order?number=${encodeURIComponent(order.number)}&email=${encodeURIComponent(order.email)}` },
-        note: `Payment is confirmed by the club. You can check your booking any time at the Track your order page in the website footer, using tracking number ${order.number} and this email address.`,
-      }),
-    });
+    if (await activeStripe()) {
+      try {
+        const checkoutUrl = await createCheckoutSession(order.id);
+        return success({ number: order.number, checkoutUrl }, "Order created. Continue to payment.", { status: 201 });
+      } catch (error) {
+        console.error("Stripe checkout failed", error instanceof Error ? error.message : "unknown error");
+        await releaseUnpaidOrder(order.id);
+        return failure("Online payment is not available right now. Please try again shortly.", 502);
+      }
+    }
+    await sendBookingEmails(order.id);
     return success({ number: order.number }, "Order booked", { status: 201 });
   } catch (error) {
     if (error instanceof Error && (error.message === "STOCK" || error.message === "MISSING")) return failure("One of the items is no longer available in that size or colour", 409);

@@ -538,6 +538,12 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum PaymentStatus {
+  UNPAID
+  PAID
+  FAILED
+}
+
 model Product {
   id          String          @id @default(cuid())
   name        String
@@ -581,6 +587,10 @@ model Order {
   status    OrderStatus @default(PENDING)
   total     Decimal     @db.Decimal(10, 2)
   items     OrderItem[]
+  paymentStatus   PaymentStatus @default(UNPAID)
+  paymentMethod   String?
+  stripeSessionId String?       @unique
+  paidAt          DateTime?
   createdAt DateTime    @default(now())
 
   @@index([email, createdAt])
@@ -591,6 +601,7 @@ model OrderItem {
   id          String  @id @default(cuid())
   orderId     String
   order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId   String?
   productName String
   color       String
   size        String

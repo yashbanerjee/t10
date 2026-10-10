@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       details: [{ label: "Name", value: record.name }, { label: "Email", value: record.email }, ...(record.phone ? [{ label: "Phone", value: record.phone }] : []), { label: "Subject", value: record.subject }],
       message: { label: "Message", body: record.message },
       cta: { label: "Open messages", href: "/admin/contacts" },
-    }));
+    }), record.email);
     return success({ id: record.id }, "Message received", { status: 201 });
   } catch {
     if (process.env.NODE_ENV !== "production") return success({ id: "local-demo-submission" }, "Message received in demo mode", { status: 201 });

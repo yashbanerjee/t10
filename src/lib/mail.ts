@@ -39,7 +39,7 @@ async function readSmtp(): Promise<SmtpConfig | null> {
   }
 }
 
-async function deliver(config: SmtpConfig, to: string, content: MailContent) {
+async function deliver(config: SmtpConfig, to: string, content: MailContent, replyTo?: string) {
   if (!config.host || !config.password) throw new Error("Add the SMTP host and password first.");
   const fromAddress = config.fromEmail || config.user;
   if (!fromAddress) throw new Error("Add a from email address first.");
@@ -54,6 +54,7 @@ async function deliver(config: SmtpConfig, to: string, content: MailContent) {
   await transport.sendMail({
     from: `"${config.fromName.replaceAll('"', "")}" <${fromAddress}>`,
     to,
+    ...(replyTo ? { replyTo } : {}),
     subject: content.subject,
     text: content.text,
     html: content.html,
@@ -65,25 +66,26 @@ async function readReadySmtp() {
   return config && config.host && config.password ? config : null;
 }
 
-async function send(config: SmtpConfig, to: string, content: MailContent, label: string) {
+async function send(config: SmtpConfig, to: string, content: MailContent, label: string, replyTo?: string) {
   if (!to) {
     console.error(`${label} mail skipped: no recipient address`);
     return;
   }
   try {
-    await deliver(config, to, content);
+    await deliver(config, to, content, replyTo);
   } catch (error) {
     console.error(`${label} mail failed`, error instanceof Error ? error.message : "unknown error");
   }
 }
 
-export async function notifyAdmin(content: MailContent) {
+/** `replyTo` lets the club answer the fan straight from the notification. */
+export async function notifyAdmin(content: MailContent, replyTo?: string) {
   const config = await readReadySmtp();
   if (!config) {
     console.warn("Mail skipped: SMTP host and password are not saved in Site settings");
     return;
   }
-  await send(config, config.adminEmail, content, "Admin");
+  await send(config, config.adminEmail, content, "Admin", replyTo);
 }
 
 export async function notifyAdminAndUser(message: { admin: MailContent; userEmail: string; user: MailContent }) {
@@ -93,7 +95,7 @@ export async function notifyAdminAndUser(message: { admin: MailContent; userEmai
     return;
   }
   await Promise.all([
-    send(config, config.adminEmail, message.admin, "Admin"),
+    send(config, config.adminEmail, message.admin, "Admin", message.userEmail),
     send(config, message.userEmail, message.user, "User"),
   ]);
 }

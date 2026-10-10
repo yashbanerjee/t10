@@ -3,7 +3,10 @@ import { prisma } from "@/lib/db";
 import { readBrochureUrl } from "@/lib/partner-brochure";
 
 /** Settings that must never be sent to public pages. */
-export const PRIVATE_SETTING_KEYS = new Set(["storage", "smtp"]);
+export const PRIVATE_SETTING_KEYS = new Set(["storage", "smtp", "stripe"]);
+
+/** Settings whose saved secrets are kept when the admin form leaves them blank. */
+export const SECRET_SETTING_KEYS = new Set(["storage", "smtp", "stripe"]);
 
 const siteUrlSchema = z.string().trim().url().refine((value) => {
   const url = new URL(value);
@@ -77,7 +80,9 @@ export function normalizeSiteSetting(key: string, value: unknown, previous?: unk
     if (!parsed.success) return { ok: false, message: "Mail settings are invalid." };
     const email = z.string().email();
     if (parsed.data.fromEmail && !email.safeParse(parsed.data.fromEmail).success) return { ok: false, message: "From email must be a valid address." };
-    if (parsed.data.adminEmail && !email.safeParse(parsed.data.adminEmail).success) return { ok: false, message: "Admin email must be a valid address." };
+    const adminEmails = parsed.data.adminEmail.split(/[,;\s]+/).map((entry) => entry.trim()).filter(Boolean);
+    if (adminEmails.some((entry) => !email.safeParse(entry).success)) return { ok: false, message: "Admin email must be one or more valid addresses, separated by commas." };
+    parsed.data.adminEmail = [...new Set(adminEmails.map((entry) => entry.toLowerCase()))].join(", ");
     const prior = previous && typeof previous === "object" && !Array.isArray(previous) ? previous as Record<string, unknown> : {};
     const clearing = !parsed.data.host && !parsed.data.user && !parsed.data.password && !parsed.data.fromEmail && !parsed.data.adminEmail;
     return {
@@ -92,6 +97,21 @@ export function normalizeSiteSetting(key: string, value: unknown, previous?: unk
         adminEmail: parsed.data.adminEmail,
         password: parsed.data.password || (clearing ? "" : typeof prior.password === "string" ? prior.password : ""),      },
     };
+  }
+  if (key === "stripe") {
+    const parsed = stripeSchema.safeParse(value ?? {});
+    if (!parsed.success) return { ok: false, message: "Stripe settings are invalid." };
+    const prior = previous && typeof previous === "object" && !Array.isArray(previous) ? previous as Record<string, unknown> : {};
+    const { publishableKey, secretKey, webhookSecret } = parsed.data;
+    if (publishableKey && !/^pk_(test|live)_/.test(publishableKey)) return { ok: false, message: "Stripe publishable key must start with pk_test_ or pk_live_." };
+    if (secretKey && !/^(sk|rk)_(test|live)_/.test(secretKey)) return { ok: false, message: "Stripe secret key must start with sk_test_, sk_live_, rk_test_ or rk_live_." };
+    if (webhookSecret && !webhookSecret.startsWith("whsec_")) return { ok: false, message: "Stripe webhook signing secret must start with whsec_." };
+    const savedSecret = parsed.data.removeKeys ? "" : secretKey || (typeof prior.secretKey === "string" ? prior.secretKey : "");
+    const savedWebhook = parsed.data.removeKeys ? "" : webhookSecret || (typeof prior.webhookSecret === "string" ? prior.webhookSecret : "");
+    const savedPublishable = parsed.data.removeKeys ? "" : publishableKey;
+    if (parsed.data.enabled && (!savedSecret || !savedPublishable)) return { ok: false, message: "Add the Stripe publishable and secret keys before turning on online payments." };
+    if (savedSecret && savedPublishable && savedSecret.split("_")[1] !== savedPublishable.split("_")[1]) return { ok: false, message: "Stripe keys must both be test keys or both be live keys." };
+    return { ok: true, value: { enabled: parsed.data.enabled, publishableKey: savedPublishable, secretKey: savedSecret, webhookSecret: savedWebhook, currency: parsed.data.currency.toLowerCase() } };
   }
   if (key === "partnerBrochure") {
     if (value != null && typeof value !== "string") return { ok: false, message: "Partner brochure must be a site path or an http(s) URL." };
@@ -177,9 +197,18 @@ const smtpSchema = z.object({
   password: z.string().max(300).optional().default(""),
   fromEmail: z.string().trim().max(200).optional().default(""),
   fromName: z.string().trim().max(80).optional().default("United Tigers"),
-  adminEmail: z.string().trim().max(200).optional().default(""),});
+  adminEmail: z.string().trim().max(600).optional().default(""),});
 
 export type SmtpSettings = z.infer<typeof smtpSchema>;
+
+const stripeSchema = z.object({
+  enabled: z.boolean().optional().default(false),
+  publishableKey: z.string().trim().max(300).optional().default(""),
+  secretKey: z.string().trim().max(300).optional().default(""),
+  webhookSecret: z.string().trim().max(300).optional().default(""),
+  currency: z.string().trim().regex(/^[a-zA-Z]{3}$/).optional().default("aed"),
+  removeKeys: z.boolean().optional().default(false),
+});
 
 export function redactSettingValue(key: string, value: unknown) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return value;
@@ -191,6 +220,10 @@ export function redactSettingValue(key: string, value: unknown) {
   if (key === "smtp") {
     const { password, ...rest } = source;
     return { ...rest, hasPassword: Boolean(password) };
+  }
+  if (key === "stripe") {
+    const { secretKey, webhookSecret, ...rest } = source;
+    return { ...rest, hasSecretKey: Boolean(secretKey), hasWebhookSecret: Boolean(webhookSecret), mode: typeof secretKey === "string" && secretKey.includes("_live_") ? "live" : secretKey ? "test" : "" };
   }
   // The admin form shows exactly what the homepage renders, so saving never changes copy by surprise.
   if (key === "homepage") return readHomepageBanner(value);

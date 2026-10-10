@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getSession, hasPermission, recordAudit } from "@/lib/auth";
 import { failure, success } from "@/lib/api";
-import { normalizeSiteSetting, redactSettingRow, redactSettingValue } from "@/lib/site-settings";
+import { normalizeSiteSetting, redactSettingRow, redactSettingValue, SECRET_SETTING_KEYS } from "@/lib/site-settings";
 import { careerFromForm, careerRecordSchema } from "@/lib/career-record";
 import { linksFromForm } from "@/lib/player-links";
 import { personName, playerTextRules } from "@/lib/admin-validation";
@@ -18,6 +18,7 @@ const permissions: Record<string, { read: string; write: string }> = {
   sponsors: { read: "CONTENT_READ", write: "SETTINGS_WRITE" }, records: { read: "STATS_READ", write: "STATS_WRITE" }, standings: { read: "STATS_READ", write: "STATS_WRITE" },
   products: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, polls: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
   contests: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, orders: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
+  pollVotes: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, contestEntries: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
   settings: { read: "SETTINGS_WRITE", write: "SETTINGS_WRITE" }, audit: { read: "AUDIT_READ", write: "AUDIT_READ" },
   franchises: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
 };
@@ -47,6 +48,14 @@ const slugify = (value: string) => value.toLowerCase().normalize("NFKD").replace
 
 async function list(collection: string) {
   if (collection === "teams") return getTeams();
+  if (collection === "pollVotes") {
+    const votes = await prisma.pollVote.findMany({ include: { poll: { select: { title: true, question: true } }, option: { select: { label: true } } }, orderBy: { createdAt: "desc" } });
+    return votes.map((vote) => ({ id: vote.id, name: vote.name, email: vote.email, phone: vote.phone, poll: vote.poll.title, question: vote.poll.question, choice: vote.option.label, createdAt: vote.createdAt }));
+  }
+  if (collection === "contestEntries") {
+    const entries = await prisma.contestEntry.findMany({ include: { contest: { select: { title: true } } }, orderBy: { createdAt: "desc" } });
+    return entries.map((entry) => ({ id: entry.id, name: entry.name, email: entry.email, phone: entry.phone, contest: entry.contest.title, answer: entry.answer, createdAt: entry.createdAt }));
+  }
   // One row per created team, in table order: the admin edits a team's figures rather than adding rows.
   if (collection === "standings") return (await getPointsTable()).map((row) => ({ ...row, id: row.entryId ?? `team:${row.teamId}`, source: row.manual ? "Entered" : "Calculated" }));
   const db = prisma as unknown as Record<string, { findMany(args?: unknown): Promise<unknown> }>;
@@ -155,7 +164,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       result = await prisma.contest.create({ data: { title: data.title, slug: slugify(data.slug || data.title), description: data.description, prize: data.prize || null, prompt: data.prompt, image: data.image || null, closesAt: data.closesAt ? new Date(data.closesAt) : null, isPublished: data.isPublished ?? true } });
     } else if (collection === "settings") {
       const parsed = settingInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
-      const existing = parsed.data.key === "storage" || parsed.data.key === "smtp" ? await prisma.siteSetting.findUnique({ where: { key: parsed.data.key } }) : null;
+      const existing = SECRET_SETTING_KEYS.has(parsed.data.key) ? await prisma.siteSetting.findUnique({ where: { key: parsed.data.key } }) : null;
       const normalized = normalizeSiteSetting(parsed.data.key, parsed.data.value, existing?.value);
       if (!normalized.ok) return failure(normalized.message, 400);
       result = await prisma.siteSetting.upsert({ where: { key: parsed.data.key }, create: { key: parsed.data.key, value: normalized.value as never }, update: { value: normalized.value as never } });

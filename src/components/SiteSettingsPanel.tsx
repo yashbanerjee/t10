@@ -11,6 +11,8 @@ type PlayerOption = { id: string; fullName: string; profileImage: string | null;
 const FEATURED_PLAYER_LIMIT = 5;
 const empty = { siteUrl: "http://localhost:3000", livePollIntervalMs: "15000", endpoint: "", bucket: "", region: "auto", publicUrl: "", accessKey: "", secretKey: "" };
 const smtpEmpty = { host: "", port: "587", secure: false, user: "", password: "", fromEmail: "", fromName: "United Tigers", adminEmail: "" };
+const stripeEmpty = { enabled: false, publishableKey: "", secretKey: "", webhookSecret: "", currency: "AED", removeKeys: false };
+type StripeValue = { enabled?: boolean; publishableKey?: string; currency?: string; hasSecretKey?: boolean; hasWebhookSecret?: boolean; mode?: string };
 const bannerEmpty = { mode: "static", title: "THE NEXT GAME", accent: "STARTS HERE", tagline: "BIGGER BOLDER TOGETHER", ctaLabel: "BACK OUR TIGERS", ctaHref: "/team", image: "", roar: "LET’S GO HUNT", showPlayers: true, players: [] as string[] };
 
 export function SiteSettingsPanel() {
@@ -23,6 +25,23 @@ export function SiteSettingsPanel() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [stripe, setStripe] = useState(stripeEmpty);
+  const [stripeSaved, setStripeSaved] = useState({ secret: false, webhook: false, mode: "" });
+  const [stripeCheck, setStripeCheck] = useState<{ ok: boolean; message: string } | null>(null);
+  const [checkingStripe, setCheckingStripe] = useState(false);
+
+  async function checkStripe() {
+    setCheckingStripe(true); setStripeCheck(null);
+    try {
+      const response = await fetch("/api/v1/admin/stripe/test", { method: "POST" });
+      const result = await response.json().catch(() => null);
+      setStripeCheck({ ok: response.ok, message: result?.message || (response.ok ? "Stripe keys work." : "Stripe check failed.") });
+    } catch {
+      setStripeCheck({ ok: false, message: "Stripe check failed: the server could not be reached." });
+    } finally {
+      setCheckingStripe(false);
+    }
+  }
   const [testTo, setTestTo] = useState("");
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
@@ -71,6 +90,10 @@ export function SiteSettingsPanel() {
       });
       const savedBrochure = rows.find((row) => row.key === "partnerBrochure");
       setBrochure(typeof savedBrochure?.value === "string" ? savedBrochure.value : "");
+      const stripeRow = rows.find((row) => row.key === "stripe");
+      const stripeValue = stripeRow?.value && typeof stripeRow.value === "object" && !Array.isArray(stripeRow.value) ? stripeRow.value as StripeValue : {};
+      setStripe({ ...stripeEmpty, enabled: Boolean(stripeValue.enabled), publishableKey: stripeValue.publishableKey ?? "", currency: (stripeValue.currency || "aed").toUpperCase() });
+      setStripeSaved({ secret: Boolean(stripeValue.hasSecretKey), webhook: Boolean(stripeValue.hasWebhookSecret), mode: stripeValue.mode ?? "" });
       const mail = rows.find((row) => row.key === "smtp");
       const mailValue = mail?.value && typeof mail.value === "object" && !Array.isArray(mail.value) ? mail.value as SmtpValue : {};
       const storageValue = storage?.value && typeof storage.value === "object" ? storage.value as StorageValue : {};
@@ -120,6 +143,7 @@ export function SiteSettingsPanel() {
       { key: "homepage", value: banner },
       { key: "partnerBrochure", value: brochure.trim() },
       { key: "smtp", value: { host: smtp.host.trim(), port: Number(smtp.port), secure: smtp.secure, user: smtp.user.trim(), password: smtp.password, fromEmail: smtp.fromEmail.trim(), fromName: smtp.fromName.trim(), adminEmail: smtp.adminEmail.trim() } },
+      { key: "stripe", value: { enabled: stripe.removeKeys ? false : stripe.enabled, publishableKey: stripe.publishableKey.trim(), secretKey: stripe.secretKey.trim(), webhookSecret: stripe.webhookSecret.trim(), currency: stripe.currency.trim() || "AED", removeKeys: stripe.removeKeys } },
     ];
     try {
       for (const payload of payloads) {
@@ -130,6 +154,8 @@ export function SiteSettingsPanel() {
       setSavedSecrets((current) => ({ access: current.access || Boolean(form.accessKey), secret: current.secret || Boolean(form.secretKey), mail: current.mail || Boolean(smtp.password) }));
       setForm((current) => ({ ...current, accessKey: "", secretKey: "" }));
       setSmtp((current) => ({ ...current, password: "" }));
+      setStripeSaved((current) => stripe.removeKeys ? { secret: false, webhook: false, mode: "" } : { secret: current.secret || Boolean(stripe.secretKey.trim()), webhook: current.webhook || Boolean(stripe.webhookSecret.trim()), mode: stripe.secretKey.trim() ? (stripe.secretKey.includes("_live_") ? "live" : "test") : current.mode });
+      setStripe((current) => current.removeKeys ? { ...stripeEmpty } : { ...current, secretKey: "", webhookSecret: "" });
       setNotice("Site settings saved. Public pages use these values on the next request.");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Could not save site settings.");
@@ -179,10 +205,20 @@ export function SiteSettingsPanel() {
       <label className="admin-field"><span className="admin-field-label">SMTP password</span><span className="admin-field-control"><input type="password" value={smtp.password} onChange={(event) => setSmtp((current) => ({ ...current, password: event.target.value }))} autoComplete="new-password" placeholder={savedSecrets.mail ? "Saved — leave blank to keep" : ""} /></span><span className="admin-field-note" /></label>
       <label className="admin-field"><span className="admin-field-label">From name</span><span className="admin-field-control"><input value={smtp.fromName} onChange={(event) => setSmtp((current) => ({ ...current, fromName: event.target.value }))} /></span><span className="admin-field-note" /></label>
       <label className="admin-field"><span className="admin-field-label">From email</span><span className="admin-field-control"><input type="email" value={smtp.fromEmail} onChange={(event) => setSmtp((current) => ({ ...current, fromEmail: event.target.value }))} placeholder="info@unitedtigers.ae" /></span><span className="admin-field-note">Address fans see as the sender.</span></label>
-      <label className="admin-field"><span className="admin-field-label">Admin email</span><span className="admin-field-control"><input type="email" value={smtp.adminEmail} onChange={(event) => setSmtp((current) => ({ ...current, adminEmail: event.target.value }))} placeholder="info@vedha.ae" /></span><span className="admin-field-note">Receives contact, booking, vote, contest and partner mail. If blank, the from email receives it.</span></label>
+      <label className="admin-field"><span className="admin-field-label">Admin email</span><span className="admin-field-control"><input value={smtp.adminEmail} onChange={(event) => setSmtp((current) => ({ ...current, adminEmail: event.target.value }))} placeholder="manager@example.com, sales@example.com" autoComplete="off" /></span><span className="admin-field-note">{!smtp.adminEmail.trim() || smtp.adminEmail.trim().toLowerCase() === smtp.fromEmail.trim().toLowerCase() ? <strong className="form-status form-status-error">No separate admin inbox. Notifications are sent from the from email to itself, and many mail servers file those only under Sent. Add a different address here.</strong> : "Receives every contact, booking, payment, vote, contest and partner notification. Separate several addresses with commas."}</span></label>
       <label className="admin-field"><span className="admin-field-label">Use SSL</span><span className="admin-field-control"><input type="checkbox" checked={smtp.secure} onChange={(event) => setSmtp((current) => ({ ...current, secure: event.target.checked }))} /></span><span className="admin-field-note">Turn on for port 465.</span></label>
       <label className="admin-field"><span className="admin-field-label">Send test email to</span><span className="admin-field-control"><input type="email" value={testTo} onChange={(event) => setTestTo(event.target.value)} placeholder={smtp.adminEmail || "you@example.com"} /></span><span className="admin-field-note">Uses the saved settings, so save first. Blank sends to the admin email.</span></label>
       <div className="admin-field"><span className="admin-field-label">Test mail</span><span className="admin-field-control"><button className="admin-primary-btn" type="button" onClick={sendTest} disabled={testing || busy}>{testing ? "SENDING…" : "SEND TEST EMAIL"}</button></span><span className="admin-field-note">{testResult ? <span className={testResult.ok ? "admin-notice" : "form-status form-status-error"}>{testResult.ok ? <Check size={13} /> : null} {testResult.message}</span> : "Checks the connection and sends one short message."}</span></div>
+    </div>
+    <div className="admin-panel-header"><h2>Online payments (Stripe)</h2></div>
+    <p className="admin-storage-note">When turned on, fans pay for shop orders by card on Stripe’s secure checkout page and the order is marked paid automatically. When off, orders are booked and the club confirms payment by phone or email. Find your keys in the Stripe Dashboard under Developers → API keys.{stripeSaved.mode ? <> <strong>Saved keys: {stripeSaved.mode === "live" ? "LIVE mode — real cards are charged." : "TEST mode — use Stripe test cards."}</strong></> : null}</p>
+    <div className="admin-editor-grid">
+      <label className="admin-field"><span className="admin-field-label">Accept online payments</span><span className="admin-field-control"><input type="checkbox" checked={stripe.enabled} disabled={stripe.removeKeys} onChange={(event) => setStripe((current) => ({ ...current, enabled: event.target.checked }))} /></span><span className="admin-field-note">{stripe.enabled ? "Checkout sends fans to Stripe to pay." : "Checkout books orders without payment."}</span></label>
+      <label className="admin-field"><span className="admin-field-label">Publishable key</span><span className="admin-field-control"><input value={stripe.publishableKey} onChange={(event) => setStripe((current) => ({ ...current, publishableKey: event.target.value, removeKeys: false }))} placeholder="pk_live_… or pk_test_…" autoComplete="off" spellCheck={false} /></span><span className="admin-field-note">Starts with pk_.</span></label>
+      <label className="admin-field"><span className="admin-field-label">Secret key</span><span className="admin-field-control"><input type="password" value={stripe.secretKey} onChange={(event) => setStripe((current) => ({ ...current, secretKey: event.target.value, removeKeys: false }))} placeholder={stripeSaved.secret && !stripe.removeKeys ? "Saved — leave blank to keep" : "sk_live_… or sk_test_…"} autoComplete="new-password" /></span><span className="admin-field-note">Starts with sk_ (or a restricted rk_ key). Never shown again after saving.</span></label>
+      <label className="admin-field"><span className="admin-field-label">Webhook signing secret</span><span className="admin-field-control"><input type="password" value={stripe.webhookSecret} onChange={(event) => setStripe((current) => ({ ...current, webhookSecret: event.target.value, removeKeys: false }))} placeholder={stripeSaved.webhook && !stripe.removeKeys ? "Saved — leave blank to keep" : "whsec_…"} autoComplete="new-password" /></span><span className="admin-field-note">Recommended. In Stripe → Developers → Webhooks, add the endpoint <code>{`${form.siteUrl.replace(/\/$/, "")}/api/v1/shop/stripe/webhook`}</code> with the events checkout.session.completed, checkout.session.expired, checkout.session.async_payment_succeeded and checkout.session.async_payment_failed, then paste its signing secret here.</span></label>
+      <label className="admin-field"><span className="admin-field-label">Currency</span><span className="admin-field-control"><input value={stripe.currency} maxLength={3} onChange={(event) => setStripe((current) => ({ ...current, currency: event.target.value.toUpperCase() }))} /></span><span className="admin-field-note">Three-letter code. Shop prices are in AED.</span></label>
+      <div className="admin-field"><span className="admin-field-label">Check keys</span><span className="admin-field-control"><button className="admin-primary-btn" type="button" onClick={checkStripe} disabled={checkingStripe || busy}>{checkingStripe ? "CHECKING…" : "CHECK STRIPE KEYS"}</button></span><span className="admin-field-note">{stripeCheck ? <span className={stripeCheck.ok ? "admin-notice" : "form-status form-status-error"}>{stripeCheck.ok ? <Check size={13} /> : null} {stripeCheck.message}</span> : "Uses the saved keys, so save first."}{stripeSaved.secret ? <> <label><input type="checkbox" checked={stripe.removeKeys} onChange={(event) => setStripe((current) => ({ ...current, removeKeys: event.target.checked, enabled: event.target.checked ? false : current.enabled }))} /> Remove saved Stripe keys</label></> : null}</span></div>
     </div>
     <div className="admin-panel-header"><h2>Homepage banner</h2></div>
     <p className="admin-storage-note">The homepage hero uses one wide picture as its background. The headline sits on the left. Upload a new image here to replace the built-in stadium.</p>
