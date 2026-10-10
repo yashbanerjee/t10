@@ -100,7 +100,7 @@ export default async function HomePage() {
       </Link>}
       {customBanner ? <h1 className="sr-only">United Tigers: {banner.title} {banner.accent}. {banner.tagline}. {banner.roar}</h1> : null}
       <div className="wrap dash-grid">
-        <article className="dash-card">
+        <article className="dash-card next-match-card">
           <header><span className="is-gold">NEXT MATCH</span><small><LeagueMark height={11} /></small></header>
           {upcoming && kickoff ? <>
             <div className="crest-row">
@@ -136,7 +136,7 @@ export default async function HomePage() {
             <header><span>VOTE FOR <em>PLAYER OF THE MATCH</em></span></header>
             <Link className="button button-accent" href={poll ? `/polls/${poll.slug}` : "/vote"}>CAST VOTE</Link>
           </div>
-          <p>{poll?.question ?? "Who lit up the game?"}<br />Cast your vote and make your voice count.</p>
+          <p>{poll?.question ?? "Who lit up the game?"}</p>
           <div className="vote-faces">
             {(poll?.options ?? []).slice(0, 5).map((option, index) => {
               const face = playerForLabel(option.label, players);

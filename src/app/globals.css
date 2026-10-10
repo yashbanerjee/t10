@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  /* Saira carries all reading text; Fulham, a caps-only jersey face, carries every headline and number. */
-  --font-body: var(--font-saira), "Segoe UI", Roboto, sans-serif;
+  /* Exo 2 carries all reading text; Fulham, a caps-only jersey face, carries every headline and number. */
+  --font-body: var(--font-exo), "Segoe UI", Roboto, sans-serif;
   --font-display: var(--font-fulham), "Arial Narrow", Impact, sans-serif;
   color-scheme: dark;
   scroll-behavior: smooth;
@@ -37,7 +37,6 @@ body {
   color: var(--text);
   font-family: var(--font-body);
   font-size: 15px;
-  font-stretch: 87.5%;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
@@ -7981,7 +7980,7 @@ html[data-mood="royal"] {
 .stay-card h2 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 17px;
+  font-size: 22px;
   font-weight: 600;
   letter-spacing: .03em;
   line-height: 1;
@@ -8131,6 +8130,15 @@ html[data-mood="royal"] {
   line-height: 1.35;
 }
 
+.next-match-card .crest-row {
+  flex: 1;
+  align-content: center;
+}
+
+.next-match-card .match-meta {
+  justify-content: center;
+}
+
 .match-meta svg,
 .crest-row small svg {
   color: #D2A95A;
@@ -8228,7 +8236,6 @@ html[data-mood="royal"] {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
-  font-stretch: 75%;
 }
 
 .mini-squad a {
@@ -8519,8 +8526,8 @@ html[data-mood="royal"] {
   }
 
   .nation-stats li span {
-    font-size: 13px;
-    overflow-wrap: anywhere;
+    font-size: 11px;
+    letter-spacing: .04em;
   }
 }
 
@@ -10150,8 +10157,10 @@ html[data-mood="royal"] {
     padding: 16px;
   }
 
-  .dash-card header span {
-    font-size: 18px;
+  .dash-card header span,
+  .board-head h2,
+  .stay-card h2 {
+    font-size: 20px;
   }
 
   .mini-squad {
