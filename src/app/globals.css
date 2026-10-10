@@ -7756,7 +7756,7 @@ html[data-mood="royal"] {
   }
 
   .poster-crest {
-    bottom: 102px;
+    bottom: 120px;
     left: 50%;
     gap: 8px;
   }
@@ -7775,7 +7775,7 @@ html[data-mood="royal"] {
   }
 
   .hero-poster .banner-cast {
-    --s: 1.4;
+    --s: 1.75;
     right: auto;
     bottom: 8px;
     left: 50%;
