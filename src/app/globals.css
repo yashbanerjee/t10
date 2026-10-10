@@ -10205,6 +10205,11 @@ html[data-mood="royal"] {
     grid-template-columns: 1fr;
   }
 
+  .news-card-featured {
+    display: block;
+    grid-column: 1 / -1;
+  }
+
   .player-grid,
   .gallery-grid,
   .partner-grid,
