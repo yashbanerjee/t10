@@ -130,7 +130,7 @@ class HomePage extends StatelessWidget {
                   child: Column(
                     children: [
                       Row(children: [Expanded(child: _Stat(Icons.groups_outlined, '1M+', 'Fans worldwide')), Expanded(child: _Stat(Icons.shield_outlined, '7', 'Franchise teams'))]),
-                      Row(children: [Expanded(child: _Stat(Icons.public, '30+', 'T10 matches')), Expanded(child: _Stat(Icons.timer_outlined, '90', 'Minutes of thrill'))]),
+                      Row(children: [Expanded(child: _Stat(Icons.public, '150+', 'International players')), Expanded(child: _Stat(Icons.emoji_events_outlined, '2', 'Championships'))]),
                     ],
                   ),
                 ),

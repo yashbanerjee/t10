@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowUpRight, Calendar, ChevronRight, Clock, Download, Facebook, Globe, Instagram, MapPin, Shield, Users } from "lucide-react";
+import { ArrowUpRight, Calendar, ChevronRight, Download, Facebook, Globe, Instagram, MapPin, Shield, Trophy, Users } from "lucide-react";
 import { getFranchises, getGallery, getMatches, getPlayers, getPolls, getProducts, getPublicSettings, getSponsors, getUpdates } from "@/lib/data";
 import { FranchiseGrid } from "@/components/FranchiseGrid";
 import { PartnerRequestForm } from "@/components/PartnerBrochure";
@@ -150,8 +150,8 @@ export default async function HomePage() {
           <ul className="nation-stats">
             <li><Users size={16} aria-hidden="true" /><strong>1M+</strong><span>Fans worldwide</span></li>
             <li><Shield size={16} aria-hidden="true" /><strong>7</strong><span>Franchise teams</span></li>
-            <li><Globe size={16} aria-hidden="true" /><strong>30+</strong><span>T10 matches</span></li>
-            <li><Clock size={16} aria-hidden="true" /><strong>90</strong><span>Minutes of thrill</span></li>
+            <li><Globe size={16} aria-hidden="true" /><strong>150+</strong><span>International players</span></li>
+            <li><Trophy size={16} aria-hidden="true" /><strong>2</strong><span>Championships</span></li>
           </ul>
         </article>
       </div>

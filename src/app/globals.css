@@ -8593,6 +8593,7 @@ html[data-mood="royal"] {
   grid-template-columns: 30px 1fr;
   column-gap: 9px;
   align-items: start;
+  align-content: start;
 }
 
 .nation-stats svg {
@@ -8727,7 +8728,8 @@ html[data-mood="royal"] {
 
   .nation-stats li span {
     font-size: 11px;
-    letter-spacing: .04em;
+    letter-spacing: .02em;
+    line-height: 1.15;
   }
 }
 
