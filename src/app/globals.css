@@ -7681,8 +7681,8 @@ html[data-mood="royal"] {
   }
 
   .hero-poster {
-    height: min(460px, calc(100svh - 72px));
-    min-height: 380px;
+    height: min(560px, calc(100svh - 64px));
+    min-height: 480px;
   }
 
   .poster-art {
@@ -7697,7 +7697,7 @@ html[data-mood="royal"] {
   .poster-art img {
     top: 0 !important;
     width: 100% !important;
-    height: 118% !important;
+    height: 112% !important;
     max-width: none !important;
     object-fit: cover;
     object-position: 50% 0;
@@ -7756,7 +7756,7 @@ html[data-mood="royal"] {
   }
 
   .poster-crest {
-    bottom: 120px;
+    bottom: calc(min(calc((100cqw - 24px) / 28.8), 15px) * 14.4 + 22px);
     left: 50%;
     gap: 8px;
   }
@@ -7775,12 +7775,13 @@ html[data-mood="royal"] {
   }
 
   .hero-poster .banner-cast {
-    --s: 1.75;
-    right: auto;
-    bottom: 8px;
-    left: 50%;
-    max-width: calc(100% - 24px);
-    translate: -50% 0;
+    --s: 1;
+    --u: min(calc((100cqw - 24px) / 28.8), 15px);
+    right: 12px;
+    bottom: 10px;
+    left: 12px;
+    justify-content: center;
+    translate: none;
   }
 
   .poster-strip {
