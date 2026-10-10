@@ -22,7 +22,7 @@ class MorePage extends StatelessWidget {
           ListTile(leading: const Icon(Icons.newspaper_outlined), title: const Text('News'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewsPage()))),
           ListTile(leading: const Icon(Icons.campaign_outlined), title: const Text('Tigers Daily'), subtitle: const Text('Training and team updates'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UpdatesPage()))),
           ListTile(leading: const Icon(Icons.photo_library_outlined), title: const Text('Gallery'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GalleryPage()))),
-          ListTile(leading: const Icon(Icons.handshake_outlined), title: const Text('Sponsors'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnersPage()))),
+          ListTile(leading: const Icon(Icons.handshake_outlined), title: const Text('Partners'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnersPage()))),
           ListTile(leading: const Icon(Icons.leaderboard_outlined), title: const Text('Stats'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StatsPage()))),
           ListTile(leading: const Icon(Icons.emoji_events_outlined), title: const Text('Records'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RecordsPage()))),
           ListTile(leading: const Icon(Icons.table_chart_outlined), title: const Text('Points table'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PointsPage()))),
