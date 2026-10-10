@@ -5,12 +5,12 @@ import { Check } from "lucide-react";
 
 type SettingRow = { key: string; value: unknown };
 type StorageValue = { endpoint?: string; bucket?: string; region?: string; publicUrl?: string; hasAccessKey?: boolean; hasSecretKey?: boolean };
-type SmtpValue = { host?: string; port?: number; secure?: boolean; user?: string; fromEmail?: string; fromName?: string; adminEmail?: string; hasPassword?: boolean };
+type SmtpValue = { host?: string; port?: number; secure?: boolean; user?: string; fromEmail?: string; fromName?: string; adminEmail?: string; hasPassword?: boolean; hasResendKey?: boolean };
 type PlayerOption = { id: string; fullName: string; profileImage: string | null; isActive: boolean; isDemo: boolean };
 
 const FEATURED_PLAYER_LIMIT = 5;
 const empty = { siteUrl: "http://localhost:3000", livePollIntervalMs: "15000", endpoint: "", bucket: "", region: "auto", publicUrl: "", accessKey: "", secretKey: "" };
-const smtpEmpty = { host: "", port: "587", secure: false, user: "", password: "", fromEmail: "", fromName: "United Tigers", adminEmail: "" };
+const smtpEmpty = { host: "", port: "587", secure: false, user: "", password: "", resendKey: "", removeResendKey: false, fromEmail: "", fromName: "United Tigers", adminEmail: "" };
 const bannerEmpty = { mode: "static", title: "THE NEXT GAME", accent: "STARTS HERE", tagline: "BIGGER BOLDER TOGETHER", ctaLabel: "BACK OUR TIGERS", ctaHref: "/team", image: "", roar: "LET’S GO HUNT", showPlayers: true, players: [] as string[] };
 
 export function SiteSettingsPanel() {
@@ -19,10 +19,26 @@ export function SiteSettingsPanel() {
   const [banner, setBanner] = useState(bannerEmpty);
   const [roster, setRoster] = useState<PlayerOption[]>([]);
   const [brochure, setBrochure] = useState("");
-  const [savedSecrets, setSavedSecrets] = useState({ access: false, secret: false, mail: false });
+  const [savedSecrets, setSavedSecrets] = useState({ access: false, secret: false, mail: false, resend: false });
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [testTo, setTestTo] = useState("");
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  async function sendTest() {
+    setTesting(true); setTestResult(null);
+    try {
+      const response = await fetch("/api/v1/admin/mail/test", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ to: testTo.trim() }) });
+      const result = await response.json().catch(() => null);
+      setTestResult({ ok: response.ok, message: result?.message || (response.ok ? "Test email sent." : "Test email failed.") });
+    } catch {
+      setTestResult({ ok: false, message: "Test email failed: the server could not be reached." });
+    } finally {
+      setTesting(false);
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -58,13 +74,15 @@ export function SiteSettingsPanel() {
       const mail = rows.find((row) => row.key === "smtp");
       const mailValue = mail?.value && typeof mail.value === "object" && !Array.isArray(mail.value) ? mail.value as SmtpValue : {};
       const storageValue = storage?.value && typeof storage.value === "object" ? storage.value as StorageValue : {};
-      setSavedSecrets({ access: Boolean(storageValue.hasAccessKey), secret: Boolean(storageValue.hasSecretKey), mail: Boolean(mailValue.hasPassword) });
+      setSavedSecrets({ access: Boolean(storageValue.hasAccessKey), secret: Boolean(storageValue.hasSecretKey), mail: Boolean(mailValue.hasPassword), resend: Boolean(mailValue.hasResendKey) });
       setSmtp({
         host: mailValue.host ?? "",
         port: mailValue.port ? String(mailValue.port) : smtpEmpty.port,
         secure: Boolean(mailValue.secure),
         user: mailValue.user ?? "",
         password: "",
+        resendKey: "",
+        removeResendKey: false,
         fromEmail: mailValue.fromEmail ?? "",
         fromName: mailValue.fromName || smtpEmpty.fromName,
         adminEmail: mailValue.adminEmail ?? "",
@@ -103,7 +121,7 @@ export function SiteSettingsPanel() {
       { key: "storage", value: { endpoint: form.endpoint.trim(), bucket: form.bucket.trim(), region: form.region.trim() || "auto", publicUrl: form.publicUrl.trim(), accessKey: form.accessKey, secretKey: form.secretKey } },
       { key: "homepage", value: banner },
       { key: "partnerBrochure", value: brochure.trim() },
-      { key: "smtp", value: { host: smtp.host.trim(), port: Number(smtp.port), secure: smtp.secure, user: smtp.user.trim(), password: smtp.password, fromEmail: smtp.fromEmail.trim(), fromName: smtp.fromName.trim(), adminEmail: smtp.adminEmail.trim() } },
+      { key: "smtp", value: { host: smtp.host.trim(), port: Number(smtp.port), secure: smtp.secure, user: smtp.user.trim(), password: smtp.password, resendKey: smtp.resendKey.trim(), removeResendKey: smtp.removeResendKey && !smtp.resendKey.trim(), fromEmail: smtp.fromEmail.trim(), fromName: smtp.fromName.trim(), adminEmail: smtp.adminEmail.trim() } },
     ];
     try {
       for (const payload of payloads) {
@@ -111,9 +129,9 @@ export function SiteSettingsPanel() {
         const result = await response.json();
         if (!response.ok) throw new Error(result.message || "Could not save site settings.");
       }
-      setSavedSecrets((current) => ({ access: current.access || Boolean(form.accessKey), secret: current.secret || Boolean(form.secretKey), mail: current.mail || Boolean(smtp.password) }));
+      setSavedSecrets((current) => ({ access: current.access || Boolean(form.accessKey), secret: current.secret || Boolean(form.secretKey), mail: current.mail || Boolean(smtp.password), resend: Boolean(smtp.resendKey.trim()) || (current.resend && !smtp.removeResendKey) }));
       setForm((current) => ({ ...current, accessKey: "", secretKey: "" }));
-      setSmtp((current) => ({ ...current, password: "" }));
+      setSmtp((current) => ({ ...current, password: "", resendKey: "", removeResendKey: false }));
       setNotice("Site settings saved. Public pages use these values on the next request.");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Could not save site settings.");
@@ -155,9 +173,11 @@ export function SiteSettingsPanel() {
       <label className="admin-field"><span className="admin-field-label">Storage secret key</span><span className="admin-field-control"><input type="password" value={form.secretKey} onChange={(event) => change("secretKey", event.target.value)} autoComplete="new-password" placeholder={savedSecrets.secret ? "Saved — leave blank to keep" : ""} /></span><span className="admin-field-note" /></label>
     </div>
     <div className="admin-panel-header"><h2>Outgoing mail</h2></div>
-    <p className="admin-storage-note">Contact messages are emailed to the admin address. Shop bookings, poll votes and contest entries are emailed to that address and to the person who submitted them.</p>
+    <p className="admin-storage-note">Contact messages are emailed to the admin address. Shop bookings, poll votes and contest entries are emailed to that address and to the person who submitted them. When a Resend API key is saved, mail is sent through Resend; otherwise it goes directly through the SMTP server below.</p>
+    <p className="admin-storage-note"><strong>Sending through: {smtp.resendKey.trim() || (savedSecrets.resend && !smtp.removeResendKey) ? "Resend" : smtp.host.trim() ? "SMTP" : "nothing yet (mail is off)"}</strong></p>
     <div className="admin-editor-grid">
-      <label className="admin-field"><span className="admin-field-label">SMTP host</span><span className="admin-field-control"><input value={smtp.host} onChange={(event) => setSmtp((current) => ({ ...current, host: event.target.value }))} placeholder="smtp.example.com" /></span><span className="admin-field-note">Leave blank to keep mail turned off.</span></label>
+      <div className="admin-field"><span className="admin-field-label">Resend API key</span><span className="admin-field-control"><input type="password" value={smtp.resendKey} onChange={(event) => setSmtp((current) => ({ ...current, resendKey: event.target.value, removeResendKey: false }))} autoComplete="new-password" placeholder={savedSecrets.resend && !smtp.removeResendKey ? "Saved — leave blank to keep" : "re_…"} /></span><span className="admin-field-note">Optional. The from email must be on a domain verified in Resend.{savedSecrets.resend ? <> <label><input type="checkbox" checked={smtp.removeResendKey} onChange={(event) => setSmtp((current) => ({ ...current, removeResendKey: event.target.checked, resendKey: event.target.checked ? "" : current.resendKey }))} /> Remove saved key and use SMTP</label></> : null}</span></div>
+      <label className="admin-field"><span className="admin-field-label">SMTP host</span><span className="admin-field-control"><input value={smtp.host} onChange={(event) => setSmtp((current) => ({ ...current, host: event.target.value }))} placeholder="smtp.example.com" /></span><span className="admin-field-note">Used when no Resend key is saved. Leave both blank to keep mail turned off.</span></label>
       <label className="admin-field"><span className="admin-field-label">SMTP port</span><span className="admin-field-control"><input type="number" min={1} max={65535} value={smtp.port} onChange={(event) => setSmtp((current) => ({ ...current, port: event.target.value }))} required /></span><span className="admin-field-note">587 for STARTTLS, 465 for SSL.</span></label>
       <label className="admin-field"><span className="admin-field-label">SMTP username</span><span className="admin-field-control"><input value={smtp.user} onChange={(event) => setSmtp((current) => ({ ...current, user: event.target.value }))} autoComplete="off" /></span><span className="admin-field-note" /></label>
       <label className="admin-field"><span className="admin-field-label">SMTP password</span><span className="admin-field-control"><input type="password" value={smtp.password} onChange={(event) => setSmtp((current) => ({ ...current, password: event.target.value }))} autoComplete="new-password" placeholder={savedSecrets.mail ? "Saved — leave blank to keep" : ""} /></span><span className="admin-field-note" /></label>
@@ -165,6 +185,8 @@ export function SiteSettingsPanel() {
       <label className="admin-field"><span className="admin-field-label">From email</span><span className="admin-field-control"><input type="email" value={smtp.fromEmail} onChange={(event) => setSmtp((current) => ({ ...current, fromEmail: event.target.value }))} placeholder="info@unitedtigers.ae" /></span><span className="admin-field-note">Address fans see as the sender.</span></label>
       <label className="admin-field"><span className="admin-field-label">Admin email</span><span className="admin-field-control"><input type="email" value={smtp.adminEmail} onChange={(event) => setSmtp((current) => ({ ...current, adminEmail: event.target.value }))} placeholder="info@vedha.ae" /></span><span className="admin-field-note">Receives contact, booking, vote and contest mail.</span></label>
       <label className="admin-field"><span className="admin-field-label">Use SSL</span><span className="admin-field-control"><input type="checkbox" checked={smtp.secure} onChange={(event) => setSmtp((current) => ({ ...current, secure: event.target.checked }))} /></span><span className="admin-field-note">Turn on for port 465.</span></label>
+      <label className="admin-field"><span className="admin-field-label">Send test email to</span><span className="admin-field-control"><input type="email" value={testTo} onChange={(event) => setTestTo(event.target.value)} placeholder={smtp.adminEmail || "you@example.com"} /></span><span className="admin-field-note">Uses the saved settings, so save first. Blank sends to the admin email.</span></label>
+      <div className="admin-field"><span className="admin-field-label">Test mail</span><span className="admin-field-control"><button className="admin-primary-btn" type="button" onClick={sendTest} disabled={testing || busy}>{testing ? "SENDING…" : "SEND TEST EMAIL"}</button></span><span className="admin-field-note">{testResult ? <span className={testResult.ok ? "admin-notice" : "form-status form-status-error"}>{testResult.ok ? <Check size={13} /> : null} {testResult.message}</span> : "Checks the connection and sends one short message."}</span></div>
     </div>
     <div className="admin-panel-header"><h2>Homepage banner</h2></div>
     <p className="admin-storage-note">The homepage hero uses one wide picture as its background. The headline sits on the left. Upload a new image here to replace the built-in stadium.</p>

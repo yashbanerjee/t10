@@ -79,7 +79,7 @@ export function normalizeSiteSetting(key: string, value: unknown, previous?: unk
     if (parsed.data.fromEmail && !email.safeParse(parsed.data.fromEmail).success) return { ok: false, message: "From email must be a valid address." };
     if (parsed.data.adminEmail && !email.safeParse(parsed.data.adminEmail).success) return { ok: false, message: "Admin email must be a valid address." };
     const prior = previous && typeof previous === "object" && !Array.isArray(previous) ? previous as Record<string, unknown> : {};
-    const clearing = !parsed.data.host && !parsed.data.user && !parsed.data.password && !parsed.data.fromEmail && !parsed.data.adminEmail;
+    const clearing = !parsed.data.host && !parsed.data.user && !parsed.data.password && !parsed.data.resendKey && !parsed.data.fromEmail && !parsed.data.adminEmail;
     return {
       ok: true,
       value: {
@@ -91,6 +91,7 @@ export function normalizeSiteSetting(key: string, value: unknown, previous?: unk
         fromName: parsed.data.fromName || "United Tigers",
         adminEmail: parsed.data.adminEmail,
         password: parsed.data.password || (clearing ? "" : typeof prior.password === "string" ? prior.password : ""),
+        resendKey: parsed.data.removeResendKey ? "" : parsed.data.resendKey || (clearing ? "" : typeof prior.resendKey === "string" ? prior.resendKey : ""),
       },
     };
   }
@@ -179,6 +180,8 @@ const smtpSchema = z.object({
   fromEmail: z.string().trim().max(200).optional().default(""),
   fromName: z.string().trim().max(80).optional().default("United Tigers"),
   adminEmail: z.string().trim().max(200).optional().default(""),
+  resendKey: z.string().trim().max(300).optional().default(""),
+  removeResendKey: z.boolean().optional().default(false),
 });
 
 export type SmtpSettings = z.infer<typeof smtpSchema>;
@@ -191,8 +194,8 @@ export function redactSettingValue(key: string, value: unknown) {
     return { ...rest, hasAccessKey: Boolean(accessKey), hasSecretKey: Boolean(secretKey) };
   }
   if (key === "smtp") {
-    const { password, ...rest } = source;
-    return { ...rest, hasPassword: Boolean(password) };
+    const { password, resendKey, ...rest } = source;
+    return { ...rest, hasPassword: Boolean(password), hasResendKey: Boolean(resendKey) };
   }
   // The admin form shows exactly what the homepage renders, so saving never changes copy by surprise.
   if (key === "homepage") return readHomepageBanner(value);
