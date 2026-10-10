@@ -9,7 +9,7 @@ export default async function PartnersPage() {
   const sponsors = await getSponsors();
   const categories = ["TITLE PARTNER", "PRINCIPAL PARTNER", "OFFICIAL PARTNER", "MEDIA PARTNER"];
   return <div className="inner-page"><section className="inner-hero"><div className="wrap"><span className="eyebrow"><i className="eyebrow-dot" />TOGETHER, WE MOVE FORWARD</span><h1>OUR<br />PARTNERS.</h1><p>United Tigers are building a platform for ambitious partners to connect with cricket’s fastest format.</p></div></section><section className="section"><div className="wrap"><div className="partner-stack">{categories.map((category) => <section className="partner-category" key={category}><h2>{category}</h2>{sponsors.filter((sponsor) => sponsor.category.toUpperCase() === category).length ? <div className="partner-grid">{sponsors.filter((sponsor) => sponsor.category.toUpperCase() === category).map((sponsor) => {
-  const mark = sponsor.logoUrl ? <Image src={sponsor.logoUrl} alt={sponsor.name} fill sizes="(max-width: 760px) 50vw, 25vw" /> : <span>{sponsor.name}</span>;
+  const mark = sponsor.logoUrl ? <><i className="partner-logo"><Image src={sponsor.logoUrl} alt="" fill sizes="(max-width: 760px) 50vw, 25vw" /></i><strong className="partner-name">{sponsor.name}</strong></> : <span>{sponsor.name}</span>;
   return sponsor.website
     ? <a className="partner-item" key={sponsor.id} href={sponsor.website} target="_blank" rel="noreferrer" aria-label={`${sponsor.name} website`}>{mark}</a>
     : <div className="partner-item partner-item-static" key={sponsor.id} title={sponsor.name}>{mark}</div>;

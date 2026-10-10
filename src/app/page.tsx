@@ -260,7 +260,7 @@ export default async function HomePage() {
             {[0, 1].map((copy) => <div className="partner-set" key={copy} aria-hidden={copy === 1 || undefined}>
               {sponsors.map((sponsor) => {
                 const logo = sponsor.logoUrl && !sponsor.logoUrl.includes("/images/demo/") ? sponsor.logoUrl : null;
-                const mark = logo ? <Image src={logo} alt={copy === 1 ? "" : sponsor.name} width={120} height={36} /> : sponsor.name;
+                const mark = logo ? <><Image src={logo} alt="" width={200} height={44} /><b>{sponsor.name}</b></> : sponsor.name;
                 return sponsor.website ? <a key={sponsor.id} href={sponsor.website} target="_blank" rel="noreferrer" tabIndex={copy === 1 ? -1 : undefined}>{mark}</a> : <span key={sponsor.id}>{mark}</span>;
               })}
             </div>)}
