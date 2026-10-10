@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   try {
     const sent = await sendTestMail(parsed.data.to || undefined);
     await recordAudit(session.sub, "TEST_MAIL", "settings", undefined, undefined, sent, request.headers.get("x-forwarded-for")?.split(",")[0]);
-    return success(sent, `Test email sent to ${sent.to} through ${sent.provider === "resend" ? "Resend" : "SMTP"}.`);
+    return success(sent, `Test email sent to ${sent.to}.`);
   } catch (error) {
     return failure(`Test email failed: ${error instanceof Error ? error.message : "unknown error"}`, 502);
   }
