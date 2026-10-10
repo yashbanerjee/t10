@@ -19,6 +19,7 @@ export function CheckoutForm() {
   const [form, setForm] = useState({ name: "", email: "", phone: "", address: "", city: "", country: "United Arab Emirates", notes: "" });
   const [error, setError] = useState("");
   const [number, setNumber] = useState("");
+  const [bookedEmail, setBookedEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const total = cart.lines.reduce((sum, line) => sum + line.price * line.quantity, 0);
 
@@ -29,6 +30,7 @@ export function CheckoutForm() {
       const response = await fetch("/api/v1/shop/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...form, items: cart.lines.map((line) => ({ variantId: line.variantId, quantity: line.quantity })) }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "The order could not be booked.");
+      setBookedEmail(form.email.trim());
       setNumber(result.data.number);
       cart.clear();
     } catch (reason) {
@@ -37,7 +39,16 @@ export function CheckoutForm() {
   }
 
   if (!cart.lines.length && !number) return <div className="fan-empty"><h2>Your bag is empty.</h2><Link className="button button-primary" href="/shop">BROWSE THE KIT</Link></div>;
-  if (number) return <div className="fan-empty"><span className="eyebrow"><i className="eyebrow-dot" />BOOKED</span><h2>ORDER {number}</h2><p>We have your name, email and phone. The club will confirm the kit and arrange payment.</p><Link className="button button-outline" href="/shop">BACK TO THE SHOP</Link></div>;
+  if (number) return <div className="fan-empty">
+    <span className="eyebrow"><i className="eyebrow-dot" />BOOKED</span>
+    <h2>YOUR KIT IS RESERVED</h2>
+    <div className="booking-tracking"><small>TRACKING NUMBER</small><strong>{number}</strong></div>
+    <p>Keep this number. It is also in the confirmation email sent to {bookedEmail || "you"}. The club will confirm the kit and arrange payment.</p>
+    <div className="booking-actions">
+      <Link className="button button-accent" href={`/track-order?number=${encodeURIComponent(number)}${bookedEmail ? `&email=${encodeURIComponent(bookedEmail)}` : ""}`}>TRACK THIS BOOKING</Link>
+      <Link className="button button-outline" href="/shop">BACK TO THE SHOP</Link>
+    </div>
+  </div>;
 
   return <form className="checkout-layout" onSubmit={submit}>
     <div className="checkout-fields">

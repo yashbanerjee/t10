@@ -17,7 +17,7 @@ export function PublicFooter() {
         <p>The next chapter of cricket’s fastest format.</p>
         <a className="social-link" href={instagram} target="_blank" rel="noreferrer"><Instagram size={16} /> @unitedtigers.ae <ArrowUpRight size={14} /></a>
       </div>
-      <div className="footer-col"><span className="eyebrow">EXPLORE</span><Link href="/team">Team</Link><Link href="/fixtures">Fixtures</Link><Link href="/points-table">Points table</Link><Link href="/stats">Stats centre</Link><Link href="/records">Records</Link><Link href="/vote">Vote</Link><Link href="/fan">Fan Zone</Link><Link href="/shop">Shop</Link></div>
+      <div className="footer-col"><span className="eyebrow">EXPLORE</span><Link href="/team">Team</Link><Link href="/fixtures">Fixtures</Link><Link href="/points-table">Points table</Link><Link href="/stats">Stats centre</Link><Link href="/records">Records</Link><Link href="/vote">Vote</Link><Link href="/fan">Fan Zone</Link><Link href="/shop">Shop</Link><Link href="/track-order">Track your order</Link></div>
       <div className="footer-col"><span className="eyebrow">THE CLUB</span><Link href="/news">News</Link><Link href="/updates">Tigers Daily</Link><Link href="/gallery">Gallery</Link><Link href="/about">Our story</Link><Link href="/franchises">About</Link><Link href="/partners">Partners</Link><Link href="/contact">Contact</Link></div>
       <div className="footer-callout">
         <span className="eyebrow">A NEW FORCE. A NEW CHAPTER.</span>
