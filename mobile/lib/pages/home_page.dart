@@ -129,7 +129,7 @@ class HomePage extends StatelessWidget {
                 const ClubCard(
                   child: Column(
                     children: [
-                      Row(children: [Expanded(child: _Stat(Icons.groups_outlined, '30K+', 'Fans worldwide')), Expanded(child: _Stat(Icons.shield_outlined, '6', 'Franchise teams'))]),
+                      Row(children: [Expanded(child: _Stat(Icons.groups_outlined, '1M+', 'Fans worldwide')), Expanded(child: _Stat(Icons.shield_outlined, '7', 'Franchise teams'))]),
                       Row(children: [Expanded(child: _Stat(Icons.public, '30+', 'T10 matches')), Expanded(child: _Stat(Icons.timer_outlined, '90', 'Minutes of thrill'))]),
                     ],
                   ),

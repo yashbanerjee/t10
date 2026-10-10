@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowUpRight, Calendar, ChevronRight, CircleCheck, Clock, Download, Facebook, Globe, Instagram, MapPin, Shield, Users } from "lucide-react";
+import { ArrowUpRight, Calendar, ChevronRight, Clock, Download, Facebook, Globe, Instagram, MapPin, Shield, Users } from "lucide-react";
 import { getFranchises, getGallery, getMatches, getPlayers, getPolls, getProducts, getPublicSettings, getSponsors, getUpdates } from "@/lib/data";
 import { FranchiseGrid } from "@/components/FranchiseGrid";
 import { PartnerRequestForm } from "@/components/PartnerBrochure";
@@ -108,7 +108,7 @@ export default async function HomePage() {
               <span>VS</span>
               <div>{opponentLogo ? <b className="has-logo"><span><Image src={opponentLogo} alt="" fill sizes="64px" /></span></b> : <b>{teamShortName(upcoming.opponent, upcoming.opponentShort)}</b>}<strong>{upcoming.opponent}</strong><em>{upcoming.venue?.city || "Away"}</em></div>
             </div>
-            <p className="match-meta"><Calendar size={12} aria-hidden="true" /> {kickoff.day} · {kickoff.time}<br /><MapPin size={12} aria-hidden="true" /> {upcoming.venue?.name ?? "Venue TBC"}</p>
+            <p className="match-meta"><span><Calendar size={12} aria-hidden="true" /> {kickoff.day} · {kickoff.time}</span><span><MapPin size={12} aria-hidden="true" /> Abu Dhabi</span></p>
             {upcoming.status === "LIVE" && <LiveScore slug={upcoming.slug} pollIntervalMs={pollIntervalMs} initial={{ status: upcoming.status, liveState: upcoming.liveState as never, innings: upcoming.innings.map((entry) => ({ runs: entry.runs, wickets: entry.wickets, overs: entry.overs.toString() })) }} />}
           </> : <>
             <div className="crest-row"><div><b className="has-crest"><Image src="/brand/tiger-gold.png" alt="" width={822} height={688} /></b><strong>United Tigers</strong><em>Abu Dhabi</em></div><span>VS</span><div><b>T10</b><strong>The field</strong><em>Abu Dhabi</em></div></div>
@@ -122,12 +122,10 @@ export default async function HomePage() {
           <div className="mini-squad">
             {squad.map((player) => {
               const name = splitName(player.fullName);
-              return <Link href={`/players/${player.slug}`} key={player.id} className={player.jerseyNumber ? undefined : "no-number"}>
-                <i>{player.profileImage ? <Image src={player.profileImage} alt="" fill sizes="80px" /> : name.last.slice(0, 1)}</i>
-                {player.jerseyNumber ? <b>{player.jerseyNumber}</b> : null}
+              return <Link href={`/players/${player.slug}`} key={player.id}>
+                <i>{player.profileImage ? <Image src={player.profileImage} alt="" fill sizes="(max-width: 760px) 170px, 120px" /> : name.last.slice(0, 1)}</i>
                 <small>{name.first}</small>
                 <strong>{name.last}</strong>
-                <em>{(player.role || "Player").replaceAll("_", " ")}</em>
               </Link>;
             })}
           </div>
@@ -136,7 +134,7 @@ export default async function HomePage() {
         <article className="dash-card dash-vote">
           <div className="dash-vote-head">
             <header><span>VOTE FOR <em>PLAYER OF THE MATCH</em></span></header>
-            <Link className="button button-accent" href={poll ? `/polls/${poll.slug}` : "/vote"}><CircleCheck size={14} aria-hidden="true" /> CAST YOUR VOTE</Link>
+            <Link className="button button-accent" href={poll ? `/polls/${poll.slug}` : "/vote"}>CAST VOTE</Link>
           </div>
           <p>{poll?.question ?? "Who lit up the game?"}<br />Cast your vote and make your voice count.</p>
           <div className="vote-faces">
@@ -150,8 +148,8 @@ export default async function HomePage() {
         <article className="dash-card">
           <header><span className="is-gold">TIGERS NATION</span></header>
           <ul className="nation-stats">
-            <li><Users size={16} aria-hidden="true" /><strong>30K+</strong><span>Fans worldwide</span></li>
-            <li><Shield size={16} aria-hidden="true" /><strong>6</strong><span>Franchise teams</span></li>
+            <li><Users size={16} aria-hidden="true" /><strong>1M+</strong><span>Fans worldwide</span></li>
+            <li><Shield size={16} aria-hidden="true" /><strong>7</strong><span>Franchise teams</span></li>
             <li><Globe size={16} aria-hidden="true" /><strong>30+</strong><span>T10 matches</span></li>
             <li><Clock size={16} aria-hidden="true" /><strong>90</strong><span>Minutes of thrill</span></li>
           </ul>
@@ -182,10 +180,10 @@ export default async function HomePage() {
               const score = match.innings.length ? match.innings.map((innings) => `${innings.runs}/${innings.wickets} (${innings.overs})`).join(" – ") : "";
               const logo = teamLogo(match.opponent, match.opponentLogoUrl);
               return <Link href={`/matches/${match.slug}`} key={match.id}>
-                <b className={label === "WIN" ? "is-win" : label === "UP NEXT" || label === "LIVE" ? "is-next" : ""}>{label}</b>
                 <span>{logo ? <i style={{ backgroundImage: `url('${logo}')` }} aria-hidden="true" /> : null}vs {match.opponent}</span>
                 <small>{when(match.date).day}</small>
                 <em>{score || (match.status === "UPCOMING" || match.status === "LIVE" ? when(match.date).time : match.result || match.competition || "Abu Dhabi T10")}</em>
+                <b className={label === "WIN" ? "is-win" : label === "UP NEXT" || label === "LIVE" ? "is-next" : ""}>{label}</b>
                 <ChevronRight className="result-go" size={14} aria-hidden="true" />
               </Link>;
             }) : <p className="dash-empty">Fixtures will be listed here.</p>}
@@ -253,16 +251,21 @@ export default async function HomePage() {
       </div>
     </section>
 
-    <section className="partner-rail">
+    <section className="partner-rail is-floating">
       <LightTrail edge="top" />
       <div className="wrap">
         <span>OUR PARTNERS</span>
-        <div>
-          {sponsors.length ? sponsors.map((sponsor) => {
-            const logo = sponsor.logoUrl && !sponsor.logoUrl.includes("/images/demo/") ? sponsor.logoUrl : null;
-            return sponsor.website ? <a key={sponsor.id} href={sponsor.website} target="_blank" rel="noreferrer">{logo ? <Image src={logo} alt={sponsor.name} width={120} height={36} /> : sponsor.name}</a> : <span key={sponsor.id}>{logo ? <Image src={logo} alt={sponsor.name} width={120} height={36} /> : sponsor.name}</span>;
-          }) : <Link href="/partners">Partner with the Tigers</Link>}
-        </div>
+        {sponsors.length ? <div className="partner-marquee">
+          <div className="partner-track" style={{ "--partner-count": sponsors.length } as React.CSSProperties}>
+            {[0, 1].map((copy) => <div className="partner-set" key={copy} aria-hidden={copy === 1 || undefined}>
+              {sponsors.map((sponsor) => {
+                const logo = sponsor.logoUrl && !sponsor.logoUrl.includes("/images/demo/") ? sponsor.logoUrl : null;
+                const mark = logo ? <Image src={logo} alt={copy === 1 ? "" : sponsor.name} width={120} height={36} /> : sponsor.name;
+                return sponsor.website ? <a key={sponsor.id} href={sponsor.website} target="_blank" rel="noreferrer" tabIndex={copy === 1 ? -1 : undefined}>{mark}</a> : <span key={sponsor.id}>{mark}</span>;
+              })}
+            </div>)}
+          </div>
+        </div> : <div><Link href="/partners">Partner with the Tigers</Link></div>}
         <em>CRICKET UNITES PEOPLE</em>
       </div>
     </section>

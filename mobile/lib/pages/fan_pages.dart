@@ -141,7 +141,7 @@ class _PollPageState extends State<PollPage> {
           ClubField(label: 'Phone', controller: phone, phone: true),
           FilledButton(
             onPressed: busy || choice == null ? null : () => _submit(current),
-            child: Text(busy ? 'SENDING…' : 'CAST YOUR VOTE'),
+            child: Text(busy ? 'SENDING…' : 'CAST VOTE'),
           ),
         ],
       ),
