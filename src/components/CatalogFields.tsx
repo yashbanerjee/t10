@@ -20,7 +20,7 @@ export function VariantEditor({ rows, onChange }: { rows: VariantDraft[]; onChan
     <div className="catalog-block-head"><strong>Colours and sizes</strong><button type="button" onClick={() => onChange([...rows, { color: "", size: "", stock: "0", price: "", image: "" }])}><Plus size={14} /> Add variant</button></div>
     <p>Each row is one colour and size. Leave the extra price blank to use the product price. Stock is how many can be booked.</p>
     {rows.map((row, index) => <div className="variant-row" key={index}>
-      <input aria-label="Colour" placeholder="Colour" required value={row.color} onChange={(event) => onChange(rows.map((item, itemIndex) => itemIndex === index ? { ...item, color: event.target.value } : item))} />
+      <input aria-label="Colour" placeholder="Colour (optional)" value={row.color} onChange={(event) => onChange(rows.map((item, itemIndex) => itemIndex === index ? { ...item, color: event.target.value } : item))} />
       <input aria-label="Size" placeholder="Size" required value={row.size} onChange={(event) => onChange(rows.map((item, itemIndex) => itemIndex === index ? { ...item, size: event.target.value } : item))} />
       <input aria-label="Stock" placeholder="Stock" type="number" min={0} required value={row.stock} onChange={(event) => onChange(rows.map((item, itemIndex) => itemIndex === index ? { ...item, stock: event.target.value } : item))} />
       <input aria-label="Variant price" placeholder="Price" type="number" min={0} step="0.01" value={row.price} onChange={(event) => onChange(rows.map((item, itemIndex) => itemIndex === index ? { ...item, price: event.target.value } : item))} />
@@ -46,5 +46,5 @@ export function ContestEntries({ entries }: { entries: EntryRow[] }) {
 }
 
 export function OrderSummary({ order }: { order: OrderView }) {
-  return <div className="catalog-block"><strong>{order.number}</strong><p>{order.name} · {order.email} · {order.phone}</p><p>{order.address}, {order.city}, {order.country}</p>{order.notes && <p>{order.notes}</p>}<div className="entry-list">{order.items.map((item) => <article key={item.id}><b>{item.productName}</b><span>{item.color} · {item.size} · {item.quantity} × {item.unitPrice}</span></article>)}</div></div>;
+  return <div className="catalog-block"><strong>{order.number}</strong><p>{order.name} · {order.email} · {order.phone}</p><p>{order.address}, {order.city}, {order.country}</p>{order.notes && <p>{order.notes}</p>}<div className="entry-list">{order.items.map((item) => <article key={item.id}><b>{item.productName}</b><span>{[item.color, item.size].filter(Boolean).join(" · ")} · {item.quantity} × {item.unitPrice}</span></article>)}</div></div>;
 }

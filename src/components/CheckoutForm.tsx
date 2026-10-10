@@ -45,7 +45,7 @@ export function CheckoutForm() {
       <label className="field-wide"><span>Notes</span><textarea value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} placeholder="Size help, delivery notes, or a gift message" /></label>
     </div>
     <aside className="checkout-summary">
-      {cart.lines.map((line) => <p key={line.variantId}><span>{line.name}<small>{line.color} · {line.size} · {line.quantity}</small></span><strong>{formatMoney(line.price * line.quantity)}</strong></p>)}
+      {cart.lines.map((line) => <p key={line.variantId}><span>{line.name}<small>{[line.color, line.size].filter(Boolean).join(" · ")} · {line.quantity}</small></span><strong>{formatMoney(line.price * line.quantity)}</strong></p>)}
       <p className="checkout-total"><span>Total</span><strong>{formatMoney(total)}</strong></p>
       <p>Booking holds the stock. Payment is confirmed with you by phone or email.</p>
       {error && <p className="form-error">{error}</p>}

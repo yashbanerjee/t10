@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         include: { items: true },
       });
     });
-    const itemLines = order.items.map((item) => `${item.quantity} × ${item.productName} (${item.color}, ${item.size}) — ${formatMoney(Number(item.unitPrice))}`).join("\n");
+    const itemLines = order.items.map((item) => `${item.quantity} × ${item.productName} (${[item.color, item.size].filter(Boolean).join(", ")}) — ${formatMoney(Number(item.unitPrice))}`).join("\n");
     const summary = [`Order: ${order.number}`, `Name: ${order.name}`, `Email: ${order.email}`, `Phone: ${order.phone}`, `Address: ${order.address}, ${order.city}, ${order.country}`, order.notes ? `Notes: ${order.notes}` : "", "", itemLines, "", `Total: ${formatMoney(Number(order.total))}`, "Payment is confirmed by the club."].filter(Boolean).join("\n");
     await notifyAdminAndUser({
       adminSubject: `Booking ${order.number}`,

@@ -545,6 +545,7 @@ model Product {
   description String
   price       Decimal         @db.Decimal(10, 2)
   image       String?
+  images      String[]        @default([])
   category    ProductCategory @default(JERSEY)
   isPublished Boolean         @default(true)
   isFeatured  Boolean         @default(false)

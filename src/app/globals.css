@@ -6624,6 +6624,69 @@ html[data-mood="royal"] {
   background: #390966 center/cover no-repeat;
 }
 
+/* Kit photos are product shots on white, so the whole garment is shown rather than cropped. */
+.product-card-photo:not(.is-empty),
+.product-photo:not(.product-photo-empty),
+.kit-row a span:not(.is-empty) {
+  background-color: #fff;
+  background-size: contain;
+  background-origin: content-box;
+}
+
+.product-photo:not(.product-photo-empty) {
+  aspect-ratio: 1;
+  min-height: 0;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.product-gallery {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.product-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product-thumbs button {
+  width: 72px;
+  height: 72px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: 8px;
+  background: #fff center / contain no-repeat content-box;
+}
+
+.product-thumbs button.is-selected {
+  border-color: #D2A95A;
+}
+
+.product-card-photo:not(.is-empty) {
+  aspect-ratio: 1;
+  min-height: 0;
+  padding: 14px;
+}
+
+.product-card-photo:not(.is-empty) span,
+.kit-row a span:not(.is-empty) {
+  color: #F4DB96;
+  text-shadow: none;
+}
+
+.product-card-photo:not(.is-empty) span {
+  width: fit-content;
+  height: fit-content;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: rgba(43, 7, 77, .9);
+  font-size: 12px;
+  line-height: 1;
+}
+
 .product-photo-empty {
   display: grid;
   place-items: center;
@@ -9251,6 +9314,12 @@ html[data-mood="royal"] {
   letter-spacing: .12em;
   border: 1px solid rgba(210, 169, 90, .3);
   text-shadow: 0 1px 6px rgba(0, 0, 0, .6);
+}
+
+.kit-row a span:not(.is-empty) {
+  min-height: 240px;
+  padding: 10px;
+  font-size: 0;
 }
 
 .kit-row a span.is-empty {
