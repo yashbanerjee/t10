@@ -37,12 +37,23 @@ export async function createCheckoutSession(orderId: string) {
   if (!active) throw new Error("STRIPE_OFF");
   const order = await prisma.order.findUniqueOrThrow({ where: { id: orderId }, include: { items: true } });
   const siteUrl = await getSiteUrl();
+  // Saving the card for later (saved_payment_method_options) only works when the session has a Stripe customer.
+  const customer = await active.stripe.customers.create({ email: order.email, name: order.name, phone: order.phone, metadata: { orderNumber: order.number } });
   const session = await active.stripe.checkout.sessions.create({
+    customer: customer.id,
+    ui_mode: "hosted",
     mode: "payment",
-    customer_email: order.email,
+    payment_method_types: ["card"],
+    billing_address_collection: "auto",
+    phone_number_collection: { enabled: true },
+    automatic_tax: { enabled: false },
+    allow_promotion_codes: false,
+    submit_type: "auto",
+    saved_payment_method_options: { payment_method_save: "enabled" },
+    origin_context: "web",
+    ...({ integration_identifier: "hosted_web_0001" } as Record<string, string>),
     client_reference_id: order.id,
     metadata: { orderId: order.id, orderNumber: order.number },
-    payment_intent_data: { metadata: { orderId: order.id, orderNumber: order.number }, description: `United Tigers order ${order.number}` },
     line_items: order.items.map((item) => ({
       quantity: item.quantity,
       price_data: {
@@ -53,7 +64,6 @@ export async function createCheckoutSession(orderId: string) {
     })),
     success_url: `${siteUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${siteUrl}/checkout?cancelled=${encodeURIComponent(order.id)}`,
-    expires_at: Math.floor(Date.now() / 1000) + 60 * 60,
   });
   await prisma.order.update({ where: { id: order.id }, data: { stripeSessionId: session.id, paymentMethod: "stripe" } });
   if (!session.url) throw new Error("Stripe did not return a checkout link");

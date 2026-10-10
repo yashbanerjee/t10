@@ -44,6 +44,7 @@ export function SafeMarkdown({ content }: { content: string }) {
   while (index < lines.length) {
     const line = lines[index]?.trim() ?? ""; if (!line) { index++; continue; }
     const image = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(line);
+    if (image && safeUrl(image[2]) && /\.(mp4|webm)(\?|#|$)/i.test(image[2])) { blocks.push(<figure className="content-image content-video" key={key++}><video src={image[2]} controls playsInline preload="metadata" aria-label={image[1]} />{image[1] && <figcaption>{image[1]}</figcaption>}</figure>); index++; continue; }
     if (image) { blocks.push(safeUrl(image[2]) ? <figure className="content-image" key={key++}><img src={image[2]} alt={image[1]} /><figcaption>{image[1]}</figcaption></figure> : null); index++; continue; }
     const head = heading(line);
     if (head) { blocks.push(head.level === 3 ? <h3 key={key++}>{inline(head.text, `h3-${index}`)}</h3> : <h2 key={key++}>{inline(head.text, `h2-${index}`)}</h2>); index++; continue; }

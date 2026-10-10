@@ -77,10 +77,10 @@ export function CheckoutForm({ onlinePayment = false, cancelledOrderId = "" }: {
     <aside className="checkout-summary">
       {cart.lines.map((line) => <p key={line.variantId}><span>{line.name}<small>{[line.color, line.size].filter(Boolean).join(" · ")} · {line.quantity}</small></span><strong>{formatMoney(line.price * line.quantity)}</strong></p>)}
       <p className="checkout-total"><span>Total</span><strong>{formatMoney(total)}</strong></p>
-      <p>{onlinePayment ? "You will pay securely by card on Stripe. Your items are held while you pay." : "Booking holds the stock. Payment is confirmed with you by phone or email."}</p>
+      <p>{onlinePayment ? "You will pay securely by card on Stripe. Your items are held while you pay." : "Online payment is unavailable right now, so orders cannot be placed. Please check back soon."}</p>
       {notice && <p className="form-status">{notice}</p>}
       {error && <p className="form-error">{error}</p>}
-      <button className="button button-primary" type="submit" disabled={saving}>{saving ? (onlinePayment ? "OPENING PAYMENT…" : "BOOKING…") : onlinePayment ? `PAY ${formatMoney(total)} SECURELY` : "BOOK THIS ORDER"}</button>
+      <button className="button button-primary" type="submit" disabled={saving || !onlinePayment}>{saving ? "OPENING PAYMENT…" : onlinePayment ? `PAY ${formatMoney(total)} SECURELY` : "PAYMENT UNAVAILABLE"}</button>
     </aside>
   </form>;
 }

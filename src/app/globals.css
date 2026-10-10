@@ -2645,7 +2645,7 @@ a.partner-item:hover {
 }
 
 .article-content {
-  max-width: 790px;
+  width: min(790px, calc(100% - 32px));
   margin: auto;
   color: #ddd4e6;
   font-size: 15px;
@@ -2698,6 +2698,20 @@ a.partner-item:hover {
   display: block;
   width: 100%;
   height: auto;
+}
+
+.content-video video {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: min(80vh, 720px);
+  margin: 0 auto;
+  border: 1px solid rgba(210, 169, 90, .25);
+  background: #0B0214;
+}
+
+.content-video figcaption {
+  text-align: center;
 }
 
 .content-image figcaption {

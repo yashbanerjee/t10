@@ -2,7 +2,6 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { failure, success } from "@/lib/api";
-import { sendBookingEmails } from "@/lib/order-mail";
 import { activeStripe, createCheckoutSession, releaseUnpaidOrder } from "@/lib/stripe";
 
 const checkoutInput = z.object({
@@ -21,6 +20,7 @@ export async function POST(request: NextRequest) {
   const parsed = checkoutInput.safeParse(body);
   if (!parsed.success) return failure("Check your name, email, phone and delivery details", 400, parsed.error.issues);
   const data = parsed.data;
+  if (!(await activeStripe())) return failure("Online payment is not available right now, so orders cannot be placed. Please try again later.", 503);
   const merged = new Map<string, number>();
   for (const item of data.items) merged.set(item.variantId, (merged.get(item.variantId) ?? 0) + item.quantity);
   try {
@@ -53,18 +53,14 @@ export async function POST(request: NextRequest) {
         include: { items: true },
       });
     });
-    if (await activeStripe()) {
-      try {
-        const checkoutUrl = await createCheckoutSession(order.id);
-        return success({ number: order.number, checkoutUrl }, "Order created. Continue to payment.", { status: 201 });
-      } catch (error) {
-        console.error("Stripe checkout failed", error instanceof Error ? error.message : "unknown error");
-        await releaseUnpaidOrder(order.id);
-        return failure("Online payment is not available right now. Please try again shortly.", 502);
-      }
+    try {
+      const checkoutUrl = await createCheckoutSession(order.id);
+      return success({ number: order.number, checkoutUrl }, "Order created. Continue to payment.", { status: 201 });
+    } catch (error) {
+      console.error("Stripe checkout failed", error instanceof Error ? error.message : "unknown error");
+      await releaseUnpaidOrder(order.id);
+      return failure("Online payment is not available right now. Please try again shortly.", 502);
     }
-    await sendBookingEmails(order.id);
-    return success({ number: order.number }, "Order booked", { status: 201 });
   } catch (error) {
     if (error instanceof Error && (error.message === "STOCK" || error.message === "MISSING")) return failure("One of the items is no longer available in that size or colour", 409);
     return failure("The order could not be booked. Please try again.", 503);
