@@ -6624,13 +6624,14 @@ html[data-mood="royal"] {
   background: #390966 center/cover no-repeat;
 }
 
-/* Kit photos are product shots on white, so the whole garment is shown rather than cropped. */
+/* Kit photos are cut-out garments, shown whole over the club backdrop rather than cropped. */
 .product-card-photo:not(.is-empty),
 .product-photo:not(.product-photo-empty),
-.kit-row a span:not(.is-empty) {
-  background-color: #fff;
-  background-size: contain;
-  background-origin: content-box;
+.product-thumbs button {
+  background:
+    var(--photo) center / contain no-repeat content-box,
+    url("/brand/merch-backdrop.webp") center / cover no-repeat border-box,
+    #2B074D;
 }
 
 .product-photo:not(.product-photo-empty) {
@@ -6658,7 +6659,6 @@ html[data-mood="royal"] {
   padding: 4px;
   border: 1px solid rgba(255, 255, 255, .28);
   border-radius: 8px;
-  background: #fff center / contain no-repeat content-box;
 }
 
 .product-thumbs button.is-selected {
@@ -8200,9 +8200,24 @@ html[data-mood="royal"] {
   min-height: 40px;
 }
 
-/* The vote button sits under the faces rather than at the card's foot, so the row stays short. */
-.dash-vote .button {
-  margin-top: 2px;
+.dash-vote-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dash-vote-head header {
+  min-width: 0;
+}
+
+.dash-vote .dash-vote-head .button {
+  flex-shrink: 0;
+  min-height: 34px;
+  margin: 0;
+  padding: 0 11px;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .mini-squad {
@@ -8315,19 +8330,21 @@ html[data-mood="royal"] {
   text-transform: uppercase;
 }
 
+/* Faces are portrait tiles that grow into whatever height the card row leaves free. */
 .vote-faces {
-  display: flex;
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
+  min-height: 64px;
 }
 
 .vote-faces span {
   position: relative;
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: 10px;
   background: #460B7D;
   box-shadow: 0 0 0 1px rgba(210, 169, 90, .4);
   font-size: 13px;
@@ -8341,8 +8358,8 @@ html[data-mood="royal"] {
 .vote-faces span.is-picked::after {
   content: "";
   position: absolute;
-  right: -1px;
-  bottom: -1px;
+  right: 4px;
+  bottom: 4px;
   width: 14px;
   height: 14px;
   border-radius: 999px;
@@ -9066,6 +9083,126 @@ html[data-mood="royal"] {
   background: transparent;
 }
 
+.home-franchises {
+  padding: 8px 0 32px;
+}
+
+.home-franchises .board-head {
+  margin-bottom: 14px;
+}
+
+.home-franchises-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.home-franchises-main:only-child {
+  grid-column: 1 / -1;
+}
+
+.home-franchises-main .franchise-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.home-partner {
+  position: sticky;
+  top: 84px;
+}
+
+@media (max-width: 900px) {
+  .home-franchises-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .home-partner {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .home-franchises-main .franchise-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.home-partner-card {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  background:
+    radial-gradient(ellipse 80% 60% at 100% 0%, rgba(201, 23, 126, .3), transparent 70%) padding-box,
+    linear-gradient(160deg, #35085E, #22053D) padding-box,
+    linear-gradient(140deg, rgba(244, 219, 150, .55), rgba(210, 169, 90, .08) 40%, rgba(201, 23, 126, .35)) border-box;
+  box-shadow: 0 14px 34px rgba(12, 2, 22, .35);
+}
+
+.home-partner-card>p {
+  margin: 0;
+  color: rgba(255, 255, 255, .78);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.home-partner .contact-form {
+  gap: 14px;
+}
+
+.home-partner .partner-form .button {
+  justify-content: center;
+  width: 100%;
+}
+
+.brochure-cover {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px rgba(244, 219, 150, .35), 0 12px 28px rgba(12, 2, 22, .45);
+}
+
+.brochure-cover img {
+  display: block;
+  width: 100%;
+  height: auto;
+  transition: transform .4s;
+}
+
+.brochure-cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 45%, rgba(18, 3, 24, .82));
+}
+
+.brochure-cover-action {
+  position: absolute;
+  z-index: 1;
+  bottom: 14px;
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--gold-surface);
+  color: var(--gold-ink);
+  box-shadow: var(--gold-shadow);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.brochure-cover:hover img,
+.brochure-cover:focus-visible img {
+  transform: scale(1.04);
+}
+
 .home-pulse {
   padding: 2px 0 22px;
 }
@@ -9749,11 +9886,7 @@ html[data-mood="royal"] {
 
   .vote-faces {
     gap: 10px;
-  }
-
-  .vote-faces span {
-    width: 52px;
-    height: 52px;
+    min-height: 96px;
   }
 
   .mini-squad {
@@ -10244,6 +10377,11 @@ html[data-mood="royal"] {
     min-height: 46px;
   }
 
+  .dash-vote .dash-vote-head .button {
+    width: auto;
+    min-height: 38px;
+  }
+
   .button:active,
   .mobile-nav>a:active,
   .dash-card:active {
@@ -10313,6 +10451,10 @@ html[data-mood="royal"] {
   .home-pulse,
   .home-feature-kit {
     padding: 0 0 20px;
+  }
+
+  .home-franchises {
+    padding: 4px 0 24px;
   }
 
   .pulse-grid {

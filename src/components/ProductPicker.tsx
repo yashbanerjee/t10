@@ -44,8 +44,8 @@ export function ProductPicker({ product }: { product: { name: string; image: str
 
   return <div className="product-buy">
     <div className="product-gallery">
-      {photo ? <div className="product-photo" style={{ backgroundImage: `url('${photo}')` }} /> : <div className="product-photo product-photo-empty"><span>{product.name.slice(0, 1)}</span></div>}
-      {gallery.length > 1 && <div className="product-thumbs">{gallery.map((item, index) => <button type="button" key={item} className={index === photoIndex ? "is-selected" : ""} aria-label={`View ${index + 1} of ${gallery.length}`} style={{ backgroundImage: `url('${item}')` }} onClick={() => setPhotoIndex(index)} />)}</div>}
+      {photo ? <div className="product-photo" style={{ "--photo": `url('${photo}')` } as React.CSSProperties} /> : <div className="product-photo product-photo-empty"><span>{product.name.slice(0, 1)}</span></div>}
+      {gallery.length > 1 && <div className="product-thumbs">{gallery.map((item, index) => <button type="button" key={item} className={index === photoIndex ? "is-selected" : ""} aria-label={`View ${index + 1} of ${gallery.length}`} style={{ "--photo": `url('${item}')` } as React.CSSProperties} onClick={() => setPhotoIndex(index)} />)}</div>}
     </div>
     <div>
       <p className="product-price">{formatMoney(price)}</p>

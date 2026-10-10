@@ -1,12 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowUpRight, Calendar, ChevronRight, CircleCheck, Clock, Facebook, Globe, Instagram, MapPin, Shield, Users } from "lucide-react";
-import { getGallery, getMatches, getPlayers, getPolls, getProducts, getPublicSettings, getSponsors, getUpdates } from "@/lib/data";
+import { ArrowUpRight, Calendar, ChevronRight, CircleCheck, Clock, Download, Facebook, Globe, Instagram, MapPin, Shield, Users } from "lucide-react";
+import { getFranchises, getGallery, getMatches, getPlayers, getPolls, getProducts, getPublicSettings, getSponsors, getUpdates } from "@/lib/data";
+import { FranchiseGrid } from "@/components/FranchiseGrid";
+import { PartnerRequestForm } from "@/components/PartnerBrochure";
+import { getPartnerBrochureUrl } from "@/lib/partner-brochure";
 import { LiveScore } from "@/components/LiveScore";
 import { LeagueMark } from "@/components/LeagueMark";
 import { LightTrail } from "@/components/LightTrail";
 import { PhotoFrame } from "@/components/PhotoFrame";
+import { ProductCard } from "@/components/ProductCard";
 import { VideoPoster } from "@/components/VideoPoster";
 import { teamLogo, teamShortName } from "@/lib/league";
 import { getLivePollIntervalMs, homepageDefaults, readHomepageBanner } from "@/lib/site-settings";
@@ -33,7 +37,8 @@ function playerForLabel(label: string, roster: { fullName: string; profileImage:
 }
 
 export default async function HomePage() {
-  const [players, matches, sponsors, settings, polls, pollIntervalMs, updates, gallery, products] = await Promise.all([getPlayers(), getMatches(), getSponsors(), getPublicSettings(), getPolls(), getLivePollIntervalMs(), getUpdates(), getGallery(), getProducts()]);
+  const [players, matches, sponsors, settings, polls, pollIntervalMs, updates, gallery, products, franchises] = await Promise.all([getPlayers(), getMatches(), getSponsors(), getPublicSettings(), getPolls(), getLivePollIntervalMs(), getUpdates(), getGallery(), getProducts(), getFranchises()]);
+  const brochureUrl = await getPartnerBrochureUrl();
   const banner = readHomepageBanner(settings.homepage ?? homepageDefaults);
   const daily = updates.filter((update) => !update.isDemo).slice(0, 3);
   const pastMatches = gallery.filter((item) => /past match/i.test(item.category));
@@ -129,15 +134,17 @@ export default async function HomePage() {
         </article>
 
         <article className="dash-card dash-vote">
-          <header><span>VOTE FOR <em>PLAYER OF THE MATCH</em></span></header>
+          <div className="dash-vote-head">
+            <header><span>VOTE FOR <em>PLAYER OF THE MATCH</em></span></header>
+            <Link className="button button-accent" href={poll ? `/polls/${poll.slug}` : "/vote"}><CircleCheck size={14} aria-hidden="true" /> CAST YOUR VOTE</Link>
+          </div>
           <p>{poll?.question ?? "Who lit up the game?"}<br />Cast your vote and make your voice count.</p>
           <div className="vote-faces">
             {(poll?.options ?? []).slice(0, 5).map((option, index) => {
               const face = playerForLabel(option.label, players);
-              return <span className={index === 0 ? "is-picked" : ""} key={option.id} title={option.label}>{face?.profileImage ? <Image src={face.profileImage} alt="" fill sizes="42px" /> : option.label.slice(0, 1)}</span>;
+              return <span className={index === 0 ? "is-picked" : ""} key={option.id} title={option.label}>{face?.profileImage ? <Image src={face.profileImage} alt="" fill sizes="(max-width: 980px) 20vw, 80px" /> : option.label.slice(0, 1)}</span>;
             })}
           </div>
-          <Link className="button button-accent" href={poll ? `/polls/${poll.slug}` : "/vote"}><CircleCheck size={14} aria-hidden="true" /> CAST YOUR VOTE</Link>
         </article>
 
         <article className="dash-card">
@@ -222,18 +229,29 @@ export default async function HomePage() {
     {kit.length > 0 && <section className="home-feature-kit">
       <div className="wrap">
         <div className="board-head"><h2>OFFICIAL KIT</h2><Link href="/shop">Shop all <ArrowUpRight size={14} /></Link></div>
-        <div className={`kit-row count-${kit.length}`}>
-          {kit.map((product) => {
-            const photo = product.image && !product.image.includes("/images/demo/") ? product.image : null;
-            return <Link href={`/shop/${product.slug}`} key={product.id}>
-            <span className={photo ? undefined : "is-empty"} style={photo ? { backgroundImage: `url('${photo}')` } : undefined}>{product.category}</span>
-            <strong>{product.name}</strong>
-            <em>AED {product.price.toLocaleString("en-AE", { maximumFractionDigits: 0 })}</em>
-          </Link>;
-          })}
-        </div>
+        <div className="product-grid">{kit.map((product) => <ProductCard product={product} key={product.id} />)}</div>
       </div>
     </section>}
+
+    <section className="home-franchises">
+      <div className="wrap home-franchises-layout">
+        {franchises.length > 0 && <div className="home-franchises-main">
+          <div className="board-head"><h2>OUR FRANCHISES</h2><Link href="/franchises">About <ArrowUpRight size={14} /></Link></div>
+          <FranchiseGrid franchises={franchises} />
+        </div>}
+        <aside className="home-partner">
+          <div className="board-head"><h2>PARTNER WITH US</h2></div>
+          <div className="home-partner-card">
+            {brochureUrl && <a className="brochure-cover" href={brochureUrl} download="United-Tigers-Partnership-Brochure.pdf" aria-label="Download the partnership brochure (PDF)">
+              <Image src="/brand/partner-brochure-cover.webp" alt="" width={900} height={506} sizes="(max-width: 900px) 100vw, 40vw" />
+              <span className="brochure-cover-action"><Download size={18} /> DOWNLOAD BROCHURE</span>
+            </a>}
+            <p>Put your brand alongside United Tigers in cricket’s fastest format. Tap the cover to download the brochure, or leave your details and our partnerships team will contact you.</p>
+            <PartnerRequestForm />
+          </div>
+        </aside>
+      </div>
+    </section>
 
     <section className="partner-rail">
       <LightTrail edge="top" />
