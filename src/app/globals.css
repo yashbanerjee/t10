@@ -7880,6 +7880,12 @@ html[data-mood="royal"] {
   bottom: 8.5%;
 }
 
+@media (min-width: 761px) {
+  .banner-cast {
+    --s: 1.265;
+  }
+}
+
 @media (min-width: 761px) and (max-width: 1100px) {
   .poster-crest {
     left: 47%;
