@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Saira } from "next/font/google";
 import "./globals.css";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
@@ -14,14 +15,15 @@ import { motionBootScript, motionCss } from "@/lib/motion";
 // When that happens, and the user has not zoomed in, match the layout width to the visible width.
 const viewportFitScript = `(function(){var vv=window.visualViewport;if(!vv)return;var meta=document.querySelector('meta[name="viewport"]');if(!meta)return;function fit(){if(vv.scale>1.01||vv.width>900)return;var layout=document.documentElement.clientWidth;if(layout<200)return;if(vv.width>layout+8)meta.setAttribute("content","width="+Math.round(vv.width)+", initial-scale=1, viewport-fit=cover");}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",fit);else fit();vv.addEventListener("resize",fit);})();`;
 
-// Both families ship as single-weight faces, so each is declared across the full weight range
-// and the browser never synthesises a smeared faux bold on top of them.
-const colosseon = localFont({
-  src: [{ path: "./fonts/Colosseon.otf", weight: "100 900", style: "normal" }],
-  variable: "--font-colosseon",
+const saira = Saira({
+  subsets: ["latin"],
+  axes: ["wdth"],
+  variable: "--font-saira",
   display: "swap",
-  fallback: ["Arial Narrow", "Roboto Condensed", "Segoe UI", "sans-serif"],
+  fallback: ["Segoe UI", "Roboto", "sans-serif"],
 });
+// Fulham ships as a single-weight face, so it is declared across the full weight range
+// and the browser never synthesises a smeared faux bold on top of it.
 const fulham = localFont({
   src: [
     { path: "./fonts/Fulham.otf", weight: "100 900", style: "normal" },
@@ -47,6 +49,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en" className={`${colosseon.variable} ${fulham.variable}`} style={theme as unknown as React.CSSProperties} suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: motionBootScript }} /><script dangerouslySetInnerHTML={{ __html: viewportFitScript }} /><style dangerouslySetInnerHTML={{ __html: motionCss }} /></head><body><a className="skip-link" href="#main">Skip to content</a><AnalyticsProvider /><MotionLayer /><CartProvider><PublicHeader /><main id="main">{children}</main><PublicFooter /></CartProvider></body></html>;
+  return <html lang="en" className={`${saira.variable} ${fulham.variable}`} style={theme as unknown as React.CSSProperties} suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: motionBootScript }} /><script dangerouslySetInnerHTML={{ __html: viewportFitScript }} /><style dangerouslySetInnerHTML={{ __html: motionCss }} /></head><body><a className="skip-link" href="#main">Skip to content</a><AnalyticsProvider /><MotionLayer /><CartProvider><PublicHeader /><main id="main">{children}</main><PublicFooter /></CartProvider></body></html>;
 }
 
