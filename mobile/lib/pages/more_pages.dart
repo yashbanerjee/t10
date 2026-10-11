@@ -3,8 +3,34 @@ import 'package:united_tigers/pages/admin_pages.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
 import 'package:united_tigers/pages/fan_pages.dart';
+import 'package:united_tigers/pages/team_page.dart';
 import 'package:united_tigers/scope.dart';
 import 'package:united_tigers/widgets.dart';
+
+void _push(BuildContext context, Widget page) => Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+
+/// Opens a link from CMS text: site paths go to the matching screen, anything else opens in the browser.
+void openSiteLink(BuildContext context, String href) {
+  final path = href.trim();
+  if (path.startsWith('http')) {
+    openExternal(path);
+    return;
+  }
+  if (path.startsWith('/contact')) return _push(context, const ContactPage());
+  if (path.startsWith('/privacy')) return _push(context, const LegalScreen(kind: LegalKind.privacy));
+  if (path.startsWith('/terms')) return _push(context, const LegalScreen(kind: LegalKind.terms));
+  if (path.startsWith('/vote') || path.startsWith('/polls') || path.startsWith('/contests')) return _push(context, const VotePage());
+  if (path.startsWith('/news')) return _push(context, const NewsPage());
+  openExternal('${ClubScope.of(context).api.base}$path');
+}
+
+class _MenuItem {
+  const _MenuItem(this.icon, this.title, this.subtitle, this.page);
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Widget page;
+}
 
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
@@ -12,27 +38,131 @@ class MorePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final api = ClubScope.of(context).api;
+    const featured = [
+      _MenuItem(Icons.how_to_vote_rounded, 'Vote', 'Polls & contests', VotePage()),
+      _MenuItem(Icons.leaderboard_rounded, 'Stats centre', 'T10, All T20 & T20Is', StatsPage()),
+    ];
+    const club = [
+      _MenuItem(Icons.newspaper_rounded, 'News', 'The newsroom', NewsPage()),
+      _MenuItem(Icons.campaign_rounded, 'Tigers Daily', 'Training & team updates', UpdatesPage()),
+      _MenuItem(Icons.photo_library_rounded, 'Gallery', 'Photos & videos', GalleryPage()),
+      _MenuItem(Icons.table_chart_rounded, 'Points table', 'League standings', PointsPage()),
+      _MenuItem(Icons.emoji_events_rounded, 'Records', 'The record book', RecordsPage()),
+      _MenuItem(Icons.celebration_rounded, 'Fan Zone', 'Coming soon', FanZonePage()),
+      _MenuItem(Icons.handshake_rounded, 'Partners', 'Our sponsors', PartnersPage()),
+      _MenuItem(Icons.auto_stories_rounded, 'Our story', 'About the club', AboutPage()),
+    ];
     return AnimatedBuilder(
       animation: api,
       builder: (context, _) => Scaffold(
-      appBar: AppBar(title: const Text('UNITED TIGERS')),
-      body: ListView(
+        appBar: const ClubAppBar('United Tigers'),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+          children: [
+            Row(children: [for (final item in featured) Expanded(child: Padding(padding: EdgeInsets.only(right: item == featured.first ? 6 : 0, left: item == featured.first ? 0 : 6), child: _FeatureTile(item: item)))]),
+            const SectionTitle('The club'),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 1.55,
+              children: [for (final item in club) _MenuTile(item: item)],
+            ),
+            const SectionTitle('Get in touch'),
+            _MenuRow(icon: Icons.mail_rounded, title: 'Contact', subtitle: 'Partnership, media & supporter enquiries', onTap: () => _push(context, const ContactPage())),
+            _MenuRow(icon: Icons.privacy_tip_rounded, title: 'Privacy', subtitle: 'How we handle your information', onTap: () => _push(context, const LegalScreen(kind: LegalKind.privacy))),
+            _MenuRow(icon: Icons.gavel_rounded, title: 'Terms', subtitle: 'Using the app, shop, polls & contests', onTap: () => _push(context, const LegalScreen(kind: LegalKind.terms))),
+            const SectionTitle('Club team'),
+            _MenuRow(icon: Icons.admin_panel_settings_rounded, title: 'Admin', subtitle: api.adminSession == null ? 'Sign in' : api.adminSession!.roleLabel, onTap: () => _push(context, const AdminHomePage())),
+            _MenuRow(icon: Icons.dns_rounded, title: 'Server', subtitle: api.base, onTap: () => _push(context, const ServerPage())),
+            const SizedBox(height: 18),
+            Center(child: Opacity(opacity: 0.8, child: Image.asset('assets/brand/abu-dhabi-t10-landscape-white.png', height: 22))),
+            const SizedBox(height: 8),
+            const Center(child: Text('#LetsGoHunt', style: TextStyle(color: goldLight, fontWeight: FontWeight.w800, letterSpacing: 1.2))),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FeatureTile extends StatelessWidget {
+  const _FeatureTile({required this.item});
+  final _MenuItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => _push(context, item.page),
+        child: Ink(
+          height: 128,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), gradient: accentGradient, boxShadow: [BoxShadow(color: pink.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8))]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(12)), child: Icon(item.icon, color: Colors.white, size: 22)),
+              const Spacer(),
+              Text(item.title.toUpperCase(), style: displayStyle(21, color: Colors.white)),
+              Text(item.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFFBE3F1), fontSize: 12)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuTile extends StatelessWidget {
+  const _MenuTile({required this.item});
+  final _MenuItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClubCard(
+      padding: const EdgeInsets.all(12),
+      onTap: () => _push(context, item.page),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ListTile(leading: const Icon(Icons.how_to_vote_outlined), title: const Text('Fan zone'), subtitle: const Text('Polls and contests'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FanPage()))),
-          ListTile(leading: const Icon(Icons.newspaper_outlined), title: const Text('News'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewsPage()))),
-          ListTile(leading: const Icon(Icons.campaign_outlined), title: const Text('Tigers Daily'), subtitle: const Text('Training and team updates'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UpdatesPage()))),
-          ListTile(leading: const Icon(Icons.photo_library_outlined), title: const Text('Gallery'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GalleryPage()))),
-          ListTile(leading: const Icon(Icons.handshake_outlined), title: const Text('Partners'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnersPage()))),
-          ListTile(leading: const Icon(Icons.leaderboard_outlined), title: const Text('Stats'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StatsPage()))),
-          ListTile(leading: const Icon(Icons.emoji_events_outlined), title: const Text('Records'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RecordsPage()))),
-          ListTile(leading: const Icon(Icons.table_chart_outlined), title: const Text('Points table'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PointsPage()))),
-          ListTile(leading: const Icon(Icons.info_outline), title: const Text('About'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutPage()))),
-          ListTile(leading: const Icon(Icons.mail_outline), title: const Text('Contact'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ContactPage()))),
-          ListTile(leading: const Icon(Icons.admin_panel_settings_outlined), title: const Text('Admin'), subtitle: Text(api.adminSession == null ? 'Sign in' : api.adminSession!.roleLabel), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminHomePage()))),
-          ListTile(leading: const Icon(Icons.dns_outlined), title: const Text('Server'), subtitle: Text(api.base), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ServerPage()))),
+          ShaderMask(blendMode: BlendMode.srcIn, shaderCallback: (bounds) => goldSurface.createShader(bounds), child: Icon(item.icon, size: 24)),
+          const Spacer(),
+          Text(item.title.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: displayStyle(17, color: Colors.white)),
+          Text(item.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 11.5)),
         ],
       ),
-    ),
+    );
+  }
+}
+
+class _MenuRow extends StatelessWidget {
+  const _MenuRow({required this.icon, required this.title, required this.subtitle, required this.onTap});
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: ClubCard(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        onTap: onTap,
+        child: Row(
+          children: [
+            Icon(icon, color: goldLight, size: 22),
+            const SizedBox(width: 12),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)), Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12))])),
+            const Icon(Icons.chevron_right_rounded, color: goldLight),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -44,37 +174,73 @@ class NewsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final api = ClubScope.of(context).api;
     return Scaffold(
-      appBar: AppBar(title: const Text('NEWSROOM')),
+      appBar: const ClubAppBar('Newsroom'),
       body: AnimatedBuilder(
         animation: api,
         builder: (context, _) {
           final stories = api.catalog.news;
-          if (stories.isEmpty) return const Center(child: Text('Stories will appear here.'));
           return RefreshIndicator(
+            color: pink,
             onRefresh: api.refresh,
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: stories.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final story = stories[index];
-                return ClubCard(
-                  onTap: () => openStory(context, story),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RemoteImage(api.media(story.coverImage)),
-                      const SizedBox(height: 8),
-                      Text(story.category ?? '', style: const TextStyle(color: gold, fontSize: 11)),
-                      Text(story.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                      Text(story.excerpt),
-                    ],
-                  ),
-                );
-              },
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                const PageHero(eyebrow: 'The newsroom', title: 'Club news.', intro: 'Squad announcements, match reports and stories from around the Tigers.'),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+                  child: stories.isEmpty
+                      ? const EmptyPanel(title: 'Stories will appear here.')
+                      : Column(
+                          children: [
+                            for (var index = 0; index < stories.length; index++)
+                              Padding(padding: const EdgeInsets.only(bottom: 12), child: _StoryCard(story: stories[index], lead: index == 0)),
+                          ],
+                        ),
+                ),
+              ],
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _StoryCard extends StatelessWidget {
+  const _StoryCard({required this.story, this.lead = false});
+  final NewsStory story;
+  final bool lead;
+
+  @override
+  Widget build(BuildContext context) {
+    final api = ClubScope.of(context).api;
+    return ClubCard(
+      padding: EdgeInsets.zero,
+      highlight: lead,
+      onTap: () => openStory(context, story),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              RemoteImage(api.media(story.coverImage), height: lead ? 200 : 150, radius: 15),
+              Positioned(left: 12, top: 12, child: MediaBadge(label: (story.category ?? 'NEWS').toUpperCase())),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (story.publishedAt != null) Text(when(story.publishedAt).split(' · ').first.toUpperCase(), style: const TextStyle(color: goldLight, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                const SizedBox(height: 6),
+                Text(story.title.toUpperCase(), style: displayStyle(lead ? 26 : 21, color: Colors.white)),
+                const SizedBox(height: 8),
+                Text(story.excerpt, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFD9CCE6))),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -111,22 +277,30 @@ class _StoryPageState extends State<StoryPage> {
   @override
   Widget build(BuildContext context) {
     final current = story;
-    if (current == null) return const Scaffold(body: LoadingView());
+    if (current == null) return const Scaffold(appBar: ClubAppBar('News'), body: LoadingView());
+    final api = ClubScope.of(context).api;
     return Scaffold(
-      appBar: AppBar(title: Text(current.category ?? 'NEWS')),
+      appBar: ClubAppBar(current.category ?? 'News'),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         children: [
-          RemoteImage(ClubScope.of(context).api.media(current.coverImage), height: 220),
-          const SizedBox(height: 12),
-          Text(current.title, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
-          if (current.authorName != null || current.publishedAt != null)
-            Text([
-              if (current.authorName != null) current.authorName!,
-              if (current.publishedAt != null) when(current.publishedAt),
-            ].join(' · ')),
-          const SizedBox(height: 8),
-          Text(current.content.isEmpty ? current.excerpt : current.content),
+          PageHero(
+            eyebrow: [current.category ?? 'News', if (current.publishedAt != null) when(current.publishedAt).split(' · ').first].join(' · '),
+            title: current.title,
+            intro: current.excerpt,
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (current.coverImage != null) ...[RemoteImage(api.media(current.coverImage), height: 220, radius: 16), const SizedBox(height: 16)],
+                ClubMarkdown(current.content.isEmpty ? current.excerpt : current.content, mediaUrl: api.media, onLink: (href) => openSiteLink(context, href)),
+                const SizedBox(height: 10),
+                Text('${current.authorName ?? 'United Tigers'}${current.publishedAt == null ? '' : ' · ${when(current.publishedAt).split(' · ').first}'}', style: const TextStyle(color: goldLight, fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -144,35 +318,54 @@ class UpdatesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final api = ClubScope.of(context).api;
     return Scaffold(
-      appBar: AppBar(title: const Text('TIGERS DAILY')),
+      appBar: const ClubAppBar('Tigers Daily'),
       body: AnimatedBuilder(
         animation: api,
         builder: (context, _) {
           final updates = api.catalog.updates;
-          if (updates.isEmpty) return const Center(child: Text('Check back soon for training notes and team news.'));
           return RefreshIndicator(
+            color: pink,
             onRefresh: api.refresh,
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: updates.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final update = updates[index];
-                return ClubCard(
-                  onTap: () => openUpdate(context, update),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (update.image != null) RemoteImage(api.media(update.image)),
-                      const SizedBox(height: 8),
-                      Text(update.category?.replaceAll('_', ' ') ?? 'UPDATE', style: const TextStyle(color: gold, fontSize: 11, fontWeight: FontWeight.w800)),
-                      Text(update.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                      Text(when(update.publishedAt)),
-                      Text(update.description),
-                    ],
-                  ),
-                );
-              },
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                const PageHero(eyebrow: 'Tigers daily', title: 'Inside the camp.', intro: 'Training notes, team news and behind-the-scenes moments.'),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+                  child: updates.isEmpty
+                      ? const EmptyPanel(title: 'Check back soon.', message: 'Training notes and team news will appear here.')
+                      : Column(
+                          children: updates
+                              .map((update) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: ClubCard(
+                                      padding: EdgeInsets.zero,
+                                      onTap: () => openUpdate(context, update),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          if (update.image != null) RemoteImage(api.media(update.image), height: 160, radius: 15),
+                                          Padding(
+                                            padding: const EdgeInsets.all(16),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Row(children: [StatusChip(update.category?.replaceAll('_', ' ') ?? 'UPDATE'), const Spacer(), Text(when(update.publishedAt).split(' · ').first, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12))]),
+                                                const SizedBox(height: 10),
+                                                Text(update.title.toUpperCase(), style: displayStyle(21, color: Colors.white)),
+                                                const SizedBox(height: 6),
+                                                Text(update.description, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFD9CCE6))),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ))
+                              .toList(),
+                        ),
+                ),
+              ],
             ),
           );
         },
@@ -210,21 +403,26 @@ class _UpdatePageState extends State<UpdatePage> {
     final update = current ?? widget.update;
     final api = ClubScope.of(context).api;
     return Scaffold(
-      appBar: AppBar(title: Text(update.category?.replaceAll('_', ' ') ?? 'UPDATE')),
+      appBar: const ClubAppBar('Tigers Daily'),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         children: [
-          if (update.image != null) RemoteImage(api.media(update.image), height: 220),
-          const SizedBox(height: 12),
-          Text(update.title, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
-          Text(when(update.publishedAt)),
-          if (update.playerName != null) Text(update.playerName!),
-          const SizedBox(height: 8),
-          Text(update.content.isEmpty ? update.description : update.content),
-          if (update.video != null) ...[
-            const SizedBox(height: 16),
-            FilledButton(onPressed: () => openExternal(api.media(update.video)), child: const Text('WATCH')),
-          ],
+          PageHero(eyebrow: '${update.category?.replaceAll('_', ' ') ?? 'Update'} · ${when(update.publishedAt).split(' · ').first}', title: update.title, intro: update.description),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (update.image != null) ...[RemoteImage(api.media(update.image), height: 220, radius: 16), const SizedBox(height: 16)],
+                if (update.playerName != null) ...[Eyebrow(update.playerName!), const SizedBox(height: 12)],
+                ClubMarkdown(update.content.isEmpty ? update.description : update.content, mediaUrl: api.media, onLink: (href) => openSiteLink(context, href)),
+                if (update.video != null) ...[
+                  const SizedBox(height: 12),
+                  FilledButton.icon(onPressed: () => openExternal(api.media(update.video)), icon: const Icon(Icons.play_arrow_rounded), label: const Text('WATCH')),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -239,39 +437,59 @@ class GalleryPage extends StatelessWidget {
     final api = ClubScope.of(context).api;
     final items = api.catalog.gallery;
     return Scaffold(
-      appBar: AppBar(title: const Text('GALLERY')),
-      body: items.isEmpty
-          ? const Center(child: Text('Photos and videos will appear here.'))
-          : GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 8, crossAxisSpacing: 8, childAspectRatio: 0.82),
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return GestureDetector(
-                  onTap: item.isVideo ? () => openExternal(api.media(item.mediaUrl)) : null,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
+      appBar: const ClubAppBar('Gallery'),
+      body: CustomScrollView(
+        slivers: [
+          const SliverToBoxAdapter(child: PageHero(eyebrow: 'Gallery', title: 'Moments.', intro: 'Photos and videos from match days, training and the Tigers family.')),
+          if (items.isEmpty)
+            const SliverPadding(padding: EdgeInsets.all(16), sliver: SliverToBoxAdapter(child: EmptyPanel(title: 'Photos and videos will appear here.')))
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.8),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final item = items[index];
+                    return GestureDetector(
+                      onTap: item.isVideo ? () => openExternal(api.media(item.mediaUrl)) : () => _showPhoto(context, api.media(item.mediaUrl), item.title),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            RemoteImage(api.media(item.isVideo ? null : item.mediaUrl), height: 120, radius: 12),
-                            if (item.isVideo) const Center(child: Icon(Icons.play_circle_fill, color: goldLight, size: 36)),
-                            Positioned(left: 6, bottom: 6, child: MediaBadge(label: item.isVideo ? 'VIDEO' : 'PHOTO')),
+                            RemoteImage(api.media(item.isVideo ? null : item.mediaUrl), height: 200, radius: 0),
+                            const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0xD91C0432)], stops: [0.5, 1]))),
+                            if (item.isVideo) const Center(child: Icon(Icons.play_circle_fill_rounded, color: goldLight, size: 44)),
+                            Positioned(left: 8, top: 8, child: MediaBadge(label: item.isVideo ? 'VIDEO' : 'PHOTO')),
+                            Positioned(left: 10, right: 10, bottom: 10, child: Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13))),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    ],
-                  ),
-                );
-              },
+                    );
+                  },
+                  childCount: items.length,
+                ),
+              ),
             ),
+        ],
+      ),
     );
   }
+}
+
+void _showPhoto(BuildContext context, String url, String title) {
+  showDialog(
+    context: context,
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(12),
+      child: GestureDetector(
+        onTap: () => Navigator.pop(context),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [ClipRRect(borderRadius: BorderRadius.circular(16), child: InteractiveViewer(child: Image.network(url, fit: BoxFit.contain))), const SizedBox(height: 10), Text(title, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800))]),
+      ),
+    ),
+  );
 }
 
 class PartnersPage extends StatelessWidget {
@@ -282,34 +500,51 @@ class PartnersPage extends StatelessWidget {
     final api = ClubScope.of(context).api;
     final sponsors = api.catalog.sponsors;
     return Scaffold(
-      appBar: AppBar(title: const Text('PARTNERS')),
+      appBar: const ClubAppBar('Partners'),
       body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: sponsors
-            .map(
-              (sponsor) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: ClubCard(
-                  onTap: sponsor.website == null ? null : () => openExternal(sponsor.website!),
-                  child: Row(
-                    children: [
-                      SizedBox(width: 72, height: 48, child: RemoteImage(api.media(sponsor.logoUrl), height: 48, radius: 8)),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(sponsor.category ?? 'PARTNER', style: const TextStyle(color: gold, fontSize: 11)),
-                            Text(sponsor.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                          ],
-                        ),
-                      ),
-                    ],
+        padding: EdgeInsets.zero,
+        children: [
+          const PageHero(eyebrow: 'Our partners', title: 'Cricket unites people.', intro: 'The brands backing the Tigers in their first season.'),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+            child: sponsors.isEmpty
+                ? const EmptyPanel(title: 'Partners will appear here.')
+                : Column(
+                    children: sponsors
+                        .map(
+                          (sponsor) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: ClubCard(
+                              onTap: sponsor.website == null ? null : () => openExternal(sponsor.website!),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 84,
+                                    height: 56,
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                                    child: sponsor.logoUrl == null ? const Icon(Icons.handshake_rounded, color: ink) : Image.network(api.media(sponsor.logoUrl), fit: BoxFit.contain, errorBuilder: (_, _, _) => const Icon(Icons.handshake_rounded, color: ink)),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text((sponsor.category ?? 'Partner').toUpperCase(), style: const TextStyle(color: goldLight, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                                        Text(sponsor.name.toUpperCase(), style: displayStyle(21, color: Colors.white)),
+                                      ],
+                                    ),
+                                  ),
+                                  if (sponsor.website != null) const Icon(Icons.arrow_outward, color: goldLight, size: 18),
+                                ],
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
                   ),
-                ),
-              ),
-            )
-            .toList(),
+          ),
+        ],
       ),
     );
   }
@@ -321,19 +556,27 @@ class AboutPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('OUR STORY')),
+      appBar: const ClubAppBar('Our story'),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         children: const [
-          Text('BUILT FOR THE MOMENT', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800)),
-          SizedBox(height: 12),
-          Text('United Tigers are a new Abu Dhabi T10 franchise announced for the 2026 season. The club brings a fresh identity to a format built for pace, energy and unforgettable moments.'),
-          SizedBox(height: 12),
-          Text('Fakhar Zaman has been announced as the team’s icon player. As the squad takes shape, the club’s story will be written alongside its players, partners and fans.'),
-          SizedBox(height: 16),
-          _Pillar('01', 'OUR MISSION', 'Bring people together through fast, fearless cricket and a shared pride in the Tigers.'),
-          _Pillar('02', 'OUR VISION', 'Build a team and fan community that grows stronger with every season.'),
-          _Pillar('03', 'OUR VALUES', 'Play with courage. Move with purpose. Make room for everyone in the pride.'),
+          PageHero(
+            eyebrow: 'Our story',
+            title: 'Built for the moment.',
+            intro: 'United Tigers are a new Abu Dhabi T10 franchise announced for the 2026 season. The club brings a fresh identity to a format built for pace, energy and unforgettable moments.',
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, 18, 16, 28),
+            child: Column(
+              children: [
+                Text('Fakhar Zaman has been announced as the team’s icon player. As the squad takes shape, the club’s story will be written alongside its players, partners and fans.', style: TextStyle(color: Color(0xFFE6DDF0), fontSize: 15, height: 1.5)),
+                SizedBox(height: 16),
+                _Pillar('01', 'Our mission', 'Bring people together through fast, fearless cricket and a shared pride in the Tigers.'),
+                _Pillar('02', 'Our vision', 'Build a team and fan community that grows stronger with every season.'),
+                _Pillar('03', 'Our values', 'Play with courage. Move with purpose. Make room for everyone in the pride.'),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -349,14 +592,23 @@ class _Pillar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 12),
       child: ClubCard(
-        child: Column(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(index, style: const TextStyle(color: gold, fontWeight: FontWeight.w800)),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-            Text(body),
+            GoldText(index, style: displayStyle(40)),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title.toUpperCase(), style: displayStyle(21, color: Colors.white)),
+                  const SizedBox(height: 4),
+                  Text(body, style: const TextStyle(color: Color(0xFFD9CCE6))),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -390,21 +642,42 @@ class _ContactPageState extends State<ContactPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('CONTACT')),
+      appBar: const ClubAppBar('Contact'),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         children: [
-          const Text('For partnership, media and supporter enquiries, leave a message for the team.'),
-          const SizedBox(height: 8),
-          const Text('Based in Abu Dhabi, United Arab Emirates'),
-          TextButton(onPressed: () => openExternal('https://www.facebook.com/share/1Bxhkk4L97/?mibextid=wwXIfr'), child: const Text('Facebook')),
-          TextButton(onPressed: () => openExternal('https://www.instagram.com/unitedtigers.ae'), child: const Text('Instagram')),
-          ClubField(label: 'Name', controller: name),
-          ClubField(label: 'Email', controller: email, email: true),
-          ClubField(label: 'Phone', controller: phone, phone: true),
-          ClubField(label: 'Subject', controller: subject),
-          ClubField(label: 'Message', controller: message, lines: 5),
-          FilledButton(onPressed: busy ? null : _submit, child: Text(busy ? 'SENDING…' : 'SEND')),
+          const PageHero(eyebrow: 'Contact', title: 'Talk to the Tigers.', intro: 'For partnership, media and supporter enquiries, leave a message for the team. Based in Abu Dhabi, United Arab Emirates.'),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: OutlinedButton.icon(onPressed: () => openExternal('https://www.facebook.com/share/1Bxhkk4L97/?mibextid=wwXIfr'), icon: const Icon(Icons.facebook_rounded), label: const Text('FACEBOOK'))),
+                    const SizedBox(width: 10),
+                    Expanded(child: OutlinedButton.icon(onPressed: () => openExternal('https://www.instagram.com/unitedtigers.ae'), icon: const Icon(Icons.camera_alt_rounded), label: const Text('INSTAGRAM'))),
+                  ],
+                ),
+                const SectionTitle('Send a message'),
+                ClubField(label: 'Name', controller: name),
+                ClubField(label: 'Email', controller: email, email: true),
+                ClubField(label: 'Phone', controller: phone, phone: true),
+                ClubField(label: 'Subject', controller: subject),
+                ClubField(label: 'Message', controller: message, lines: 5),
+                FilledButton(onPressed: busy ? null : _submit, child: Text(busy ? 'SENDING…' : 'SEND MESSAGE')),
+                const SizedBox(height: 10),
+                Text.rich(
+                  TextSpan(children: [
+                    const TextSpan(text: 'We use your details only to reply. See our '),
+                    WidgetSpan(alignment: PlaceholderAlignment.baseline, baseline: TextBaseline.alphabetic, child: GestureDetector(onTap: () => _push(context, const LegalScreen(kind: LegalKind.privacy)), child: const Text('privacy policy', style: TextStyle(color: goldLight, decoration: TextDecoration.underline, decorationColor: goldLight, fontSize: 12.5)))),
+                    const TextSpan(text: '.'),
+                  ]),
+                  style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12.5),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -426,6 +699,51 @@ class _ContactPageState extends State<ContactPage> {
     } finally {
       if (mounted) setState(() => busy = false);
     }
+  }
+}
+
+enum LegalKind { privacy, terms }
+
+/// Privacy or Terms, with the wording an admin saves under Legal pages.
+class LegalScreen extends StatelessWidget {
+  const LegalScreen({super.key, required this.kind});
+  final LegalKind kind;
+
+  @override
+  Widget build(BuildContext context) {
+    final api = ClubScope.of(context).api;
+    return AnimatedBuilder(
+      animation: api,
+      builder: (context, _) {
+        final page = kind == LegalKind.privacy ? api.site.privacy : api.site.terms;
+        final fallbackTitle = kind == LegalKind.privacy ? 'Privacy' : 'Terms';
+        return Scaffold(
+          appBar: ClubAppBar(page?.title ?? fallbackTitle),
+          body: page == null
+              ? MessageView('The ${fallbackTitle.toLowerCase()} page could not be loaded. Check your connection and try again.', onRetry: api.refresh)
+              : RefreshIndicator(
+                  color: pink,
+                  onRefresh: api.refresh,
+                  child: ListView(
+                    padding: EdgeInsets.zero,
+                    children: [
+                      PageHero(eyebrow: 'United Tigers', title: '${page.title}.', intro: page.intro),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (page.updatedOn != null) Text('LAST UPDATED ${when(page.updatedOn).split(' · ').first.toUpperCase()}', style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                            ClubMarkdown(page.content, mediaUrl: api.media, onLink: (href) => openSiteLink(context, href)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+        );
+      },
+    );
   }
 }
 
@@ -454,12 +772,12 @@ class _ServerPageState extends State<ServerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('SERVER')),
+      appBar: const ClubAppBar('Server'),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Point the app at the United Tigers API. On an Android emulator, use http://10.0.2.2:3001. On a phone, use your computer’s address.'),
-          const SizedBox(height: 12),
+          const Text('Point the app at the United Tigers API. On an Android emulator, use http://10.0.2.2:3001. On a phone, use your computer’s address, or https://unitedtigers.ae for the live site.', style: TextStyle(color: Color(0xFFE6DDF0))),
+          const SizedBox(height: 16),
           ClubField(label: 'API address', controller: address!),
           FilledButton(
             onPressed: () async {
@@ -474,6 +792,27 @@ class _ServerPageState extends State<ServerPage> {
   }
 }
 
+enum StatScope { season, allT20, t20 }
+
+enum StatCategory { batting, bowling, fielding }
+
+typedef _Column = (String key, String label);
+
+const _columns = <StatCategory, List<_Column>>{
+  StatCategory.batting: [('runs', 'Runs'), ('matches', 'M'), ('average', 'Avg'), ('strikeRate', 'SR'), ('highestScore', 'HS'), ('fours', '4s'), ('sixes', '6s')],
+  StatCategory.bowling: [('wickets', 'Wkts'), ('matches', 'M'), ('economy', 'Econ'), ('bowlingAverage', 'Avg'), ('bowlingStrikeRate', 'SR'), ('bestBowling', 'Best')],
+  StatCategory.fielding: [('catches', 'Catches'), ('runOuts', 'Run outs'), ('stumpings', 'Stumpings')],
+};
+
+String _figure(FigureSet? set, String key) {
+  if (set == null) return '–';
+  final text = set.text(key);
+  if (text == null) return '–';
+  final number = num.tryParse(text);
+  if (number == null) return text;
+  return number % 1 == 0 ? number.toInt().toString() : number.toStringAsFixed(2);
+}
+
 class StatsPage extends StatefulWidget {
   const StatsPage({super.key});
 
@@ -486,48 +825,191 @@ class _StatsPageState extends State<StatsPage> {
   String? error;
   bool loading = true;
   bool started = false;
+  StatScope scope = StatScope.season;
+  StatCategory category = StatCategory.batting;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (started) return;
     started = true;
-    ClubScope.of(context).api.fetchStats().then((data) {
-      if (mounted) setState(() { rows = data; loading = false; });
-    }).catchError((reason) {
-      if (mounted) setState(() { error = '$reason'.replaceFirst('Exception: ', ''); loading = false; });
-    });
+    _load();
   }
+
+  Future<void> _load() async {
+    try {
+      final data = await ClubScope.of(context).api.fetchStats();
+      if (!mounted) return;
+      final played = data.where((row) => row.season.played).length;
+      setState(() {
+        rows = data;
+        loading = false;
+        error = null;
+        scope = played * 2 >= data.length ? StatScope.season : data.any((row) => row.allT20 != null) ? StatScope.allT20 : StatScope.t20;
+      });
+    } catch (reason) {
+      if (mounted) setState(() { error = '$reason'.replaceFirst('Exception: ', ''); loading = false; });
+    }
+  }
+
+  FigureSet? _figures(PlayerStat row) => switch (scope) { StatScope.season => row.season, StatScope.allT20 => row.allT20, StatScope.t20 => row.t20 };
+
+  void _changeScope(StatScope next) => setState(() {
+        scope = next;
+        if (next == StatScope.t20 && category == StatCategory.fielding) category = StatCategory.batting;
+      });
 
   @override
   Widget build(BuildContext context) {
+    final columns = _columns[category]!;
+    final primary = columns.first.$1;
+    final sorted = [...rows]..sort((left, right) {
+        final a = _figures(left)?.number(primary);
+        final b = _figures(right)?.number(primary);
+        if (a == null && b == null) return left.name.compareTo(right.name);
+        if (a == null) return 1;
+        if (b == null) return -1;
+        return b.compareTo(a);
+      });
+    final leaders = sorted.where((row) => (_figures(row)?.number(primary) ?? 0) > 0).take(3).toList();
+    final footnote = switch (scope) {
+      StatScope.season => 'Figures from scorecards of the ${DateTime.now().year} Abu Dhabi T10 season.',
+      StatScope.allT20 => 'Every recognised T20 the player has played: domestic, franchise and international. These are not merged into club figures.',
+      StatScope.t20 => 'T20 Internationals only. Players without a T20I are listed with a link to their All T20 record.',
+    };
     return Scaffold(
-      appBar: AppBar(title: const Text('STATS')),
+      appBar: ClubAppBar('Stats centre', actions: [IconButton(tooltip: 'Records', onPressed: () => _push(context, const RecordsPage()), icon: const Icon(Icons.emoji_events_rounded, color: goldLight))]),
       body: error != null
-          ? MessageView(error!)
+          ? MessageView(error!, onRetry: () { setState(() => loading = true); _load(); })
           : loading
               ? const LoadingView()
-              : rows.isEmpty
-                  ? const Center(child: Text('The numbers will appear once scorecards are entered.'))
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: rows.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        final row = rows[index];
-                        String rate(double? value) => value == null ? '–' : value.toStringAsFixed(2);
-                        return ClubCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(row.name, style: const TextStyle(fontWeight: FontWeight.w800)),
-                              Text('${row.matches} matches · ${row.runs} runs · ${row.wickets} wickets'),
-                              Text('Avg ${rate(row.average)} · SR ${rate(row.strikeRate)} · Econ ${rate(row.economy)}'),
+              : RefreshIndicator(
+                  color: pink,
+                  onRefresh: _load,
+                  child: ListView(
+                    padding: EdgeInsets.zero,
+                    children: [
+                      PageHero(
+                        eyebrow: 'Stats centre',
+                        title: 'The numbers.',
+                        intro: footnote,
+                        child: ClubTabs<StatScope>(options: [(StatScope.season, '${DateTime.now().year} T10'), (StatScope.allT20, 'All T20'), (StatScope.t20, 'T20I')], value: scope, onChanged: _changeScope),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ClubTabs<StatCategory>(
+                              options: [(StatCategory.batting, 'Batting'), (StatCategory.bowling, 'Bowling'), if (scope != StatScope.t20) (StatCategory.fielding, 'Fielding')],
+                              value: category,
+                              onChanged: (next) => setState(() => category = next),
+                            ),
+                            if (rows.isEmpty)
+                              const Padding(padding: EdgeInsets.only(top: 16), child: EmptyPanel(title: 'The numbers will appear once scorecards are entered.'))
+                            else ...[
+                              if (leaders.isNotEmpty) ...[
+                                SectionTitle('Leaders · ${columns.first.$2}'),
+                                Row(children: [for (var index = 0; index < leaders.length; index++) Expanded(child: Padding(padding: EdgeInsets.only(right: index < leaders.length - 1 ? 8 : 0), child: _LeaderCard(rank: index + 1, name: leaders[index].name, value: _figure(_figures(leaders[index]), primary), label: columns.first.$2, onTap: () => _openPlayer(leaders[index]))))]),
+                              ],
+                              SectionTitle(category.name),
+                              ...sorted.map((row) => Padding(padding: const EdgeInsets.only(bottom: 10), child: _statRow(row, columns))),
                             ],
-                          ),
-                        );
-                      },
-                    ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+    );
+  }
+
+  Widget _statRow(PlayerStat row, List<_Column> columns) {
+    final figures = _figures(row);
+    return ClubCard(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      onTap: () => _openPlayer(row),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [Expanded(child: Text(row.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5))), if (figures != null) GoldText(_figure(figures, columns.first.$1), style: displayStyle(26))]),
+          const SizedBox(height: 8),
+          if (figures == null && scope != StatScope.season)
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              children: [
+                Text(scope == StatScope.t20 ? 'No T20 Internationals yet.' : 'No T20 record available yet.', style: const TextStyle(color: Color(0xFFBDAED0), fontStyle: FontStyle.italic)),
+                if (scope == StatScope.t20 && row.allT20 != null)
+                  GestureDetector(onTap: () => _changeScope(StatScope.allT20), child: const Text('See his All T20 record', style: TextStyle(color: goldLight, fontWeight: FontWeight.w800, decoration: TextDecoration.underline, decorationColor: goldLight))),
+              ],
+            )
+          else
+            Wrap(spacing: 6, runSpacing: 6, children: [for (final (key, label) in columns.skip(1)) _FigureChip(label: label, value: _figure(figures, key))]),
+        ],
+      ),
+    );
+  }
+
+  void _openPlayer(PlayerStat row) {
+    final player = ClubScope.of(context).api.catalog.players.where((player) => player.slug == row.slug).firstOrNull;
+    if (player != null) openPlayer(context, player);
+  }
+}
+
+class _LeaderCard extends StatelessWidget {
+  const _LeaderCard({required this.rank, required this.name, required this.value, required this.label, required this.onTap});
+  final int rank;
+  final String name;
+  final String value;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final first = rank == 1;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          height: 132,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: first ? accentGradient : const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF3A0B66), Color(0xFF2A0750)]),
+            border: first ? null : Border.all(color: gold.withValues(alpha: 0.35)),
+            boxShadow: first ? [BoxShadow(color: pink.withValues(alpha: 0.4), blurRadius: 18, offset: const Offset(0, 8))] : null,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('#$rank', style: displayStyle(18, color: first ? Colors.white : goldLight)),
+              const Spacer(),
+              GoldText(value, style: displayStyle(34)),
+              Text(label.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1, color: Color(0xFFF1E6F7))),
+              const SizedBox(height: 4),
+              Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FigureChip extends StatelessWidget {
+  const _FigureChip({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(color: purple.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(9), border: Border.all(color: gold.withValues(alpha: 0.25))),
+      child: Text.rich(TextSpan(children: [TextSpan(text: '${label.toUpperCase()} ', style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 0.5)), TextSpan(text: value, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800))])),
     );
   }
 }
@@ -559,33 +1041,47 @@ class _RecordsPageState extends State<RecordsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('RECORDS')),
+      appBar: const ClubAppBar('Records'),
       body: loading
           ? const LoadingView()
-          : rows.isEmpty
-              ? const Center(child: Text('The record book is open.'))
-              : ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: rows
-                      .map(
-                        (record) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: ClubCard(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (record.category != null) Text(record.category!, style: const TextStyle(color: gold, fontSize: 11, fontWeight: FontWeight.w800)),
-                                Text(record.value, style: const TextStyle(color: gold, fontSize: 22, fontWeight: FontWeight.w800)),
-                                Text(record.title, style: const TextStyle(fontWeight: FontWeight.w800)),
-                                Text(record.playerName ?? 'United Tigers'),
-                                if (record.seasonYear != null) Text('${record.seasonYear}'),
-                              ],
-                            ),
-                          ),
+          : ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                const PageHero(eyebrow: 'The record book', title: 'Records.', intro: 'The best of the Tigers, season by season.'),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+                  child: rows.isEmpty
+                      ? const EmptyPanel(title: 'The record book is open.', message: 'Records will be written as the season is played.')
+                      : GridView.count(
+                          crossAxisCount: 2,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
+                          childAspectRatio: 0.9,
+                          children: rows
+                              .map(
+                                (record) => ClubCard(
+                                  padding: const EdgeInsets.all(14),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      if (record.category != null) Text(record.category!.toUpperCase(), style: const TextStyle(color: goldLight, fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                                      const Spacer(),
+                                      GoldText(record.value, style: displayStyle(36), maxLines: 1),
+                                      const SizedBox(height: 4),
+                                      Text(record.title.toUpperCase(), maxLines: 2, overflow: TextOverflow.ellipsis, style: displayStyle(15, color: Colors.white, height: 1)),
+                                      const SizedBox(height: 6),
+                                      Text([record.playerName ?? 'United Tigers', if (record.seasonYear != null) '${record.seasonYear}'].join(' · '), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12)),
+                                    ],
+                                  ),
+                                ),
+                              )
+                              .toList(),
                         ),
-                      )
-                      .toList(),
                 ),
+              ],
+            ),
     );
   }
 }
@@ -617,23 +1113,55 @@ class _PointsPageState extends State<PointsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('POINTS')),
+      appBar: const ClubAppBar('Points table'),
       body: loading
           ? const LoadingView()
-          : rows.isEmpty
-              ? const Center(child: Text('The table appears after completed matches.'))
-              : ListView(
-                  children: rows
-                      .map(
-                        (row) => ListTile(
-                          leading: Text('${row.position}'),
-                          title: Text(row.teamName),
-                          subtitle: Text('P ${row.played}  W ${row.won}  L ${row.lost}  NRR ${row.netRunRate.toStringAsFixed(3)}'),
-                          trailing: Text('${row.points}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+          : ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                const PageHero(eyebrow: 'The league', title: 'Points table.', intro: 'Standings for every franchise, built from completed scorecards and confirmed by the club.'),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+                  child: rows.isEmpty
+                      ? const EmptyPanel(title: 'The table appears after completed matches.')
+                      : Column(
+                          children: rows.map((row) {
+                            final ours = row.teamName.toLowerCase().contains('united tigers');
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: ClubCard(
+                                highlight: ours,
+                                padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 34,
+                                      height: 34,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(shape: BoxShape.circle, gradient: row.position <= 4 ? goldSurface : null, color: row.position <= 4 ? null : glow),
+                                      child: Text('${row.position}', style: TextStyle(fontFamily: display, fontSize: 18, color: row.position <= 4 ? ink : Colors.white)),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(row.teamName.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: displayStyle(18, color: Colors.white)),
+                                          const SizedBox(height: 3),
+                                          Text('P ${row.played}   W ${row.won}   L ${row.lost}   NRR ${row.netRunRate >= 0 ? '+' : ''}${row.netRunRate.toStringAsFixed(3)}', style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12, fontWeight: FontWeight.w700)),
+                                        ],
+                                      ),
+                                    ),
+                                    Column(children: [GoldText('${row.points}', style: displayStyle(28)), const Text('PTS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1, color: Color(0xFFBDAED0)))]),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
-                      )
-                      .toList(),
                 ),
+              ],
+            ),
     );
   }
 }

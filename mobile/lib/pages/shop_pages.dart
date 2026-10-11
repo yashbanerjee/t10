@@ -5,6 +5,31 @@ import 'package:united_tigers/models.dart';
 import 'package:united_tigers/scope.dart';
 import 'package:united_tigers/widgets.dart';
 
+class _BagButton extends StatelessWidget {
+  const _BagButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final cart = ClubScope.of(context).cart;
+    return AnimatedBuilder(
+      animation: cart,
+      builder: (context, _) {
+        final count = cart.lines.fold<int>(0, (sum, line) => sum + line.quantity);
+        return IconButton(
+          tooltip: 'Your bag',
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CartPage())),
+          icon: Badge(
+            isLabelVisible: count > 0,
+            backgroundColor: pink,
+            label: Text('$count'),
+            child: const Icon(Icons.shopping_bag_rounded, color: goldLight),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class ShopPage extends StatelessWidget {
   const ShopPage({super.key});
 
@@ -12,44 +37,46 @@ class ShopPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final api = ClubScope.of(context).api;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('SHOP'),
-        actions: [
-          IconButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CartPage())),
-            icon: const Icon(Icons.shopping_bag_outlined),
-          ),
-        ],
-      ),
+      appBar: const ClubAppBar('Shop', actions: [_BagButton()]),
       body: AnimatedBuilder(
         animation: api,
         builder: (context, _) {
           final products = api.catalog.products;
-          if (products.isEmpty) return const Center(child: Text('Kit will appear here.'));
           return RefreshIndicator(
+            color: pink,
             onRefresh: api.refresh,
-            child: GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.68),
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                final product = products[index];
-                return ClubCard(
-                  padding: const EdgeInsets.all(10),
-                  onTap: () => openProduct(context, product),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RemoteImage(api.media(product.image), height: 120, radius: 12),
-                      const SizedBox(height: 8),
-                      Text(product.category?.replaceAll('_', ' ') ?? '', style: const TextStyle(color: gold, fontSize: 11, fontWeight: FontWeight.w800)),
-                      Text(product.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
-                      const Spacer(),
-                      Text(money(product.price), style: const TextStyle(color: orange, fontWeight: FontWeight.w800)),
-                    ],
+            child: CustomScrollView(
+              slivers: [
+                const SliverToBoxAdapter(child: PageHero(eyebrow: 'Official merchandise', title: 'Wear the\nstripes.', intro: 'Book your kit here. The club confirms stock and payment with you.')),
+                if (products.isEmpty)
+                  const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.all(16), child: EmptyPanel(title: 'Kit coming soon', message: 'Kit will appear here.')))
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+                    sliver: SliverGrid(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.64),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final product = products[index];
+                        return ClubCard(
+                          padding: const EdgeInsets.all(10),
+                          highlight: product.isFeatured,
+                          onTap: () => openProduct(context, product),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: RemoteImage(api.media(product.image), height: 150, radius: 12)),
+                              const SizedBox(height: 10),
+                              Text(product.category?.replaceAll('_', ' ').toUpperCase() ?? '', style: const TextStyle(color: goldLight, fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 0.8)),
+                              Text(product.name.toUpperCase(), maxLines: 2, overflow: TextOverflow.ellipsis, style: displayStyle(16, color: Colors.white, height: 1.05)),
+                              const SizedBox(height: 6),
+                              GoldText(money(product.price), style: displayStyle(20)),
+                            ],
+                          ),
+                        );
+                      }, childCount: products.length),
+                    ),
                   ),
-                );
-              },
+              ],
             ),
           );
         },
@@ -101,10 +128,27 @@ class _ProductPageState extends State<ProductPage> {
     } catch (_) {}
   }
 
+  Widget _choice(String label, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: selected ? accentGradient : null,
+          color: selected ? null : purple.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: selected ? goldLight : gold.withValues(alpha: 0.3)),
+        ),
+        child: Text(label, style: TextStyle(fontWeight: FontWeight.w800, color: selected ? Colors.white : const Color(0xFFD9CCE6))),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final current = product;
-    if (current == null) return const Scaffold(body: LoadingView());
+    if (current == null) return const Scaffold(appBar: ClubAppBar('Shop'), body: LoadingView());
     final api = ClubScope.of(context).api;
     final colors = current.variants.map((item) => item.color).toSet().toList();
     final sizes = current.variants.where((item) => item.color == color).toList();
@@ -112,49 +156,41 @@ class _ProductPageState extends State<ProductPage> {
     final price = selected?.price ?? current.price;
     final photo = api.media(selected?.image ?? current.image);
     return Scaffold(
-      appBar: AppBar(title: Text(current.name)),
+      appBar: const ClubAppBar('Shop', actions: [_BagButton()]),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
-          RemoteImage(photo, height: 260),
-          const SizedBox(height: 12),
-          Text(money(price), style: const TextStyle(color: orange, fontSize: 22, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 8),
-          Text(current.description),
-          const SizedBox(height: 12),
-          const Text('COLOUR', style: TextStyle(fontWeight: FontWeight.w800)),
-          Wrap(
-            spacing: 8,
-            children: colors
-                .map(
-                  (item) => ChoiceChip(
-                    label: Text(item),
-                    selected: item == color,
-                    onSelected: (_) => setState(() {
-                      color = item;
-                      size = current.variants.firstWhere((variant) => variant.color == item).size;
-                    }),
-                  ),
-                )
-                .toList(),
-          ),
-          const SizedBox(height: 8),
-          const Text('SIZE', style: TextStyle(fontWeight: FontWeight.w800)),
-          Wrap(
-            spacing: 8,
-            children: sizes
-                .map(
-                  (item) => ChoiceChip(
-                    label: Text(item.size),
-                    selected: item.size == size,
-                    onSelected: (_) => setState(() => size = item.size),
-                  ),
-                )
-                .toList(),
-          ),
-          if (selected != null) Text('${selected.stock} available'),
+          ClubCard(highlight: true, padding: const EdgeInsets.all(8), child: RemoteImage(photo, height: 320)),
           const SizedBox(height: 16),
+          if (current.category != null) Eyebrow(current.category!.replaceAll('_', ' ')),
+          const SizedBox(height: 8),
+          GoldText(current.name.toUpperCase(), style: displayStyle(32, height: 0.95)),
+          const SizedBox(height: 6),
+          Text(money(price), style: displayStyle(26, color: Colors.white)),
+          const SizedBox(height: 10),
+          Text(current.description, style: const TextStyle(color: Color(0xFFE6DDF0), height: 1.5)),
+          if (colors.isNotEmpty) ...[
+            const SectionTitle('Colour'),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final item in colors)
+                  _choice(item, item == color, () => setState(() {
+                        color = item;
+                        size = current.variants.firstWhere((variant) => variant.color == item).size;
+                      })),
+              ],
+            ),
+          ],
+          if (sizes.isNotEmpty) ...[
+            const SectionTitle('Size'),
+            Wrap(spacing: 8, runSpacing: 8, children: [for (final item in sizes) _choice(item.size, item.size == size, () => setState(() => size = item.size))]),
+          ],
+          if (selected != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text(selected.stock < 1 ? 'Sold out' : '${selected.stock} available', style: const TextStyle(color: goldLight, fontWeight: FontWeight.w700))),
+          const SizedBox(height: 20),
           FilledButton(
+            style: goldButtonStyle(),
             onPressed: selected == null || selected.stock < 1
                 ? null
                 : () async {
@@ -187,40 +223,45 @@ class CartPage extends StatelessWidget {
     return AnimatedBuilder(
       animation: cart,
       builder: (context, _) => Scaffold(
-        appBar: AppBar(title: const Text('YOUR BAG')),
+        appBar: const ClubAppBar('Your bag'),
         body: cart.lines.isEmpty
-            ? const Center(child: Text('Your bag is empty.'))
+            ? const Padding(padding: EdgeInsets.all(16), child: EmptyPanel(title: 'Your bag is empty', message: 'Pick your kit from the shop.'))
             : ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                 children: [
                   ...cart.lines.map(
                     (line) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.only(bottom: 10),
                       child: ClubCard(
                         child: Row(
                           children: [
+                            SizedBox(width: 64, height: 64, child: RemoteImage(line.image ?? '', height: 64, radius: 12)),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(line.name, style: const TextStyle(fontWeight: FontWeight.w800)),
-                                  Text('${line.color} · ${line.size}'),
-                                  Text(money(line.price)),
+                                  Text(line.name.toUpperCase(), style: displayStyle(16, color: Colors.white)),
+                                  Text('${line.color} · ${line.size}', style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12.5)),
+                                  GoldText(money(line.price), style: displayStyle(17)),
                                 ],
                               ),
                             ),
-                            IconButton(onPressed: () => cart.setQuantity(line.variantId, line.quantity - 1), icon: const Icon(Icons.remove)),
-                            Text('${line.quantity}'),
-                            IconButton(onPressed: () => cart.setQuantity(line.variantId, line.quantity + 1), icon: const Icon(Icons.add)),
+                            IconButton(onPressed: () => cart.setQuantity(line.variantId, line.quantity - 1), icon: const Icon(Icons.remove_circle_outline_rounded, color: goldLight)),
+                            Text('${line.quantity}', style: const TextStyle(fontWeight: FontWeight.w900)),
+                            IconButton(onPressed: () => cart.setQuantity(line.variantId, line.quantity + 1), icon: const Icon(Icons.add_circle_outline_rounded, color: goldLight)),
                           ],
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text('Total ${money(cart.total)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 12),
-                  FilledButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CheckoutPage())), child: const Text('CHECKOUT')),
+                  const SizedBox(height: 6),
+                  ClubCard(
+                    highlight: true,
+                    child: Row(children: [const Expanded(child: Eyebrow('Total')), GoldText(money(cart.total), style: displayStyle(28))]),
+                  ),
+                  const SizedBox(height: 14),
+                  FilledButton(style: goldButtonStyle(), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CheckoutPage())), child: const Text('CHECKOUT')),
                 ],
               ),
       ),
@@ -256,12 +297,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('YOUR DETAILS')),
+      appBar: const ClubAppBar('Your details'),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
-          const Text('Name, email, phone and a delivery address. The club holds the stock and confirms payment with you.'),
-          const SizedBox(height: 12),
+          const Text('Name, email, phone and a delivery address. The club holds the stock and confirms payment with you.', style: TextStyle(color: Color(0xFFE6DDF0), height: 1.5)),
+          const SizedBox(height: 14),
           ClubField(label: 'Name', controller: name),
           ClubField(label: 'Email', controller: email, email: true),
           ClubField(label: 'Phone', controller: phone, phone: true),
@@ -269,7 +310,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           ClubField(label: 'City', controller: city),
           ClubField(label: 'Country', controller: country),
           ClubField(label: 'Notes', controller: notes, lines: 3),
-          FilledButton(onPressed: busy ? null : _submit, child: Text(busy ? 'BOOKING…' : 'BOOK ORDER')),
+          FilledButton(style: goldButtonStyle(), onPressed: busy ? null : _submit, child: Text(busy ? 'BOOKING…' : 'BOOK ORDER')),
         ],
       ),
     );

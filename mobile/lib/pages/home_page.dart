@@ -51,15 +51,19 @@ class HomePage extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
               children: [
-                Transform.translate(
-                  offset: const Offset(-16, 0),
-                  child: SizedBox(width: MediaQuery.sizeOf(context).width, child: HomeHero(banner: api.banner)),
+                SizedBox(
+                  height: 460,
+                  child: OverflowBox(
+                    minWidth: MediaQuery.sizeOf(context).width,
+                    maxWidth: MediaQuery.sizeOf(context).width,
+                    child: HomeHero(banner: api.banner),
+                  ),
                 ),
                 const SectionTitle('NEXT MATCH'),
                 if (upcoming == null)
                   const ClubCard(child: Text('The next fixture will appear here as soon as it is confirmed.'))
                 else
-                  ClubCard(onTap: () => openMatch(context, upcoming), child: _NextMatch(match: upcoming)),
+                  ClubCard(highlight: true, onTap: () => openMatch(context, upcoming), child: _NextMatch(match: upcoming)),
                 SectionTitle('MEET OUR TIGERS', action: 'View all', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamPage()))),
                 SizedBox(
                   height: 214,
@@ -91,13 +95,14 @@ class HomePage extends StatelessWidget {
                     },
                   ),
                 ),
-                const SectionTitle('VOTE FOR PLAYER OF THE MATCH'),
+                SectionTitle('THE VOTE', action: 'All polls', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VotePage()))),
                 ClubCard(
+                  highlight: true,
                   onTap: poll == null ? null : () => openPoll(context, poll),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Vote for\nplayer of the match', style: TextStyle(fontSize: 26, height: 0.95, fontWeight: FontWeight.w800)),
+                      GoldText('VOTE FOR\nPLAYER OF THE MATCH', style: displayStyle(30)),
                       const SizedBox(height: 8),
                       Text(poll?.question ?? 'Who lit up the game?'),
                       const SizedBox(height: 12),
@@ -121,7 +126,7 @@ class HomePage extends StatelessWidget {
                           ),
                         ),
                       const SizedBox(height: 12),
-                      FilledButton(onPressed: poll == null ? null : () => openPoll(context, poll), child: const Text('CAST YOUR VOTE')),
+                      FilledButton(style: goldButtonStyle(), onPressed: poll == null ? null : () => openPoll(context, poll), child: const Text('CAST YOUR VOTE')),
                     ],
                   ),
                 ),
@@ -243,16 +248,16 @@ class HomePage extends StatelessWidget {
                   ),
                 ],
                 if (catalog.contests.isNotEmpty) ...[
-                  const SectionTitle('FAN CONTEST'),
+                  SectionTitle('FAN CONTEST', action: 'All contests', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VotePage()))),
                   ClubCard(
                     onTap: () => openContest(context, catalog.contests.first),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(catalog.contests.first.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                        if (catalog.contests.first.prize != null) Text('Prize · ${catalog.contests.first.prize}'),
-                        const SizedBox(height: 10),
-                        const Text('ENTER NOW', style: TextStyle(color: orange, fontWeight: FontWeight.w800)),
+                        Text(catalog.contests.first.title.toUpperCase(), style: displayStyle(24, color: Colors.white)),
+                        if (catalog.contests.first.prize != null) ...[const SizedBox(height: 6), Text('Prize · ${catalog.contests.first.prize}', style: const TextStyle(color: goldLight, fontWeight: FontWeight.w700))],
+                        const SizedBox(height: 12),
+                        const Row(children: [Text('ENTER NOW', style: TextStyle(color: goldLight, fontWeight: FontWeight.w900, letterSpacing: 1)), SizedBox(width: 6), Icon(Icons.arrow_outward, size: 15, color: goldLight)]),
                       ],
                     ),
                   ),
@@ -310,7 +315,7 @@ class HomeHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final api = ClubScope.of(context).api;
     final art = banner.isImage ? api.media(banner.image) : api.media('/images/hero-art.webp');
-    final title = const TextStyle(fontSize: 32, height: 0.94, fontWeight: FontWeight.w800);
+    final title = displayStyle(42, height: 0.9);
     return GestureDetector(
       onTap: () => openClubPath(context, banner.ctaHref),
       child: SizedBox(
@@ -381,12 +386,12 @@ class HomeHero extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.network(api.media('/brand/tiger-gold.png'), width: 42, height: 36, errorBuilder: (_, _, _) => const SizedBox(width: 42, height: 36)),
+                  Image.asset('assets/brand/tiger-gold.png', width: 42, height: 36),
                   const SizedBox(width: 8),
                   const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      GoldText('UNITED TIGERS', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, height: 1)),
+                      GoldText('UNITED TIGERS', style: TextStyle(fontFamily: display, fontSize: 26, height: 1)),
                       GoldText('ABU DHABI', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 2.4)),
                     ],
                   ),
@@ -447,8 +452,12 @@ void openClubPath(BuildContext context, String href) {
     page = const ShopPage();
   } else if (path.startsWith('/fixtures') || path.startsWith('/matches')) {
     page = const FixturesPage();
-  } else if (path.startsWith('/fan') || path.startsWith('/polls') || path.startsWith('/contests')) {
-    page = const FanPage();
+  } else if (path.startsWith('/vote') || path.startsWith('/polls') || path.startsWith('/contests')) {
+    page = const VotePage();
+  } else if (path.startsWith('/fan')) {
+    page = const FanZonePage();
+  } else if (path.startsWith('/stats') || path.startsWith('/records')) {
+    page = const StatsPage();
   } else if (path.startsWith('/news')) {
     page = const NewsPage();
   } else if (path.startsWith('/gallery')) {
@@ -504,27 +513,33 @@ Player? _faceFor(String label, List<Player> players) {
 }
 
 class _Crest extends StatelessWidget {
-  const _Crest(this.mark, this.name, this.place);
+  const _Crest(this.mark, this.name, this.place, {this.ours = false});
   final String mark;
   final String name;
   final String place;
+  final bool ours;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 58,
+            height: 58,
+            padding: EdgeInsets.all(ours ? 6 : 0),
             alignment: Alignment.center,
-            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: gold), color: glow),
-            child: Text(mark, style: const TextStyle(fontWeight: FontWeight.w800)),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: ours ? goldSurface : const LinearGradient(colors: [Color(0xFF6A1290), Color(0xFF2A0750)]),
+              border: Border.all(color: gold.withValues(alpha: 0.5)),
+              boxShadow: [BoxShadow(color: (ours ? gold : pink).withValues(alpha: 0.25), blurRadius: 14)],
+            ),
+            child: ours ? Image.asset('assets/brand/united-tigers.png', fit: BoxFit.contain) : Text(mark, style: displayStyle(20, color: Colors.white)),
           ),
-          const SizedBox(height: 6),
-          Text(name, maxLines: 2, style: const TextStyle(fontWeight: FontWeight.w800)),
-          Text(place, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          const SizedBox(height: 8),
+          Text(name.toUpperCase(), maxLines: 2, textAlign: TextAlign.center, style: displayStyle(16, color: Colors.white, height: 1)),
+          Text(place, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12)),
         ],
       ),
     );
@@ -548,16 +563,16 @@ class _NextMatch extends StatelessWidget {
       children: [
         Row(
           children: [
-            const _Crest('UT', 'United Tigers', 'Abu Dhabi'),
-            const Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text('VS', style: TextStyle(color: gold, fontWeight: FontWeight.w800))),
+            const _Crest('UT', 'United Tigers', 'Abu Dhabi', ours: true),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: GoldText('VS', style: displayStyle(28))),
             _Crest(_mark(match.opponentShort ?? match.opponent), match.opponent, match.venueCity ?? 'Away'),
           ],
         ),
-        const SizedBox(height: 10),
-        Text(when(match.date)),
-        Text(match.venueName ?? 'Venue TBC'),
+        const SizedBox(height: 14),
+        Row(children: [const Icon(Icons.event_rounded, size: 15, color: goldLight), const SizedBox(width: 6), Expanded(child: Text(when(match.date)))]),
+        Row(children: [const Icon(Icons.place_rounded, size: 15, color: goldLight), const SizedBox(width: 6), Expanded(child: Text(match.venueName ?? 'Venue TBC'))]),
         const SizedBox(height: 12),
-        const Text('MATCH CENTRE', style: TextStyle(color: orange, fontWeight: FontWeight.w800)),
+        const Row(children: [Text('MATCH CENTRE', style: TextStyle(color: goldLight, fontWeight: FontWeight.w900, letterSpacing: 1)), SizedBox(width: 6), Icon(Icons.arrow_outward, size: 15, color: goldLight)]),
       ],
     );
   }

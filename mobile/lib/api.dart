@@ -19,6 +19,7 @@ class ClubApi extends ChangeNotifier {
   bool loading = true;
   ClubCatalog catalog = ClubCatalog.empty;
   HomeBanner banner = HomeBanner.fallback;
+  SiteContent site = SiteContent.fallback;
   AdminSession? adminSession;
 
   String get base => client.base;
@@ -77,10 +78,11 @@ class ClubApi extends ChangeNotifier {
     try {
       final loaded = await Future.wait([
         repository.loadCatalog(),
-        repository.loadBanner().catchError((_) => HomeBanner.fallback),
+        repository.loadSettings().catchError((_) => SiteContent.fallback),
       ]);
       catalog = loaded[0] as ClubCatalog;
-      banner = loaded[1] as HomeBanner;
+      site = loaded[1] as SiteContent;
+      banner = site.banner;
     } catch (reason) {
       error = reason.toString().replaceFirst('Exception: ', '');
     } finally {

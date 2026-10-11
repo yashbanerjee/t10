@@ -21,6 +21,8 @@ class Player {
     this.isCaptain = false,
     this.isViceCaptain = false,
     this.isIconPlayer = false,
+    this.t20Record,
+    this.allT20Record,
   });
 
   final String id;
@@ -42,6 +44,12 @@ class Player {
   final bool isCaptain;
   final bool isViceCaptain;
   final bool isIconPlayer;
+
+  /// T20 International record; never merged into club figures.
+  final FigureSet? t20Record;
+
+  /// Every recognised T20 the player has played: domestic, franchise and international.
+  final FigureSet? allT20Record;
 
   String get heading => displayName ?? fullName;
   String get badge {
@@ -71,6 +79,8 @@ class Player {
         isCaptain: asBool(json['isCaptain']),
         isViceCaptain: asBool(json['isViceCaptain']),
         isIconPlayer: asBool(json['isIconPlayer']),
+        t20Record: json['t20Record'] is Map ? FigureSet.fromRecord(json['t20Record']) : null,
+        allT20Record: json['allT20Record'] is Map ? FigureSet.fromRecord(json['allT20Record']) : null,
       );
 
   static List<Player> list(dynamic value) => asList(value).map(Player.fromJson).toList();
@@ -479,37 +489,85 @@ class PointsRow {
   static List<PointsRow> list(dynamic value) => asList(value).map(PointsRow.fromJson).toList();
 }
 
+/// One set of cricket figures in the leaderboard keys (`highestScore`, `bowlingOvers`, ...). Missing figures stay null.
+class FigureSet {
+  const FigureSet(this.values);
+  final Map<String, dynamic> values;
+
+  /// Reads a saved player record, whose keys use `bestScore` and `overs`.
+  factory FigureSet.fromRecord(dynamic value) {
+    final json = asMap(value);
+    return FigureSet({...json, 'highestScore': json['bestScore'], 'bowlingOvers': json['overs']});
+  }
+
+  num? number(String key) {
+    final value = values[key];
+    if (value == null) return null;
+    if (value is num) return value;
+    return num.tryParse(value.toString());
+  }
+
+  String? text(String key) => asText(values[key]);
+
+  bool get hasBowling => (number('wickets') ?? 0) > 0 || (number('bowlingRuns') ?? 0) > 0 || (text('bowlingOvers') ?? '0') != '0';
+  bool get hasFielding => (number('catches') ?? 0) > 0 || (number('stumpings') ?? 0) > 0 || (number('runOuts') ?? 0) > 0;
+  bool get played => (number('matches') ?? 0) > 0;
+}
+
 class PlayerStat {
-  const PlayerStat({required this.name, required this.matches, required this.runs, required this.wickets, required this.average, required this.strikeRate, required this.economy});
+  const PlayerStat({required this.name, required this.slug, required this.season, this.t20, this.allT20});
 
   final String name;
-  final int matches;
-  final int runs;
-  final int wickets;
-  final double? average;
-  final double? strikeRate;
-  final double? economy;
+  final String slug;
+  final FigureSet season;
+  final FigureSet? t20;
+  final FigureSet? allT20;
+
+  int get matches => (season.number('matches') ?? 0).toInt();
+  int get runs => (season.number('runs') ?? 0).toInt();
+  int get wickets => (season.number('wickets') ?? 0).toInt();
+  double? get average => season.number('average')?.toDouble();
+  double? get strikeRate => season.number('strikeRate')?.toDouble();
+  double? get economy => season.number('economy')?.toDouble();
 
   factory PlayerStat.fromJson(Map<String, dynamic> json) {
     final player = asMap(json['player']);
-    final stats = asMap(json['stats']);
-    double? rate(dynamic value) {
-      if (value == null) return null;
-      return asDouble(value);
-    }
-
     return PlayerStat(
       name: player['fullName']?.toString() ?? 'Player',
-      matches: asInt(stats['matches']),
-      runs: asInt(stats['runs']),
-      wickets: asInt(stats['wickets']),
-      average: rate(stats['average']),
-      strikeRate: rate(stats['strikeRate']),
-      economy: rate(stats['economy']),
+      slug: player['slug']?.toString() ?? '',
+      season: FigureSet(asMap(json['stats'])),
+      t20: json['t20'] is Map ? FigureSet(asMap(json['t20'])) : null,
+      allT20: json['allT20'] is Map ? FigureSet(asMap(json['allT20'])) : null,
     );
   }
 
   static List<PlayerStat> list(dynamic value) => asList(value).map(PlayerStat.fromJson).toList();
+}
+
+/// Public site settings the app shows: the homepage banner and the legal pages.
+class SiteContent {
+  const SiteContent({required this.banner, this.privacy, this.terms});
+  final HomeBanner banner;
+  final LegalPage? privacy;
+  final LegalPage? terms;
+
+  static const fallback = SiteContent(banner: HomeBanner.fallback);
+}
+
+/// Privacy or Terms text, edited in Admin → Legal pages.
+class LegalPage {
+  const LegalPage({required this.title, required this.intro, required this.content, this.updatedOn});
+  final String title;
+  final String intro;
+  final String content;
+  final DateTime? updatedOn;
+
+  static LegalPage? fromJson(dynamic value) {
+    final json = asMap(value);
+    final content = asText(json['content']);
+    if (content == null) return null;
+    return LegalPage(title: asText(json['title']) ?? '', intro: asText(json['intro']) ?? '', content: content, updatedOn: asDate(json['updatedOn']));
+  }
 }
 
 class HomeBanner {

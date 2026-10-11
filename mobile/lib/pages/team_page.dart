@@ -14,71 +14,59 @@ class TeamPage extends StatelessWidget {
       animation: api,
       builder: (context, _) {
         return Scaffold(
-          appBar: AppBar(title: const Text('THE SQUAD')),
+          appBar: const ClubAppBar('The squad'),
           body: RefreshIndicator(
+            color: pink,
             onRefresh: api.refresh,
             child: CustomScrollView(
               slivers: [
-                const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.fromLTRB(16, 16, 16, 12), child: Text('Meet the names announced for the Tigers’ first season.'))),
+                const SliverToBoxAdapter(child: PageHero(eyebrow: 'Abu Dhabi T10 · 2026', title: 'Meet our\nTigers.', intro: 'The names announced for the Tigers’ first season.')),
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
                   sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.72),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.66),
                     delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final player = api.catalog.players[index];
-                        return ClubCard(
-                          padding: const EdgeInsets.all(10),
-                          onTap: () => openPlayer(context, player),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              RemoteImage(api.media(player.profileImage), height: 110, radius: 14),
-                              const SizedBox(height: 8),
-                              Text(player.badge, style: const TextStyle(color: gold, fontSize: 10, fontWeight: FontWeight.w800)),
-                              Text(player.fullName, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
-                              Text('#${player.jerseyNumber ?? 'UT'} · ${roleLabel(player.role)}', style: const TextStyle(fontSize: 12)),
-                            ],
-                          ),
-                        );
-                      },
+                      (context, index) => _PlayerCard(player: api.catalog.players[index]),
                       childCount: api.catalog.players.length,
                     ),
                   ),
                 ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: Column(
+                if (api.catalog.staff.isNotEmpty)
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
+                    sliver: SliverList.list(
                       children: [
-                if (api.catalog.staff.isNotEmpty) const SectionTitle('STAFF'),
-                ...api.catalog.staff.map(
-                  (member) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: ClubCard(
-                      child: Row(
-                        children: [
-                          SizedBox(width: 64, height: 64, child: RemoteImage(api.media(member.profileImage), height: 64, radius: 12)),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(member.fullName, style: const TextStyle(fontWeight: FontWeight.w800)),
-                                Text('${member.title} · ${member.category}'),
-                                if (member.bio != null) Text(member.bio!, maxLines: 3, overflow: TextOverflow.ellipsis),
-                              ],
+                        const SectionTitle('Coaching & staff'),
+                        ...api.catalog.staff.map(
+                          (member) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: ClubCard(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(width: 68, height: 68, child: RemoteImage(api.media(member.profileImage), height: 68, radius: 34)),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(member.category.toUpperCase(), style: const TextStyle(color: goldLight, fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                                        Text(member.fullName.toUpperCase(), style: displayStyle(20, color: Colors.white)),
+                                        Text(member.title, style: const TextStyle(color: Color(0xFFD9CCE6), fontWeight: FontWeight.w700)),
+                                        if (member.bio != null) ...[const SizedBox(height: 6), Text(member.bio!, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12.5))],
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                        ),
                       ],
                     ),
-                  ),
-                ),
+                  )
+                else
+                  const SliverToBoxAdapter(child: SizedBox(height: 28)),
               ],
             ),
           ),
@@ -88,32 +76,182 @@ class TeamPage extends StatelessWidget {
   }
 }
 
+class _PlayerCard extends StatelessWidget {
+  const _PlayerCard({required this.player});
+  final Player player;
+
+  @override
+  Widget build(BuildContext context) {
+    final api = ClubScope.of(context).api;
+    final special = player.isCaptain || player.isViceCaptain || player.isIconPlayer;
+    return ClubCard(
+      padding: EdgeInsets.zero,
+      highlight: special,
+      onTap: () => openPlayer(context, player),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF8A1BA6), Color(0xFF4B0C66), Color(0xFF2A0750)]))),
+                  RemoteImage(api.media(player.profileImage), height: 200, radius: 0),
+                  const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0xE61C0432)], stops: [0.55, 1]))),
+                  Positioned(right: 10, top: 6, child: GoldText('${player.jerseyNumber ?? 'UT'}', style: displayStyle(30))),
+                  if (special) Positioned(left: 8, top: 8, child: MediaBadge(label: player.badge)),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(player.fullName.toUpperCase(), maxLines: 2, overflow: TextOverflow.ellipsis, style: displayStyle(17, color: Colors.white, height: 1)),
+                const SizedBox(height: 4),
+                Text(roleLabel(player.role), style: const TextStyle(color: goldLight, fontSize: 11.5, fontWeight: FontWeight.w800, letterSpacing: 0.6)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _rate(double? value) => value == null ? '–' : value.toStringAsFixed(2);
+
 class _StatsBlock extends StatelessWidget {
   const _StatsBlock(this.label, this.stats);
   final String label;
   final CricketStats stats;
 
-  String _rate(double? value) => value == null ? '–' : value.toStringAsFixed(2);
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionTitle(label),
+        _FigureGrid(figures: [
+          ('Matches', '${stats.matches}'),
+          ('Runs', '${stats.runs}'),
+          ('Wickets', '${stats.wickets}'),
+          ('High score', '${stats.highestScore}'),
+          ('Average', _rate(stats.average)),
+          ('Strike rate', _rate(stats.strikeRate)),
+          ('Economy', _rate(stats.economy)),
+          ('Best', stats.bestBowling ?? '–'),
+          ('Fours', '${stats.fours}'),
+          ('Sixes', '${stats.sixes}'),
+          ('Catches', '${stats.catches}'),
+          ('Overs', stats.bowlingOvers ?? '–'),
+        ]),
+      ],
+    );
+  }
+}
+
+class _FigureGrid extends StatelessWidget {
+  const _FigureGrid({required this.figures});
+  final List<(String, String)> figures;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: ClubCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: const TextStyle(color: gold, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 6),
-            Text('${stats.matches} matches · ${stats.runs} runs · ${stats.wickets} wickets'),
-            Text('HS ${stats.highestScore} · Avg ${_rate(stats.average)} · SR ${_rate(stats.strikeRate)}'),
-            Text('Econ ${_rate(stats.economy)} · ${stats.fours} fours · ${stats.sixes} sixes · ${stats.catches} catches'),
-            if (stats.bowlingOvers != null || stats.bestBowling != null) Text('Overs ${stats.bowlingOvers ?? '–'} · Best ${stats.bestBowling ?? '–'}'),
-          ],
-        ),
-      ),
+    return GridView.count(
+      crossAxisCount: 3,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 8,
+      crossAxisSpacing: 8,
+      childAspectRatio: 1.35,
+      children: [
+        for (final (label, value) in figures)
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xEB33085E), Color(0xEB4B0C66)]),
+              border: Border.all(color: gold.withValues(alpha: 0.25)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(label.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 9.5, fontWeight: FontWeight.w800, letterSpacing: 0.7)),
+                GoldText(value, style: displayStyle(24), maxLines: 1),
+              ],
+            ),
+          ),
+      ],
     );
   }
+}
+
+String _recordFigure(FigureSet set, String key) {
+  final text = set.text(key);
+  if (text == null) return '–';
+  final number = num.tryParse(text);
+  if (number == null) return text;
+  return number % 1 == 0 ? number.toInt().toString() : number.toStringAsFixed(2);
+}
+
+/// A T20 record from Admin, in Batting, Bowling (if he bowled) and Fielding (if any) groups.
+class _T20Record extends StatelessWidget {
+  const _T20Record({required this.title, required this.record, required this.empty});
+  final String title;
+  final FigureSet? record;
+  final String empty;
+
+  @override
+  Widget build(BuildContext context) {
+    final set = record;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(padding: const EdgeInsets.only(top: 18, bottom: 10), child: GoldText(title, style: displayStyle(22))),
+        if (set == null || !set.played)
+          ClubCard(child: Text(empty, style: const TextStyle(color: Color(0xFFD9CCE6), fontStyle: FontStyle.italic)))
+        else ...[
+          const _GroupLabel('Batting'),
+          _FigureGrid(figures: [
+            ('Matches', _recordFigure(set, 'matches')),
+            ('Runs', _recordFigure(set, 'runs')),
+            ('High score', _recordFigure(set, 'highestScore')),
+            ('Average', _recordFigure(set, 'average')),
+            ('Strike rate', _recordFigure(set, 'strikeRate')),
+            ('50s / 100s', '${_recordFigure(set, 'fifties')} / ${_recordFigure(set, 'hundreds')}'),
+          ]),
+          if (set.hasBowling) ...[
+            const _GroupLabel('Bowling'),
+            _FigureGrid(figures: [
+              ('Wickets', _recordFigure(set, 'wickets')),
+              ('Best', _recordFigure(set, 'bestBowling')),
+              ('Economy', _recordFigure(set, 'economy')),
+              ('Average', _recordFigure(set, 'bowlingAverage')),
+              ('Strike rate', _recordFigure(set, 'bowlingStrikeRate')),
+              ('Overs', _recordFigure(set, 'bowlingOvers')),
+            ]),
+          ],
+          if (set.hasFielding) ...[
+            const _GroupLabel('Fielding'),
+            _FigureGrid(figures: [('Catches', _recordFigure(set, 'catches')), ('Stumpings', _recordFigure(set, 'stumpings')), ('Run outs', _recordFigure(set, 'runOuts'))]),
+          ],
+        ],
+      ],
+    );
+  }
+}
+
+class _GroupLabel extends StatelessWidget {
+  const _GroupLabel(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.only(top: 6, bottom: 8), child: Eyebrow(text));
 }
 
 void openPlayer(BuildContext context, Player player) {
@@ -162,47 +300,81 @@ class _PlayerPageState extends State<PlayerPage> {
   Widget build(BuildContext context) {
     final current = player;
     if (current == null) {
-      return Scaffold(appBar: AppBar(title: const Text('PLAYER')), body: error == null ? const LoadingView() : MessageView(error!));
+      return Scaffold(appBar: const ClubAppBar('Player'), body: error == null ? const LoadingView() : MessageView(error!));
     }
     final api = ClubScope.of(context).api;
-    final facts = <String, String>{
-      if (current.battingStyle != null) 'Batting': current.battingStyle!,
-      if (current.bowlingStyle != null) 'Bowling': current.bowlingStyle!,
-      if (current.heightCm != null) 'Height': '${current.heightCm} cm',
-      if (current.dateOfBirth != null) 'Born': when(current.dateOfBirth).split(' · ').first,
-      if (current.shortName != null) 'Short name': current.shortName!,
-      if (current.country != null) 'Country': current.country!,
-    };
+    final facts = <(String, String)>[
+      ('Role', roleLabel(current.role)),
+      if (current.nationality != null) ('Nationality', current.nationality!),
+      if (current.battingStyle != null) ('Batting', current.battingStyle!),
+      if (current.bowlingStyle != null) ('Bowling', current.bowlingStyle!),
+      if (current.dateOfBirth != null) ('Born', when(current.dateOfBirth).split(' · ').first),
+      if (current.heightCm != null) ('Height', '${current.heightCm} cm'),
+    ];
+    final name = current.heading;
     return Scaffold(
-      appBar: AppBar(title: Text(current.heading)),
+      appBar: ClubAppBar(name),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         children: [
-          RemoteImage(api.media(current.coverImage ?? current.profileImage), height: 280),
-          const SizedBox(height: 12),
-          Text(current.badge, style: const TextStyle(color: gold, fontWeight: FontWeight.w800)),
-          Text('#${current.jerseyNumber ?? 'UT'}', style: const TextStyle(color: gold, fontSize: 28, fontWeight: FontWeight.w800)),
-          Text(current.heading, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800)),
-          Text(roleLabel(current.role)),
-          if (current.nationality != null) Text(current.nationality!),
-          const SizedBox(height: 12),
-          Text(current.bio ?? 'Player profile details are being completed.'),
-          if (report?.currentSeason != null) _StatsBlock('THIS SEASON', report!.currentSeason!),
-          if (report?.career != null) _StatsBlock('CAREER', report!.career!),
-          if (facts.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            ...facts.entries.map(
-              (fact) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
+          SizedBox(
+            height: 380,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, colors: [Color(0xFFC9177E), Color(0xFF6A1290), Color(0xFF2A0750)]))),
+                Positioned(right: -30, top: 20, bottom: 40, child: Opacity(opacity: 0.18, child: Image.asset('assets/brand/united-tigers.png'))),
+                RemoteImage(api.media(current.coverImage ?? current.profileImage), height: 380, radius: 0),
+                const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0xF2340A5F)], stops: [0.45, 1]))),
+                Positioned(
+                  left: 18,
+                  right: 18,
+                  bottom: 18,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Eyebrow(current.badge),
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(child: GoldText(name.toUpperCase(), style: displayStyle(44, height: 0.9))),
+                          GoldText('#${current.jerseyNumber ?? 'UT'}', style: displayStyle(46)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    SizedBox(width: 110, child: Text(fact.key, style: const TextStyle(color: gold))),
-                    Expanded(child: Text(fact.value, style: const TextStyle(fontWeight: FontWeight.w700))),
+                    for (final (label, value) in facts)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(color: purple.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(12), border: Border.all(color: gold.withValues(alpha: 0.3))),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [Text(label.toUpperCase(), style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 9.5, fontWeight: FontWeight.w800, letterSpacing: 0.8)), Text(value, style: const TextStyle(fontWeight: FontWeight.w800))]),
+                      ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 16),
+                Text(current.bio ?? 'Player profile details are being completed.', style: const TextStyle(color: Color(0xFFE6DDF0), fontSize: 15, height: 1.55)),
+                if (report?.currentSeason != null) _StatsBlock('This season', report!.currentSeason!),
+                if (report?.career != null) _StatsBlock('Career', report!.career!),
+                const SectionTitle('Beyond the Tigers'),
+                _T20Record(title: 'ALL T20 MATCHES', record: current.allT20Record, empty: 'No T20 record is available for $name yet.'),
+                _T20Record(title: 'T20 INTERNATIONALS', record: current.t20Record, empty: '$name has not played a T20 International yet.'),
+              ],
             ),
-          ],
+          ),
         ],
       ),
     );

@@ -34,10 +34,11 @@ class ClubRepository {
     );
   }
 
-  Future<HomeBanner> loadBanner() async {
+  Future<SiteContent> loadSettings() async {
     final data = await client.get('/api/v1/settings');
     final settings = data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
-    return HomeBanner.fromJson(settings['homepage']);
+    final legal = settings['legal'] is Map ? Map<String, dynamic>.from(settings['legal'] as Map) : <String, dynamic>{};
+    return SiteContent(banner: HomeBanner.fromJson(settings['homepage']), privacy: LegalPage.fromJson(legal['privacy']), terms: LegalPage.fromJson(legal['terms']));
   }
 
   Future<Player> player(String slug) async => Player.fromJson(_map(await client.get('/api/v1/players/$slug')));
