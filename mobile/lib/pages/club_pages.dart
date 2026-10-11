@@ -34,7 +34,7 @@ class _LoaderState<T> extends State<_Loader<T>> {
             child: EmptyPanel(title: 'Could not load this page', message: _clean(snapshot.error!), action: 'Try again', onAction: () => setState(() => future = widget.load())),
           );
         }
-        if (!snapshot.hasData) return const Padding(padding: EdgeInsets.symmetric(vertical: 60), child: LoadingView());
+        if (!snapshot.hasData) return const LoadingView(hero: false, cards: 4);
         return widget.builder(context, snapshot.data as T);
       },
     );
@@ -531,19 +531,22 @@ class _MediaTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final api = ClubScope.of(context).api;
     final url = api.media(item.mediaUrl);
-    return GestureDetector(
-      onTap: () => openGallery(context, group, item, api.media),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (item.isVideo) VideoThumb(url) else RemoteImage(url, height: 200, radius: 0),
-            const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0xD91C0432)], stops: [0.5, 1]))),
-            if (item.isVideo) const Center(child: FaIcon(FontAwesomeIcons.circlePlay, color: goldLight, size: 42)),
-            Positioned(left: 8, top: 8, child: MediaBadge(label: item.isVideo ? 'VIDEO' : 'PHOTO')),
-            Positioned(left: 10, right: 10, bottom: 10, child: Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13))),
-          ],
+    return Reveal(
+      scale: 0.92,
+      child: Pressable(
+        onTap: () => openGallery(context, group, item, api.media),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (item.isVideo) VideoThumb(url) else RemoteImage(url, height: 200, radius: 0),
+              const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0xD91C0432)], stops: [0.5, 1]))),
+              if (item.isVideo) const Center(child: FaIcon(FontAwesomeIcons.circlePlay, color: goldLight, size: 42)),
+              Positioned(left: 8, top: 8, child: MediaBadge(label: item.isVideo ? 'VIDEO' : 'PHOTO')),
+              Positioned(left: 10, right: 10, bottom: 10, child: Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13))),
+            ],
+          ),
         ),
       ),
     );

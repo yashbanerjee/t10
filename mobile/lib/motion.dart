@@ -118,7 +118,8 @@ class GlowFrame extends StatelessWidget {
   }
 }
 
-/// Fades and lifts (or slides) its child into place once, after an optional stagger delay.
+/// Fades and lifts (or slides) its child into place once it scrolls into view, after an optional delay.
+/// Items that come into view in the same frame are staggered automatically.
 class Reveal extends StatefulWidget {
   const Reveal({super.key, required this.child, this.delay = Duration.zero, this.offset = 24, this.dx = 0, this.scale = 1, this.duration = const Duration(milliseconds: 650)});
   final Widget child;
@@ -139,13 +140,78 @@ class _RevealState extends State<Reveal> with SingleTickerProviderStateMixin {
   late final CurvedAnimation _ease = CurvedAnimation(parent: _in, curve: Curves.easeOutCubic);
   late final CurvedAnimation _pop = CurvedAnimation(parent: _in, curve: Curves.easeOutBack);
 
+  static int _wave = 0;
+  static bool _waveScheduled = false;
+  final List<ScrollPosition> _watching = [];
+  bool _started = false;
+
   @override
   void initState() {
     super.initState();
-    if (widget.delay == Duration.zero) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _watch());
+  }
+
+  Iterable<ScrollableState> _scrollables() sync* {
+    for (var scrollable = Scrollable.maybeOf(context); scrollable != null; scrollable = Scrollable.maybeOf(scrollable.context)) {
+      yield scrollable;
+    }
+  }
+
+  bool _inView() {
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.attached || !box.hasSize) return true;
+    final rect = box.localToGlobal(Offset.zero) & box.size;
+    for (final scrollable in _scrollables()) {
+      final view = scrollable.context.findRenderObject();
+      if (view is! RenderBox || !view.hasSize) continue;
+      final port = view.localToGlobal(Offset.zero) & view.size;
+      final hidden = scrollable.position.axis == Axis.vertical
+          ? rect.top > port.bottom - 24 || rect.bottom < port.top
+          : rect.left > port.right - 16 || rect.right < port.left;
+      if (hidden) return false;
+    }
+    return true;
+  }
+
+  void _watch() {
+    if (!mounted || _started) return;
+    if (_inView()) return _start();
+    for (final scrollable in _scrollables()) {
+      scrollable.position.addListener(_check);
+      _watching.add(scrollable.position);
+    }
+    if (_watching.isEmpty) _start();
+  }
+
+  void _check() {
+    if (mounted && !_started && _inView()) _start();
+  }
+
+  void _unwatch() {
+    for (final position in _watching) {
+      position.removeListener(_check);
+    }
+    _watching.clear();
+  }
+
+  void _start() {
+    _started = true;
+    _unwatch();
+    var delay = widget.delay;
+    if (delay == Duration.zero) {
+      delay = Duration(milliseconds: math.min(_wave++, 6) * 60);
+      if (!_waveScheduled) {
+        _waveScheduled = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _wave = 0;
+          _waveScheduled = false;
+        });
+      }
+    }
+    if (delay == Duration.zero) {
       _in.forward();
     } else {
-      Future.delayed(widget.delay, () {
+      Future.delayed(delay, () {
         if (mounted) _in.forward();
       });
     }
@@ -153,6 +219,7 @@ class _RevealState extends State<Reveal> with SingleTickerProviderStateMixin {
 
   @override
   void dispose() {
+    _unwatch();
     _ease.dispose();
     _pop.dispose();
     _in.dispose();

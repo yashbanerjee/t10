@@ -649,20 +649,143 @@ Future<void> openExternal(String url) async {
   await launchUrl(uri, mode: LaunchMode.externalApplication);
 }
 
+/// Shimmering page skeleton shown while data loads: a hero block and a stack of card placeholders.
 class LoadingView extends StatelessWidget {
-  const LoadingView({super.key});
+  const LoadingView({super.key, this.hero = true, this.cards = 5});
+
+  /// Set to false when the page already shows its own hero above the loading area.
+  final bool hero;
+  final int cards;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+    final skeleton = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (hero)
+          const Padding(
+            padding: EdgeInsets.fromLTRB(18, 22, 18, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Bone(width: 96, height: 10),
+                SizedBox(height: 14),
+                Bone(width: 230, height: 30),
+                SizedBox(height: 8),
+                Bone(width: 160, height: 30),
+                SizedBox(height: 16),
+                Bone(height: 10),
+                SizedBox(height: 7),
+                Bone(width: 250, height: 10),
+              ],
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+          child: Column(children: [for (var i = 0; i < cards; i++) const _SkeletonCard()]),
+        ),
+      ],
+    );
+    return IgnorePointer(
+      child: Shimmer(
+        child: LayoutBuilder(
+          builder: (context, constraints) => constraints.hasBoundedHeight
+              ? ClipRect(child: OverflowBox(alignment: Alignment.topCenter, maxHeight: double.infinity, child: skeleton))
+              : skeleton,
+        ),
+      ),
+    );
+  }
+}
+
+class _SkeletonCard extends StatelessWidget {
+  const _SkeletonCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0x8033085E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: gold.withValues(alpha: 0.14)),
+      ),
+      child: const Row(
         children: [
-          Image.asset('assets/brand/tiger-gold.png', height: 54),
-          const SizedBox(height: 14),
-          const SizedBox(width: 120, child: LinearProgressIndicator(color: goldLight, backgroundColor: Color(0x33F4DB96), minHeight: 3)),
+          Bone(width: 46, height: 46, radius: 23),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                FractionallySizedBox(widthFactor: 0.62, child: Bone(height: 14)),
+                SizedBox(height: 8),
+                FractionallySizedBox(widthFactor: 0.4, child: Bone(height: 10)),
+                SizedBox(height: 8),
+                FractionallySizedBox(widthFactor: 0.85, child: Bone(height: 10)),
+              ],
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+/// A placeholder bar for skeleton layouts; place inside a [Shimmer] to animate it.
+class Bone extends StatelessWidget {
+  const Bone({super.key, this.width, required this.height, this.radius = 6});
+  final double? width;
+  final double height;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width ?? double.infinity,
+      height: height,
+      decoration: BoxDecoration(color: const Color(0x2EF4DB96), borderRadius: BorderRadius.circular(radius)),
+    );
+  }
+}
+
+/// Sweeps a soft gold highlight across whatever its child paints.
+class Shimmer extends StatefulWidget {
+  const Shimmer({super.key, required this.child});
+  final Widget child;
+
+  @override
+  State<Shimmer> createState() => _ShimmerState();
+}
+
+class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
+  late final AnimationController _sweep = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))..repeat();
+
+  @override
+  void dispose() {
+    _sweep.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _sweep,
+      child: widget.child,
+      builder: (context, child) {
+        final x = -3 + 5 * Curves.easeInOut.transform(_sweep.value);
+        return ShaderMask(
+          blendMode: BlendMode.srcATop,
+          shaderCallback: (bounds) => LinearGradient(
+            begin: Alignment(x, -0.4),
+            end: Alignment(x + 1.6, 0.4),
+            colors: const [Color(0x00FFFFFF), Color(0x38FFE7A8), Color(0x00FFFFFF)],
+          ).createShader(bounds),
+          child: child,
+        );
+      },
     );
   }
 }
