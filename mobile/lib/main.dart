@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:united_tigers/api.dart';
 import 'package:united_tigers/cart_store.dart';
+import 'package:united_tigers/firebase_options.dart';
+import 'package:united_tigers/services/analytics.dart';
+import 'package:united_tigers/services/push.dart';
 import 'package:united_tigers/pages/fixtures_page.dart';
 import 'package:united_tigers/pages/home_page.dart';
 import 'package:united_tigers/pages/more_pages.dart';
@@ -11,7 +16,17 @@ import 'package:united_tigers/pages/team_page.dart';
 import 'package:united_tigers/scope.dart';
 import 'package:united_tigers/widgets.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final options = DefaultFirebaseOptions.currentPlatform;
+  if (options != null) {
+    try {
+      await Firebase.initializeApp(options: options);
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    } catch (reason) {
+      debugPrint('Firebase unavailable: $reason');
+    }
+  }
   runApp(const UnitedTigersApp());
 }
 
@@ -25,6 +40,12 @@ class UnitedTigersApp extends StatefulWidget {
 class _UnitedTigersAppState extends State<UnitedTigersApp> {
   final api = ClubApi();
   final cart = CartStore();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => ClubPush.start());
+  }
 
   @override
   void dispose() {
@@ -41,6 +62,8 @@ class _UnitedTigersAppState extends State<UnitedTigersApp> {
       child: MaterialApp(
         title: 'United Tigers',
         debugShowCheckedModeBanner: false,
+        navigatorKey: ClubPush.navigatorKey,
+        navigatorObservers: [ClubAnalytics.observer],
         theme: ThemeData(
           brightness: Brightness.dark,
           scaffoldBackgroundColor: Colors.transparent,
@@ -144,6 +167,7 @@ class _ClubShellState extends State<ClubShell> {
           onChanged: (value) {
             if (value == index) return;
             HapticFeedback.selectionClick();
+            ClubAnalytics.screen(const ['home', 'team', 'fixtures', 'shop', 'more'][value]);
             setState(() => index = value);
           },
         ),

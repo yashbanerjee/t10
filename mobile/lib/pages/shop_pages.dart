@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:united_tigers/services/analytics.dart';
 import 'package:united_tigers/cart_store.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
@@ -91,6 +92,7 @@ class ShopPage extends StatelessWidget {
 }
 
 void openProduct(BuildContext context, Product product) {
+  ClubAnalytics.viewProduct(product.slug, product.name, product.price);
   Navigator.push(context, MaterialPageRoute(builder: (_) => ProductPage(slug: product.slug, preview: product)));
 }
 
@@ -209,6 +211,7 @@ class _ProductPageState extends State<ProductPage> {
                         image: photo,
                       ),
                     );
+                    ClubAnalytics.addToCart(current.slug, current.name, price.toDouble(), 1);
                     if (context.mounted) await showClubMessage(context, 'Added to your bag.');
                   },
             child: const Text('ADD TO BAG'),

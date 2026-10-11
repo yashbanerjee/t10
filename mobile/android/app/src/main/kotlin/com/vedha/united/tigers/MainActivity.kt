@@ -1,4 +1,4 @@
-package ae.unitedtigers.united_tigers
+package com.vedha.united.tigers
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
+import 'package:united_tigers/services/analytics.dart';
 import 'package:united_tigers/scope.dart';
 import 'package:united_tigers/widgets.dart';
 
@@ -266,6 +267,7 @@ class _GroupLabel extends StatelessWidget {
 }
 
 void openPlayer(BuildContext context, Player player) {
+  ClubAnalytics.viewPlayer(player.slug, player.fullName);
   Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerPage(slug: player.slug, preview: player)));
 }
 

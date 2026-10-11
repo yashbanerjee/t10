@@ -4,6 +4,7 @@ import 'package:united_tigers/api/api_client.dart';
 import 'package:united_tigers/api/club_repository.dart';
 import 'package:united_tigers/models.dart';
 import 'package:united_tigers/models/admin_models.dart';
+import 'package:united_tigers/services/analytics.dart';
 
 class ClubApi extends ChangeNotifier {
   ClubApi() : client = ApiClient() {
@@ -63,13 +64,29 @@ class ClubApi extends ChangeNotifier {
 
   Future<String> post(String path, Map<String, dynamic> payload) => client.post(path, payload);
 
-  Future<String> sendContact(Map<String, dynamic> payload) => repository.contact(payload);
+  Future<String> sendContact(Map<String, dynamic> payload) async {
+    final reply = await repository.contact(payload);
+    ClubAnalytics.event('contact_submitted', {'topic': '${payload['subject'] ?? payload['topic'] ?? 'general'}'});
+    return reply;
+  }
 
-  Future<String> sendVote(String slug, Map<String, dynamic> payload) => repository.vote(slug, payload);
+  Future<String> sendVote(String slug, Map<String, dynamic> payload) async {
+    final reply = await repository.vote(slug, payload);
+    ClubAnalytics.event('poll_vote', {'poll': slug});
+    return reply;
+  }
 
-  Future<String> sendEntry(String slug, Map<String, dynamic> payload) => repository.enterContest(slug, payload);
+  Future<String> sendEntry(String slug, Map<String, dynamic> payload) async {
+    final reply = await repository.enterContest(slug, payload);
+    ClubAnalytics.event('contest_entry', {'contest': slug});
+    return reply;
+  }
 
-  Future<String> sendOrder(Map<String, dynamic> payload) => repository.checkout(payload);
+  Future<String> sendOrder(Map<String, dynamic> payload) async {
+    final reply = await repository.checkout(payload);
+    ClubAnalytics.event('booking_submitted');
+    return reply;
+  }
 
   Future<void> refresh() async {
     loading = true;
@@ -130,7 +147,15 @@ class ClubApi extends ChangeNotifier {
 
   Future<List<Franchise>> fetchFranchises() => repository.franchises();
 
-  Future<TrackedOrder> trackOrder(String number, String email) => repository.trackOrder(number, email);
+  Future<TrackedOrder> trackOrder(String number, String email) async {
+    final order = await repository.trackOrder(number, email);
+    ClubAnalytics.event('booking_tracked', {'status': order.status});
+    return order;
+  }
 
-  Future<String?> requestPartnerBrochure(Map<String, dynamic> payload) => repository.partnerRequest(payload);
+  Future<String?> requestPartnerBrochure(Map<String, dynamic> payload) async {
+    final brochure = await repository.partnerRequest(payload);
+    ClubAnalytics.event('generate_lead', {'lead_source': 'partner_brochure'});
+    return brochure;
+  }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
+import 'package:united_tigers/services/analytics.dart';
 import 'package:united_tigers/scope.dart';
 import 'package:united_tigers/widgets.dart';
 
@@ -125,6 +126,7 @@ class _MatchList extends StatelessWidget {
 }
 
 void openMatch(BuildContext context, ClubMatch match) {
+  ClubAnalytics.viewMatch(match.slug, match.opponent);
   Navigator.push(context, MaterialPageRoute(builder: (_) => MatchPage(slug: match.slug, preview: match)));
 }
 
