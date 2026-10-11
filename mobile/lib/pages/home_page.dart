@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
+import 'package:united_tigers/pages/club_pages.dart';
 import 'package:united_tigers/pages/fan_pages.dart';
 import 'package:united_tigers/pages/fixtures_page.dart';
 import 'package:united_tigers/pages/more_pages.dart';
@@ -63,36 +65,20 @@ class HomePage extends StatelessWidget {
                 if (upcoming == null)
                   const ClubCard(child: Text('The next fixture will appear here as soon as it is confirmed.'))
                 else
-                  ClubCard(highlight: true, onTap: () => openMatch(context, upcoming), child: _NextMatch(match: upcoming)),
+                  Reveal(child: ClubCard(highlight: true, onTap: () => openMatch(context, upcoming), child: _NextMatch(match: upcoming))),
                 SectionTitle('MEET OUR TIGERS', action: 'View all', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamPage()))),
                 SizedBox(
                   height: 214,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
+                    clipBehavior: Clip.none,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
                     itemCount: roster.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 10),
-                    itemBuilder: (context, index) {
-                      final player = roster[index];
-                      final name = _splitName(player.fullName);
-                      return GestureDetector(
-                        onTap: () => openPlayer(context, player),
-                        child: SizedBox(
-                          width: 124,
-                          child: ClubCard(
-                            padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
-                            child: Column(
-                              children: [
-                                RemoteImage(api.media(player.profileImage), height: 88, radius: 40),
-                                const SizedBox(height: 8),
-                                GoldText('${player.jerseyNumber ?? 'UT'}', style: const TextStyle(fontWeight: FontWeight.w800)),
-                                Text(name.$1, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: Colors.white70)),
-                                Text(name.$2, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                    separatorBuilder: (_, _) => const SizedBox(width: 12),
+                    itemBuilder: (context, index) => SizedBox(
+                      width: 146,
+                      child: _TigerCard(player: roster[index], order: index, glowing: index.isEven),
+                    ),
                   ),
                 ),
                 SectionTitle('THE VOTE', action: 'All polls', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VotePage()))),
@@ -134,8 +120,8 @@ class HomePage extends StatelessWidget {
                 const ClubCard(
                   child: Column(
                     children: [
-                      Row(children: [Expanded(child: _Stat(Icons.groups_outlined, '1M+', 'Fans worldwide')), Expanded(child: _Stat(Icons.shield_outlined, '7', 'Franchise teams'))]),
-                      Row(children: [Expanded(child: _Stat(Icons.public, '150+', 'International players')), Expanded(child: _Stat(Icons.emoji_events_outlined, '2', 'Championships'))]),
+                      Row(children: [Expanded(child: _Stat(FontAwesomeIcons.users, '1M+', 'Fans worldwide')), Expanded(child: _Stat(FontAwesomeIcons.shieldHalved, '7', 'Franchise teams'))]),
+                      Row(children: [Expanded(child: _Stat(FontAwesomeIcons.earthAsia, '150+', 'International players')), Expanded(child: _Stat(FontAwesomeIcons.trophy, '2', 'Championships'))]),
                     ],
                   ),
                 ),
@@ -155,17 +141,19 @@ class HomePage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Expanded(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Stack(
+                                child: Builder(builder: (context) {
+                                  final tile = Stack(
                                     fit: StackFit.expand,
                                     children: [
                                       RemoteImage(api.media(item.isVideo ? null : item.mediaUrl), height: 140, radius: 0),
-                                      if (item.isVideo) const Center(child: Icon(Icons.play_circle_fill, color: goldLight, size: 36)),
+                                      if (item.isVideo) const Center(child: Floating(distance: 3, child: FaIcon(FontAwesomeIcons.circlePlay, color: goldLight, size: 38))),
                                       Positioned(left: 8, bottom: 8, child: MediaBadge(label: item.isVideo ? 'VIDEO' : 'PHOTO')),
                                     ],
-                                  ),
-                                ),
+                                  );
+                                  return index == 0
+                                      ? GlowFrame(radius: 14, colors: neonPink, offset: 0.4, child: tile)
+                                      : ClipRRect(borderRadius: BorderRadius.circular(12), child: tile);
+                                }),
                               ),
                               const SizedBox(height: 6),
                               Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700)),
@@ -183,6 +171,7 @@ class HomePage extends StatelessWidget {
                     child: ClubCard(onTap: () => openMatch(context, match), child: _FixtureRow(match: match)),
                   ),
                 ),
+                const HomePartnerCta(),
                 if (moments.isNotEmpty)
                   SectionTitle('FEATURED MOMENTS', action: 'Gallery', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GalleryPage()))),
                 if (moments.isNotEmpty)
@@ -269,8 +258,8 @@ class HomePage extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          IconButton(onPressed: () => openExternal('https://www.facebook.com/share/1Bxhkk4L97/?mibextid=wwXIfr'), icon: const Icon(Icons.facebook), color: const Color(0xFF1877F2)),
-                          IconButton(onPressed: () => openExternal('https://www.instagram.com/unitedtigers.ae'), icon: const Icon(Icons.camera_alt_outlined), color: pink),
+                          IconButton(onPressed: () => openExternal('https://www.facebook.com/share/1Bxhkk4L97/?mibextid=wwXIfr'), icon: const FaIcon(FontAwesomeIcons.facebookF, size: 20), color: const Color(0xFF1877F2)),
+                          IconButton(onPressed: () => openExternal('https://www.instagram.com/unitedtigers.ae'), icon: const FaIcon(FontAwesomeIcons.instagram, size: 22), color: pink),
                         ],
                       ),
                       const GoldText('#LetsGoHunt', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1)),
@@ -290,6 +279,7 @@ class HomePage extends StatelessWidget {
                     ],
                   ),
                 ),
+                const HomeFranchises(),
               ],
             ),
           ),
@@ -409,7 +399,7 @@ class HomeHero extends StatelessWidget {
             Positioned(
               left: 12,
               right: 12,
-              bottom: 96,
+              bottom: banner.showPlayers ? 132 : 96,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -435,7 +425,16 @@ class HomeHero extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     for (var index = 0; index < _cast.length; index++)
-                      _Arch(url: api.media(_cast[index]), height: index == 2 ? 72 : index == 1 || index == 3 ? 60 : 50),
+                      Padding(
+                        padding: EdgeInsets.only(left: index == 0 ? 0 : 6),
+                        child: _Arch(
+                          url: api.media(_cast[index]),
+                          width: const [46.0, 56.0, 68.0, 56.0, 46.0][index],
+                          height: const [74.0, 92.0, 112.0, 92.0, 74.0][index],
+                          order: const [0, 1, 2, 1, 0][index],
+                          lead: index == 2,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -446,24 +445,152 @@ class HomeHero extends StatelessWidget {
   }
 }
 
+/// Pill-topped player portrait with a metallic gold rim, matching the website's banner cast.
 class _Arch extends StatelessWidget {
-  const _Arch({required this.url, required this.height});
+  const _Arch({required this.url, required this.width, required this.height, required this.order, this.lead = false});
   final String url;
+  final double width;
   final double height;
+  final int order;
+  final bool lead;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 38,
-      height: height,
-      margin: const EdgeInsets.only(left: 4),
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24), bottom: Radius.circular(8)),
-        border: Border.all(color: const Color(0xFFEEC873), width: 1.4),
-        gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFFFF7DBE), Color(0xFFC9177E), Color(0xFF6E2660)]),
+    final outer = BorderRadius.vertical(top: Radius.circular(width / 2), bottom: const Radius.circular(10));
+    final inner = BorderRadius.vertical(top: Radius.circular(width / 2 - 2), bottom: const Radius.circular(8));
+    return Reveal(
+      delay: Duration(milliseconds: 350 + order * 120),
+      offset: 18,
+      scale: 0.6,
+      child: Floating(
+        distance: lead ? 5 : 3.5,
+        phase: (order * 0.27) % 1,
+        period: Duration(milliseconds: 2400 + order * 260),
+        child: Container(
+          width: width,
+          height: height,
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            borderRadius: outer,
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFFFF3C9), Color(0xFFEEC873), Color(0xFFA8873A), Color(0xFFF6E7AE), Color(0xFFAC884A)],
+              stops: [0, 0.3, 0.58, 0.8, 1],
+            ),
+            boxShadow: [
+              BoxShadow(color: const Color(0xFFFB3BA6).withValues(alpha: lead ? 0.7 : 0.5), blurRadius: lead ? 22 : 14),
+              BoxShadow(color: const Color(0xFF0F021B).withValues(alpha: 0.6), blurRadius: 14, offset: const Offset(0, 8)),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: inner,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFFFF7DBE), Color(0xFFC9177E), Color(0xFF6E2660)], stops: [0, 0.55, 1]))),
+                Image.network(url, fit: BoxFit.cover, alignment: const Alignment(0, -0.64), errorBuilder: (_, _, _) => const SizedBox.shrink()),
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0x47FF7DBE), Color(0x00000000), Color(0x80C9177E), Color(0xD1961E64)],
+                      stops: [0, 0.34, 0.78, 1],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Image.network(url, fit: BoxFit.cover, alignment: const Alignment(0, -0.2), errorBuilder: (_, _, _) => const SizedBox.shrink()),
+    );
+  }
+}
+
+/// Square-portrait player card for the home carousel; [glowing] cards get the animated neon rim.
+class _TigerCard extends StatelessWidget {
+  const _TigerCard({required this.player, required this.order, required this.glowing});
+  final Player player;
+  final int order;
+  final bool glowing;
+
+  @override
+  Widget build(BuildContext context) {
+    final api = ClubScope.of(context).api;
+    final name = _splitName(player.fullName);
+    final body = DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF3A0A66), Color(0xFF260644)]),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AspectRatio(
+            aspectRatio: 1,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                const DecoratedBox(decoration: BoxDecoration(gradient: RadialGradient(center: Alignment(0, -0.2), radius: 0.9, colors: [Color(0xFFC9177E), Color(0xFF460B7D)]))),
+                RemoteImage(api.media(player.profileImage), height: double.infinity, radius: 0, alignment: Alignment.topCenter),
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x00260644), Color(0x00260644), Color(0xE6260644)], stops: [0, 0.6, 1]),
+                  ),
+                ),
+                Positioned(
+                  left: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: const Color(0xCC1C0432),
+                      border: Border.all(color: goldLight.withValues(alpha: 0.6)),
+                    ),
+                    child: GoldText('${player.jerseyNumber ?? 'UT'}', style: displayStyle(17, height: 1)),
+                  ),
+                ),
+                if (player.role != null)
+                  Positioned(
+                    left: 10,
+                    right: 10,
+                    bottom: 6,
+                    child: Text(player.role!.replaceAll('_', ' ').toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: goldLight, fontSize: 9.5, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+                  ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 7, 10, 9),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name.$1.isEmpty ? ' ' : name.$1, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: Colors.white70, height: 1.1)),
+                const SizedBox(height: 2),
+                Text(name.$2.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: displayStyle(19, color: Colors.white, height: 1)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+    return Reveal(
+      delay: Duration(milliseconds: 120 + order * 110),
+      child: Pressable(
+        onTap: () => openPlayer(context, player),
+        child: glowing
+            ? GlowFrame(radius: 18, width: 2, offset: order * 0.25, colors: order.isEven ? neonGold : neonPink, child: body)
+            : DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [goldLight.withValues(alpha: 0.75), gold.withValues(alpha: 0.25), goldLight.withValues(alpha: 0.55)]),
+                  boxShadow: [BoxShadow(color: const Color(0xFF12021F).withValues(alpha: 0.45), blurRadius: 16, offset: const Offset(0, 8))],
+                ),
+                child: Padding(padding: const EdgeInsets.all(1.2), child: ClipRRect(borderRadius: BorderRadius.circular(16.8), child: body)),
+              ),
+      ),
     );
   }
 }
@@ -497,7 +624,7 @@ void openClubPath(BuildContext context, String href) {
 
 class _Stat extends StatelessWidget {
   const _Stat(this.icon, this.value, this.label);
-  final IconData icon;
+  final FaIconData icon;
   final String value;
   final String label;
 
@@ -507,13 +634,19 @@ class _Stat extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Icon(icon, color: gold, size: 18),
+          Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: pink.withValues(alpha: 0.18), border: Border.all(color: gold.withValues(alpha: 0.45))),
+            child: FaIcon(icon, color: goldLight, size: 15),
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: gold)),
+                CountUp(value, builder: (text) => GoldText(text, style: displayStyle(26))),
                 Text(label, style: const TextStyle(fontSize: 12)),
               ],
             ),
@@ -596,8 +729,8 @@ class _NextMatch extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 14),
-        Row(children: [const Icon(Icons.event_rounded, size: 15, color: goldLight), const SizedBox(width: 6), Expanded(child: Text(when(match.date)))]),
-        Row(children: [const Icon(Icons.place_rounded, size: 15, color: goldLight), const SizedBox(width: 6), Expanded(child: Text(match.venueName ?? 'Venue TBC'))]),
+        Row(children: [const SizedBox(width: 16, child: FaIcon(FontAwesomeIcons.calendarDays, size: 13, color: goldLight)), const SizedBox(width: 6), Expanded(child: Text(when(match.date)))]),
+        Row(children: [const SizedBox(width: 16, child: FaIcon(FontAwesomeIcons.locationDot, size: 13, color: goldLight)), const SizedBox(width: 6), Expanded(child: Text(match.venueName ?? 'Venue TBC'))]),
         const SizedBox(height: 12),
         const Row(children: [Text('MATCH CENTRE', style: TextStyle(color: goldLight, fontWeight: FontWeight.w900, letterSpacing: 1)), SizedBox(width: 6), Icon(Icons.arrow_outward, size: 15, color: goldLight)]),
       ],

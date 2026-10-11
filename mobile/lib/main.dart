@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:united_tigers/api.dart';
 import 'package:united_tigers/cart_store.dart';
 import 'package:united_tigers/pages/fixtures_page.dart';
@@ -45,6 +47,9 @@ class _UnitedTigersAppState extends State<UnitedTigersApp> {
           canvasColor: night,
           colorScheme: const ColorScheme.dark(primary: orange, secondary: gold, surface: purple),
           iconTheme: const IconThemeData(color: gold),
+          pageTransitionsTheme: const PageTransitionsTheme(
+            builders: {TargetPlatform.android: ClubPageTransitions(), TargetPlatform.iOS: ClubPageTransitions(), TargetPlatform.windows: ClubPageTransitions(), TargetPlatform.macOS: ClubPageTransitions(), TargetPlatform.linux: ClubPageTransitions()},
+          ),
           appBarTheme: AppBarTheme(
             backgroundColor: const Color(0xF22B074D),
             surfaceTintColor: Colors.transparent,
@@ -97,7 +102,7 @@ class _UnitedTigersAppState extends State<UnitedTigersApp> {
             bodyMedium: TextStyle(color: Color(0xFFF7F4FB), height: 1.35),
           ),
         ),
-        builder: (context, child) => ClubAtmosphere(child: child ?? const SizedBox.shrink()),
+        builder: (context, child) => GlowClock(child: ClubAtmosphere(child: child ?? const SizedBox.shrink())),
         home: const ClubShell(),
       ),
     );
@@ -122,31 +127,172 @@ class _ClubShellState extends State<ClubShell> {
       animation: cart,
       builder: (context, _) => Scaffold(
         backgroundColor: Colors.transparent,
-        body: pages[index],
-        bottomNavigationBar: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xF52B074D), Color(0xFA1C0432)]),
-            boxShadow: [BoxShadow(color: const Color(0xFF12021F).withValues(alpha: 0.5), blurRadius: 20, offset: const Offset(0, -6))],
+        body: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 320),
+          switchInCurve: Curves.easeOutCubic,
+          layoutBuilder: (current, _) => current ?? const SizedBox.shrink(),
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: SlideTransition(position: Tween(begin: const Offset(0, 0.03), end: Offset.zero).animate(animation), child: child),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 2, width: double.infinity, child: DecoratedBox(decoration: BoxDecoration(gradient: collarGradient))),
-              NavigationBar(
-                selectedIndex: index,
-                onDestinationSelected: (value) => setState(() => index = value),
-                destinations: [
-                  const NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Home'),
-                  const NavigationDestination(icon: Icon(Icons.groups_outlined), selectedIcon: Icon(Icons.groups_rounded), label: 'Team'),
-                  const NavigationDestination(icon: Icon(Icons.sports_cricket_outlined), selectedIcon: Icon(Icons.sports_cricket), label: 'Fixtures'),
-                  NavigationDestination(icon: Badge(isLabelVisible: cart.count > 0, backgroundColor: pink, label: Text('${cart.count}'), child: const Icon(Icons.shopping_bag_outlined)), selectedIcon: Badge(isLabelVisible: cart.count > 0, backgroundColor: pink, label: Text('${cart.count}'), child: const Icon(Icons.shopping_bag_rounded)), label: 'Shop'),
-                  const NavigationDestination(icon: Icon(Icons.grid_view_outlined), selectedIcon: Icon(Icons.grid_view_rounded), label: 'More'),
-                ],
-              ),
-            ],
-          ),
+          child: KeyedSubtree(key: ValueKey(index), child: pages[index]),
+        ),
+        bottomNavigationBar: _ClubNavBar(
+          index: index,
+          cartCount: cart.count,
+          onChanged: (value) {
+            if (value == index) return;
+            HapticFeedback.selectionClick();
+            setState(() => index = value);
+          },
         ),
       ),
+    );
+  }
+}
+
+/// Floating capsule navigation: a gold lens slides to the chosen tab and lifts its icon above the bar.
+class _ClubNavBar extends StatelessWidget {
+  const _ClubNavBar({required this.index, required this.cartCount, required this.onChanged});
+  final int index;
+  final int cartCount;
+  final ValueChanged<int> onChanged;
+
+  static const _items = [
+    (FontAwesomeIcons.house, 'Home'),
+    (FontAwesomeIcons.peopleGroup, 'Team'),
+    (FontAwesomeIcons.calendarDays, 'Fixtures'),
+    (FontAwesomeIcons.bagShopping, 'Shop'),
+    (FontAwesomeIcons.grip, 'More'),
+  ];
+  static const _lens = 52.0;
+  static const _motion = Duration(milliseconds: 420);
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.paddingOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(14, 0, 14, bottom + 10),
+      child: SizedBox(
+        height: 84,
+        child: LayoutBuilder(
+          builder: (context, box) {
+            final slot = box.maxWidth / _items.length;
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned.fill(
+                  top: 18,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(26),
+                      boxShadow: [
+                        BoxShadow(color: const Color(0xFF0F021B).withValues(alpha: 0.65), blurRadius: 24, offset: const Offset(0, 10)),
+                        BoxShadow(color: pink.withValues(alpha: 0.25), blurRadius: 22, spreadRadius: -6),
+                      ],
+                    ),
+                    child: GlowFrame(
+                      radius: 26,
+                      width: 1.5,
+                      bloom: 0.6,
+                      child: const DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF3A0A66), Color(0xFF1C0432)]),
+                        ),
+                        child: SizedBox.expand(),
+                      ),
+                    ),
+                  ),
+                ),
+                AnimatedPositioned(
+                  duration: _motion,
+                  curve: Curves.easeOutBack,
+                  left: slot * index + (slot - _lens) / 2,
+                  top: 0,
+                  width: _lens,
+                  height: _lens,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: goldSurface,
+                      border: Border.all(color: const Color(0xFF2B074D), width: 3),
+                      boxShadow: [
+                        BoxShadow(color: const Color(0xFFEEC873).withValues(alpha: 0.55), blurRadius: 18),
+                        BoxShadow(color: pink.withValues(alpha: 0.45), blurRadius: 26, offset: const Offset(0, 6)),
+                      ],
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    for (var i = 0; i < _items.length; i++)
+                      Expanded(
+                        child: Semantics(
+                          button: true,
+                          selected: i == index,
+                          label: _items[i].$2,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => onChanged(i),
+                            child: _NavItem(icon: _items[i].$1, label: _items[i].$2, selected: i == index, badge: i == 3 ? cartCount : 0),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({required this.icon, required this.label, required this.selected, required this.badge});
+  final FaIconData icon;
+  final String label;
+  final bool selected;
+  final int badge;
+
+  @override
+  Widget build(BuildContext context) {
+    final glyph = AnimatedScale(
+      scale: selected ? 1.12 : 1,
+      duration: _ClubNavBar._motion,
+      curve: Curves.easeOutBack,
+      child: FaIcon(icon, size: 19, color: selected ? ink : const Color(0xFFBDAED0)),
+    );
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        AnimatedPositioned(
+          duration: _ClubNavBar._motion,
+          curve: Curves.easeOutBack,
+          left: 0,
+          right: 0,
+          top: selected ? 16 : 32,
+          child: Center(
+            child: badge > 0 ? Badge(backgroundColor: pink, label: Text('$badge'), offset: const Offset(10, -8), child: glyph) : glyph,
+          ),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 10,
+          child: AnimatedDefaultTextStyle(
+            duration: _ClubNavBar._motion,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: selected ? 1 : 0.3,
+              color: selected ? goldLight : const Color(0xFF9F8FB5),
+            ),
+            child: Text(label.toUpperCase(), textAlign: TextAlign.center, maxLines: 1),
+          ),
+        ),
+      ],
     );
   }
 }

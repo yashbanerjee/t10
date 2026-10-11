@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:united_tigers/cart_store.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
@@ -23,7 +24,7 @@ class _BagButton extends StatelessWidget {
             isLabelVisible: count > 0,
             backgroundColor: pink,
             label: Text('$count'),
-            child: const Icon(Icons.shopping_bag_rounded, color: goldLight),
+            child: const FaIcon(FontAwesomeIcons.bagShopping, color: goldLight, size: 19),
           ),
         );
       },
@@ -39,7 +40,7 @@ class ShopPage extends StatelessWidget {
     final api = ClubScope.of(context).api;
     return Scaffold(
       appBar: ClubAppBar('Shop', actions: [
-        IconButton(tooltip: 'Track your booking', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TrackOrderPage())), icon: const Icon(Icons.local_shipping_rounded, color: goldLight)),
+        IconButton(tooltip: 'Track your booking', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TrackOrderPage())), icon: const FaIcon(FontAwesomeIcons.truckFast, color: goldLight, size: 18)),
         const _BagButton(),
       ]),
       body: AnimatedBuilder(
@@ -251,9 +252,9 @@ class CartPage extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            IconButton(onPressed: () => cart.setQuantity(line.variantId, line.quantity - 1), icon: const Icon(Icons.remove_circle_outline_rounded, color: goldLight)),
+                            IconButton(onPressed: () => cart.setQuantity(line.variantId, line.quantity - 1), icon: const FaIcon(FontAwesomeIcons.circleMinus, color: goldLight, size: 20)),
                             Text('${line.quantity}', style: const TextStyle(fontWeight: FontWeight.w900)),
-                            IconButton(onPressed: () => cart.setQuantity(line.variantId, line.quantity + 1), icon: const Icon(Icons.add_circle_outline_rounded, color: goldLight)),
+                            IconButton(onPressed: () => cart.setQuantity(line.variantId, line.quantity + 1), icon: const FaIcon(FontAwesomeIcons.circlePlus, color: goldLight, size: 20)),
                           ],
                         ),
                       ),

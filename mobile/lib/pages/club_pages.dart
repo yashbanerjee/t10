@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
 import 'package:united_tigers/pages/fixtures_page.dart';
@@ -70,37 +71,15 @@ class _FranchiseCard extends StatelessWidget {
   const _FranchiseCard({required this.franchise});
   final Franchise franchise;
 
-  IconData _icon(String label) => switch (label) {
-        'Facebook' => Icons.facebook_rounded,
-        'Instagram' => Icons.camera_alt_rounded,
-        'YouTube' => Icons.smart_display_rounded,
-        _ => Icons.alternate_email_rounded,
-      };
-
   @override
   Widget build(BuildContext context) {
-    final api = ClubScope.of(context).api;
-    final initials = franchise.name.split(RegExp(r'\s+')).where((part) => part.isNotEmpty).take(2).map((part) => part[0]).join();
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: ClubCard(
         highlight: franchise.isHome,
         child: Row(
           children: [
-            Container(
-              width: 76,
-              height: 76,
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: franchise.isHome ? goldSurface : const LinearGradient(colors: [Color(0xFF6A1290), Color(0xFF2A0750)]),
-                border: Border.all(color: gold.withValues(alpha: 0.45)),
-              ),
-              alignment: Alignment.center,
-              child: franchise.logoUrl == null
-                  ? Text(initials.toUpperCase(), style: displayStyle(24, color: Colors.white))
-                  : ClipOval(child: Image.network(api.media(franchise.logoUrl), fit: BoxFit.contain, errorBuilder: (_, _, _) => Text(initials.toUpperCase(), style: displayStyle(24, color: Colors.white)))),
-            ),
+            _FranchiseCrest(franchise: franchise, size: 76),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -109,29 +88,255 @@ class _FranchiseCard extends StatelessWidget {
                   if (franchise.isHome) const Padding(padding: EdgeInsets.only(bottom: 4), child: StatusChip('OUR CLUB')),
                   Text(franchise.league.toUpperCase(), style: const TextStyle(color: goldLight, fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 0.9)),
                   Text(franchise.name.toUpperCase(), style: displayStyle(21, color: Colors.white, height: 1.05)),
-                  if (franchise.channels.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Wrap(
-                        spacing: 4,
-                        children: [
-                          for (final (label, href) in franchise.channels)
-                            IconButton(
-                              tooltip: '${franchise.name} on $label',
-                              visualDensity: VisualDensity.compact,
-                              style: IconButton.styleFrom(backgroundColor: purple.withValues(alpha: 0.7), side: BorderSide(color: gold.withValues(alpha: 0.35))),
-                              onPressed: () => openExternal(href),
-                              icon: Icon(_icon(label), size: 17, color: goldLight),
-                            ),
-                        ],
-                      ),
-                    ),
+                  if (franchise.channels.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 6), child: _FranchiseSocials(franchise: franchise)),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _FranchiseCrest extends StatelessWidget {
+  const _FranchiseCrest({required this.franchise, required this.size});
+  final Franchise franchise;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final api = ClubScope.of(context).api;
+    final initials = franchise.name.split(RegExp(r'\s+')).where((part) => part.isNotEmpty).take(2).map((part) => part[0]).join().toUpperCase();
+    final fallback = Text(initials, style: displayStyle(size * 0.32, color: franchise.isHome ? ink : Colors.white));
+    return Container(
+      width: size,
+      height: size,
+      padding: EdgeInsets.all(size * 0.1),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: franchise.isHome ? goldSurface : const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF6A1290), Color(0xFF2A0750)]),
+        border: Border.all(color: gold.withValues(alpha: 0.5)),
+        boxShadow: [BoxShadow(color: (franchise.isHome ? gold : pink).withValues(alpha: 0.3), blurRadius: 16)],
+      ),
+      alignment: Alignment.center,
+      child: franchise.logoUrl == null ? fallback : ClipOval(child: Image.network(api.media(franchise.logoUrl), fit: BoxFit.contain, errorBuilder: (_, _, _) => fallback)),
+    );
+  }
+}
+
+class _FranchiseSocials extends StatelessWidget {
+  const _FranchiseSocials({required this.franchise, this.size = 16, this.center = false});
+  final Franchise franchise;
+  final double size;
+  final bool center;
+
+  static FaIconData _icon(String label) => switch (label) {
+        'Facebook' => FontAwesomeIcons.facebookF,
+        'Instagram' => FontAwesomeIcons.instagram,
+        'YouTube' => FontAwesomeIcons.youtube,
+        'X' => FontAwesomeIcons.xTwitter,
+        _ => FontAwesomeIcons.at,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      alignment: center ? WrapAlignment.center : WrapAlignment.start,
+      children: [
+        for (final (label, href) in franchise.channels)
+          Tooltip(
+            message: '${franchise.name} on $label',
+            child: Material(
+              color: purple.withValues(alpha: 0.7),
+              shape: CircleBorder(side: BorderSide(color: gold.withValues(alpha: 0.4))),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () => openExternal(href),
+                child: SizedBox.square(dimension: size + 18, child: Center(child: FaIcon(_icon(label), size: size, color: goldLight))),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Home-page "Our franchises" board: our club in a wide lead card, the rest in a two-column grid.
+/// Stays hidden until franchises load, so a missing endpoint never shows an error on the home page.
+class HomeFranchises extends StatefulWidget {
+  const HomeFranchises({super.key});
+
+  @override
+  State<HomeFranchises> createState() => _HomeFranchisesState();
+}
+
+class _HomeFranchisesState extends State<HomeFranchises> {
+  Future<List<Franchise>>? _future;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _future ??= ClubScope.of(context).api.fetchFranchises();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<Franchise>>(
+      future: _future,
+      builder: (context, snapshot) {
+        final franchises = snapshot.data ?? const <Franchise>[];
+        if (franchises.isEmpty) return const SizedBox.shrink();
+        final home = franchises.where((item) => item.isHome).toList();
+        final others = franchises.where((item) => !item.isHome).toList();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SectionTitle('Our franchises', action: 'About', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FranchisesPage()))),
+            for (final franchise in home) _FranchiseCard(franchise: franchise),
+            LayoutBuilder(
+              builder: (context, box) {
+                final width = (box.maxWidth - 12) / 2;
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    for (final (index, franchise) in others.indexed)
+                      SizedBox(
+                        width: width,
+                        height: 222,
+                        child: Reveal(
+                          delay: Duration(milliseconds: 70 * (index % 2)),
+                          child: GlowFrame(
+                            radius: 16,
+                            width: 1.2,
+                            colors: softRim,
+                            bloom: 0.3,
+                            offset: index * 0.19,
+                            child: Container(
+                              padding: const EdgeInsets.fromLTRB(10, 14, 10, 10),
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xEB33085E), Color(0xEB2A0750), Color(0xEB4B0C66)]),
+                              ),
+                              child: Column(
+                                children: [
+                                  _FranchiseCrest(franchise: franchise, size: 62),
+                                  const SizedBox(height: 10),
+                                  Text(franchise.league.toUpperCase(), maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: const TextStyle(color: goldLight, fontSize: 9.5, fontWeight: FontWeight.w800, letterSpacing: 0.8, height: 1.2)),
+                                  const SizedBox(height: 2),
+                                  Text(franchise.name.toUpperCase(), maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: displayStyle(16.5, color: Colors.white, height: 1.02)),
+                                  const Spacer(),
+                                  if (franchise.channels.isNotEmpty) _FranchiseSocials(franchise: franchise, size: 12, center: true),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Home-page "Partner with us" panel, matching the website: brochure cover, pitch and the two ways in.
+class HomePartnerCta extends StatelessWidget {
+  const HomePartnerCta({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final api = ClubScope.of(context).api;
+    void open() => Navigator.push(context, MaterialPageRoute(builder: (_) => const BecomePartnerPage()));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SectionTitle('Partner with us'),
+        Reveal(
+          child: GlowFrame(
+            radius: 20,
+            width: 1.8,
+            offset: 0.3,
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF3A0A66), Color(0xFF2A0750), Color(0xFF5A0F6E)]),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Pressable(
+                    onTap: open,
+                    child: AspectRatio(
+                      aspectRatio: 900 / 506,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          RemoteImage(api.media('/brand/partner-brochure-cover.webp'), height: double.infinity, radius: 0),
+                          const DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x00000000), Color(0x00000000), Color(0xCC1C0432)], stops: [0, 0.55, 1]),
+                            ),
+                          ),
+                          Positioned(
+                            left: 12,
+                            bottom: 12,
+                            child: Floating(
+                              distance: 3,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  gradient: goldSurface,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [BoxShadow(color: const Color(0xFFEEC873).withValues(alpha: 0.45), blurRadius: 14)],
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    FaIcon(FontAwesomeIcons.download, size: 12, color: ink),
+                                    SizedBox(width: 7),
+                                    Text('GET THE BROCHURE', style: TextStyle(color: ink, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.9)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SheenText("LET'S MAKE A MARK.", style: displayStyle(28)),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Put your brand alongside United Tigers in cricket’s fastest format. Get the brochure, or leave your details and our partnerships team will contact you.',
+                          style: TextStyle(color: Color(0xFFE6DDF0), height: 1.45),
+                        ),
+                        const SizedBox(height: 14),
+                        FilledButton.icon(style: goldButtonStyle(), onPressed: open, icon: const FaIcon(FontAwesomeIcons.handshake, size: 16), label: const Text('BECOME A PARTNER')),
+                        const SizedBox(height: 10),
+                        OutlinedButton(
+                          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnersPage())),
+                          child: const Text('MEET OUR PARTNERS'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -225,7 +430,7 @@ class _BecomePartnerPageState extends State<BecomePartnerPage> {
                         const Text('Our partnerships team has your details and will be in touch. A copy is on its way to your inbox.', style: TextStyle(color: Color(0xFFE6DDF0), height: 1.45)),
                         if (brochure != null) ...[
                           const SizedBox(height: 12),
-                          FilledButton.icon(style: goldButtonStyle(), onPressed: () => openExternal(api.media(brochure)), icon: const Icon(Icons.picture_as_pdf_rounded), label: const Text('OPEN BROCHURE')),
+                          FilledButton.icon(style: goldButtonStyle(), onPressed: () => openExternal(api.media(brochure)), icon: const FaIcon(FontAwesomeIcons.filePdf, size: 17), label: const Text('OPEN BROCHURE')),
                         ],
                       ],
                     ),
@@ -336,7 +541,7 @@ class _MediaTile extends StatelessWidget {
           children: [
             RemoteImage(item.isVideo ? '' : url, height: 200, radius: 0),
             const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0xD91C0432)], stops: [0.5, 1]))),
-            if (item.isVideo) const Center(child: Icon(Icons.play_circle_fill_rounded, color: goldLight, size: 46)),
+            if (item.isVideo) const Center(child: FaIcon(FontAwesomeIcons.circlePlay, color: goldLight, size: 42)),
             Positioned(left: 8, top: 8, child: MediaBadge(label: item.isVideo ? 'VIDEO' : 'PHOTO')),
             Positioned(left: 10, right: 10, bottom: 10, child: Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13))),
           ],
@@ -424,7 +629,7 @@ class SeasonPage extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            const Icon(Icons.chevron_right_rounded, color: goldLight),
+                            const FaIcon(FontAwesomeIcons.chevronRight, color: goldLight, size: 14),
                           ],
                         ),
                       ),
@@ -446,17 +651,28 @@ class _SeasonStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: highlight ? accentGradient : const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xEB33085E), Color(0xEB4B0C66)]),
-        border: Border.all(color: gold.withValues(alpha: highlight ? 0.6 : 0.25)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [Text(label.toUpperCase(), style: const TextStyle(color: Color(0xFFE6DDF0), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.9)), GoldText(value, style: displayStyle(36))],
+    return Reveal(
+      scale: 0.88,
+      child: GlowFrame(
+        radius: 18,
+        width: highlight ? 1.8 : 1.2,
+        colors: highlight ? neonGold : softRim,
+        bloom: highlight ? 0.7 : 0.3,
+        offset: label.length * 0.11,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: highlight ? accentGradient : const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xEB33085E), Color(0xEB4B0C66)]),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label.toUpperCase(), style: const TextStyle(color: Color(0xFFE6DDF0), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.9)),
+              CountUp(value, builder: (text) => GoldText(text, style: displayStyle(36))),
+            ],
+          ),
+        ),
       ),
     );
   }

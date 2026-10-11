@@ -1,5 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:united_tigers/motion.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+export 'package:united_tigers/motion.dart';
 
 const night = Color(0xFF1C0432);
 const page = Color(0xFF390966);
@@ -61,11 +66,33 @@ class ClubAtmosphere extends StatelessWidget {
             ),
           ),
         ),
-        Positioned.fill(child: _Glow(center: const Alignment(1.1, -0.72), radius: 0.95, alpha: 0.4)),
-        Positioned.fill(child: _Glow(center: const Alignment(-1.2, 0.25), radius: 0.8, alpha: 0.2)),
-        Positioned.fill(child: _Glow(center: const Alignment(0.5, 1.15), radius: 0.9, alpha: 0.22)),
+        const Positioned.fill(child: RepaintBoundary(child: _Aurora())),
         Positioned.fill(child: child),
       ],
+    );
+  }
+}
+
+/// The three pink glows behind every screen, drifting slowly like the website's aurora.
+class _Aurora extends StatelessWidget {
+  const _Aurora();
+
+  @override
+  Widget build(BuildContext context) {
+    final clock = GlowClock.of(context);
+    return AnimatedBuilder(
+      animation: clock,
+      builder: (context, _) {
+        final a = clock.value * 2 * math.pi;
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            _Glow(center: Alignment(1.1 + 0.12 * math.sin(a), -0.72 + 0.1 * math.cos(a)), radius: 0.95, alpha: 0.34 + 0.08 * math.sin(a * 2)),
+            _Glow(center: Alignment(-1.2 + 0.15 * math.cos(a), 0.25 + 0.14 * math.sin(a)), radius: 0.8, alpha: 0.2),
+            _Glow(center: Alignment(0.5 - 0.18 * math.sin(a), 1.15 - 0.08 * math.cos(a)), radius: 0.9, alpha: 0.2 + 0.06 * math.cos(a * 2)),
+          ],
+        );
+      },
     );
   }
 }
@@ -152,21 +179,30 @@ class PageHero extends StatelessWidget {
             right: -8,
             top: 10,
             bottom: 10,
-            child: Opacity(opacity: 0.22, child: Image.asset('assets/brand/united-tigers.png', fit: BoxFit.contain)),
+            child: Reveal(
+              offset: 0,
+              dx: 60,
+              duration: const Duration(milliseconds: 1100),
+              child: Floating(
+                distance: 6,
+                period: const Duration(milliseconds: 3800),
+                child: Opacity(opacity: 0.22, child: Image.asset('assets/brand/united-tigers.png', fit: BoxFit.contain)),
+              ),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 22, 18, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Eyebrow(eyebrow),
+                Reveal(offset: 0, dx: -20, child: Eyebrow(eyebrow)),
                 const SizedBox(height: 12),
-                GoldText(title.toUpperCase(), style: displayStyle(40, height: 0.92)),
+                Reveal(delay: const Duration(milliseconds: 90), offset: 30, child: SheenText(title.toUpperCase(), style: displayStyle(40, height: 0.92))),
                 if (intro != null && intro!.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  Text(intro!, style: const TextStyle(color: Color(0xFFE6DDF0), fontSize: 14.5, height: 1.45)),
+                  Reveal(delay: const Duration(milliseconds: 200), child: Text(intro!, style: const TextStyle(color: Color(0xFFE6DDF0), fontSize: 14.5, height: 1.45))),
                 ],
-                if (child != null) ...[const SizedBox(height: 16), child!],
+                if (child != null) ...[const SizedBox(height: 16), Reveal(delay: const Duration(milliseconds: 300), child: child!)],
               ],
             ),
           ),
@@ -185,7 +221,7 @@ class Eyebrow extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(width: 7, height: 7, decoration: BoxDecoration(shape: BoxShape.circle, gradient: accentGradient, boxShadow: [BoxShadow(color: pink.withValues(alpha: 0.7), blurRadius: 8)])),
+        Pulse(child: Container(width: 7, height: 7, decoration: const BoxDecoration(shape: BoxShape.circle, gradient: accentGradient))),
         const SizedBox(width: 8),
         Flexible(child: Text(text.toUpperCase(), style: const TextStyle(color: goldLight, fontSize: 11.5, fontWeight: FontWeight.w800, letterSpacing: 1.6))),
       ],
@@ -193,49 +229,86 @@ class Eyebrow extends StatelessWidget {
   }
 }
 
-class ClubCard extends StatelessWidget {
+/// Every content box in the app: glass purple body, a glowing rim with a light running round it,
+/// a rise-in when it scrolls into view and a press-in when tapped.
+class ClubCard extends StatefulWidget {
   const ClubCard({super.key, required this.child, this.onTap, this.padding = const EdgeInsets.all(16), this.highlight = false});
   final Widget child;
   final VoidCallback? onTap;
   final EdgeInsets padding;
 
-  /// Gold-to-pink frame for the card a screen wants to lead with.
+  /// Brighter neon rim for the card a screen wants to lead with.
   final bool highlight;
+
+  @override
+  State<ClubCard> createState() => _ClubCardState();
+}
+
+class _ClubCardState extends State<ClubCard> {
+  static final _seed = math.Random();
+  final double _offset = _seed.nextDouble();
+  bool _down = false;
 
   @override
   Widget build(BuildContext context) {
     const radius = 16.0;
+    final rim = widget.highlight ? 1.8 : 1.2;
     final card = Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(radius),
       child: InkWell(
-        onTap: onTap,
+        onTap: widget.onTap,
+        onHighlightChanged: widget.onTap == null ? null : (value) => setState(() => _down = value),
         borderRadius: BorderRadius.circular(radius),
         splashColor: pink.withValues(alpha: 0.18),
+        highlightColor: goldLight.withValues(alpha: 0.05),
         child: Ink(
           width: double.infinity,
-          padding: padding,
+          padding: widget.padding,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(highlight ? radius - 1.4 : radius),
+            borderRadius: BorderRadius.circular(radius),
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [Color(0xEB33085E), Color(0xEB2A0750), Color(0xEB4B0C66)],
               stops: [0, 0.55, 1],
             ),
-            border: highlight ? null : Border.all(color: gold.withValues(alpha: 0.28)),
+            border: Border.all(color: gold.withValues(alpha: 0.18), width: rim),
           ),
-          child: child,
+          child: widget.child,
         ),
       ),
     );
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(radius),
-        gradient: highlight ? collarGradient : null,
-        boxShadow: [BoxShadow(color: const Color(0xFF12021F).withValues(alpha: 0.35), blurRadius: 18, offset: const Offset(0, 8))],
+    return Reveal(
+      offset: 28,
+      child: AnimatedScale(
+        scale: _down ? 0.97 : 1,
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOut,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(radius),
+            boxShadow: [
+              BoxShadow(color: const Color(0xFF12021F).withValues(alpha: 0.35), blurRadius: 18, offset: const Offset(0, 8)),
+              if (widget.highlight) BoxShadow(color: pink.withValues(alpha: 0.22), blurRadius: 24, spreadRadius: -6),
+            ],
+          ),
+          child: RepaintBoundary(
+            child: CustomPaint(
+              foregroundPainter: GlowBorderPainter(
+                clock: GlowClock.of(context),
+                radius: radius,
+                width: rim,
+                colors: widget.highlight ? neonGold : softRim,
+                offset: _offset,
+                bloom: widget.highlight ? 0.6 : 0.35,
+                speed: widget.highlight ? 4 : 3,
+              ),
+              child: RepaintBoundary(child: card),
+            ),
+          ),
+        ),
       ),
-      child: Padding(padding: EdgeInsets.all(highlight ? 1.4 : 0), child: card),
     );
   }
 }
@@ -248,11 +321,23 @@ class SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Reveal(
+      offset: 0,
+      dx: -26,
+      child: Padding(
       padding: const EdgeInsets.only(top: 26, bottom: 12),
       child: Row(
         children: [
-          Container(width: 4, height: 22, margin: const EdgeInsets.only(right: 10), decoration: BoxDecoration(borderRadius: BorderRadius.circular(2), gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [goldLight, pink]))),
+          Container(
+            width: 4,
+            height: 22,
+            margin: const EdgeInsets.only(right: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(2),
+              gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [goldLight, pink]),
+              boxShadow: [BoxShadow(color: pink.withValues(alpha: 0.6), blurRadius: 8)],
+            ),
+          ),
           Expanded(child: Text(text.toUpperCase(), style: displayStyle(21, color: Colors.white, spacing: 0.8))),
           if (action != null)
             InkWell(
@@ -265,6 +350,7 @@ class SectionTitle extends StatelessWidget {
               ),
             ),
         ],
+      ),
       ),
     );
   }
@@ -386,10 +472,11 @@ class MediaBadge extends StatelessWidget {
 }
 
 class RemoteImage extends StatelessWidget {
-  const RemoteImage(this.url, {super.key, this.height = 140, this.radius = 14});
+  const RemoteImage(this.url, {super.key, this.height = 140, this.radius = 14, this.alignment = Alignment.center});
   final String url;
   final double height;
   final double radius;
+  final Alignment alignment;
 
   @override
   Widget build(BuildContext context) {
@@ -408,7 +495,17 @@ class RemoteImage extends StatelessWidget {
               height: height,
               width: double.infinity,
               fit: BoxFit.cover,
+              alignment: alignment,
               errorBuilder: (_, _, _) => placeholder,
+              frameBuilder: (context, child, frame, synchronous) => synchronous
+                  ? child
+                  : Stack(
+                      fit: StackFit.passthrough,
+                      children: [
+                        if (frame == null) placeholder,
+                        AnimatedOpacity(opacity: frame == null ? 0 : 1, duration: const Duration(milliseconds: 420), curve: Curves.easeOut, child: child),
+                      ],
+                    ),
             ),
     );
   }

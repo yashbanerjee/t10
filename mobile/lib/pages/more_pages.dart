@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:united_tigers/api/api_client.dart';
 import 'package:united_tigers/pages/admin_pages.dart';
 import 'package:united_tigers/pages/club_pages.dart';
@@ -39,7 +40,7 @@ void openSiteLink(BuildContext context, String href) {
 
 class _MenuItem {
   const _MenuItem(this.icon, this.title, this.subtitle, this.page);
-  final IconData icon;
+  final FaIconData icon;
   final String title;
   final String subtitle;
   final Widget page;
@@ -52,22 +53,22 @@ class MorePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final api = ClubScope.of(context).api;
     const featured = [
-      _MenuItem(Icons.how_to_vote_rounded, 'Vote', 'Polls & contests', VotePage()),
-      _MenuItem(Icons.leaderboard_rounded, 'Stats centre', 'T10, All T20 & T20Is', StatsPage()),
+      _MenuItem(FontAwesomeIcons.squarePollVertical, 'Vote', 'Polls & contests', VotePage()),
+      _MenuItem(FontAwesomeIcons.chartLine, 'Stats centre', 'T10, All T20 & T20Is', StatsPage()),
     ];
     const club = [
-      _MenuItem(Icons.newspaper_rounded, 'News', 'The newsroom', NewsPage()),
-      _MenuItem(Icons.campaign_rounded, 'Tigers Daily', 'Training & team updates', UpdatesPage()),
-      _MenuItem(Icons.photo_library_rounded, 'Gallery', 'Photos & videos', GalleryPage()),
-      _MenuItem(Icons.table_chart_rounded, 'Points table', 'League standings', PointsPage()),
-      _MenuItem(Icons.emoji_events_rounded, 'Records', 'The record book', RecordsPage()),
-      _MenuItem(Icons.celebration_rounded, 'Fan Zone', 'Coming soon', FanZonePage()),
-      _MenuItem(Icons.handshake_rounded, 'Partners', 'Our sponsors', PartnersPage()),
-      _MenuItem(Icons.auto_stories_rounded, 'Our story', 'About the club', AboutPage()),
-      _MenuItem(Icons.calendar_month_rounded, '2026 season', 'Results & leaders', SeasonPage()),
-      _MenuItem(Icons.video_library_rounded, 'Player draft', 'Draft night', DraftPage()),
-      _MenuItem(Icons.shield_rounded, 'Franchises', 'The Tigers family', FranchisesPage()),
-      _MenuItem(Icons.local_shipping_rounded, 'Track booking', 'Shop orders', TrackOrderPage()),
+      _MenuItem(FontAwesomeIcons.newspaper, 'News', 'The newsroom', NewsPage()),
+      _MenuItem(FontAwesomeIcons.bullhorn, 'Tigers Daily', 'Training & team updates', UpdatesPage()),
+      _MenuItem(FontAwesomeIcons.images, 'Gallery', 'Photos & videos', GalleryPage()),
+      _MenuItem(FontAwesomeIcons.tableList, 'Points table', 'League standings', PointsPage()),
+      _MenuItem(FontAwesomeIcons.trophy, 'Records', 'The record book', RecordsPage()),
+      _MenuItem(FontAwesomeIcons.fire, 'Fan Zone', 'Coming soon', FanZonePage()),
+      _MenuItem(FontAwesomeIcons.handshake, 'Partners', 'Our sponsors', PartnersPage()),
+      _MenuItem(FontAwesomeIcons.bookOpen, 'Our story', 'About the club', AboutPage()),
+      _MenuItem(FontAwesomeIcons.calendarDays, '2026 season', 'Results & leaders', SeasonPage()),
+      _MenuItem(FontAwesomeIcons.clapperboard, 'Player draft', 'Draft night', DraftPage()),
+      _MenuItem(FontAwesomeIcons.shieldHalved, 'Franchises', 'The Tigers family', FranchisesPage()),
+      _MenuItem(FontAwesomeIcons.truckFast, 'Track booking', 'Shop orders', TrackOrderPage()),
     ];
     return AnimatedBuilder(
       animation: api,
@@ -88,13 +89,13 @@ class MorePage extends StatelessWidget {
               children: [for (final item in club) _MenuTile(item: item)],
             ),
             const SectionTitle('Get in touch'),
-            _MenuRow(icon: Icons.mail_rounded, title: 'Contact', subtitle: 'Partnership, media & supporter enquiries', onTap: () => _push(context, const ContactPage())),
-            _MenuRow(icon: Icons.workspace_premium_rounded, title: 'Become a partner', subtitle: 'Get the partnership brochure', onTap: () => _push(context, const BecomePartnerPage())),
-            _MenuRow(icon: Icons.privacy_tip_rounded, title: 'Privacy', subtitle: 'How we handle your information', onTap: () => _push(context, const LegalScreen(kind: LegalKind.privacy))),
-            _MenuRow(icon: Icons.gavel_rounded, title: 'Terms', subtitle: 'Using the app, shop, polls & contests', onTap: () => _push(context, const LegalScreen(kind: LegalKind.terms))),
+            _MenuRow(icon: FontAwesomeIcons.envelope, title: 'Contact', subtitle: 'Partnership, media & supporter enquiries', onTap: () => _push(context, const ContactPage())),
+            _MenuRow(icon: FontAwesomeIcons.crown, title: 'Become a partner', subtitle: 'Get the partnership brochure', onTap: () => _push(context, const BecomePartnerPage())),
+            _MenuRow(icon: FontAwesomeIcons.userShield, title: 'Privacy', subtitle: 'How we handle your information', onTap: () => _push(context, const LegalScreen(kind: LegalKind.privacy))),
+            _MenuRow(icon: FontAwesomeIcons.scaleBalanced, title: 'Terms', subtitle: 'Using the app, shop, polls & contests', onTap: () => _push(context, const LegalScreen(kind: LegalKind.terms))),
             const SectionTitle('Club team'),
-            _MenuRow(icon: Icons.admin_panel_settings_rounded, title: 'Admin', subtitle: api.adminSession == null ? 'Sign in' : api.adminSession!.roleLabel, onTap: () => _push(context, const AdminHomePage())),
-            _MenuRow(icon: Icons.dns_rounded, title: 'Server', subtitle: api.base, onTap: () => _push(context, const ServerPage())),
+            _MenuRow(icon: FontAwesomeIcons.userGear, title: 'Admin', subtitle: api.adminSession == null ? 'Sign in' : api.adminSession!.roleLabel, onTap: () => _push(context, const AdminHomePage())),
+            _MenuRow(icon: FontAwesomeIcons.server, title: 'Server', subtitle: api.base, onTap: () => _push(context, const ServerPage())),
             const SizedBox(height: 18),
             Center(child: Opacity(opacity: 0.8, child: Image.asset('assets/brand/abu-dhabi-t10-landscape-white.png', height: 22))),
             const SizedBox(height: 8),
@@ -112,23 +113,31 @@ class _FeatureTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+    return Reveal(
+      scale: 0.9,
+      child: Pressable(
         onTap: () => _push(context, item.page),
-        child: Ink(
-          height: 128,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), gradient: accentGradient, boxShadow: [BoxShadow(color: pink.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8))]),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(12)), child: Icon(item.icon, color: Colors.white, size: 22)),
-              const Spacer(),
-              Text(item.title.toUpperCase(), style: displayStyle(21, color: Colors.white)),
-              Text(item.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFFBE3F1), fontSize: 12)),
-            ],
+        child: GlowFrame(
+          radius: 18,
+          width: 1.8,
+          offset: item.title.length * 0.13,
+          child: Container(
+            height: 128,
+            padding: const EdgeInsets.all(14),
+            decoration: const BoxDecoration(gradient: accentGradient),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Floating(
+                  distance: 3,
+                  phase: item.title.length * 0.1 % 1,
+                  child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(12)), child: FaIcon(item.icon, color: Colors.white, size: 20)),
+                ),
+                const Spacer(),
+                Text(item.title.toUpperCase(), style: displayStyle(21, color: Colors.white)),
+                Text(item.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFFBE3F1), fontSize: 12)),
+              ],
+            ),
           ),
         ),
       ),
@@ -148,7 +157,7 @@ class _MenuTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ShaderMask(blendMode: BlendMode.srcIn, shaderCallback: (bounds) => goldSurface.createShader(bounds), child: Icon(item.icon, size: 24)),
+          ShaderMask(blendMode: BlendMode.srcIn, shaderCallback: (bounds) => goldSurface.createShader(bounds), child: FaIcon(item.icon, size: 22)),
           const Spacer(),
           Text(item.title.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: displayStyle(17, color: Colors.white)),
           Text(item.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 11.5)),
@@ -160,7 +169,7 @@ class _MenuTile extends StatelessWidget {
 
 class _MenuRow extends StatelessWidget {
   const _MenuRow({required this.icon, required this.title, required this.subtitle, required this.onTap});
-  final IconData icon;
+  final FaIconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
@@ -174,10 +183,10 @@ class _MenuRow extends StatelessWidget {
         onTap: onTap,
         child: Row(
           children: [
-            Icon(icon, color: goldLight, size: 22),
+            SizedBox(width: 26, child: Center(child: FaIcon(icon, color: goldLight, size: 19))),
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)), Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12))])),
-            const Icon(Icons.chevron_right_rounded, color: goldLight),
+            const FaIcon(FontAwesomeIcons.chevronRight, color: goldLight, size: 14),
           ],
         ),
       ),
@@ -436,7 +445,7 @@ class _UpdatePageState extends State<UpdatePage> {
                 ClubMarkdown(update.content.isEmpty ? update.description : update.content, mediaUrl: api.media, onLink: (href) => openSiteLink(context, href)),
                 if (update.video != null) ...[
                   const SizedBox(height: 12),
-                  FilledButton.icon(onPressed: () => openExternal(api.media(update.video)), icon: const Icon(Icons.play_arrow_rounded), label: const Text('WATCH')),
+                  FilledButton.icon(onPressed: () => openExternal(api.media(update.video)), icon: const FaIcon(FontAwesomeIcons.play, size: 15), label: const Text('WATCH')),
                 ],
               ],
             ),
@@ -478,7 +487,7 @@ class GalleryPage extends StatelessWidget {
                           children: [
                             RemoteImage(api.media(item.isVideo ? null : item.mediaUrl), height: 200, radius: 0),
                             const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0xD91C0432)], stops: [0.5, 1]))),
-                            if (item.isVideo) const Center(child: Icon(Icons.play_circle_fill_rounded, color: goldLight, size: 44)),
+                            if (item.isVideo) const Center(child: FaIcon(FontAwesomeIcons.circlePlay, color: goldLight, size: 40)),
                             Positioned(left: 8, top: 8, child: MediaBadge(label: item.isVideo ? 'VIDEO' : 'PHOTO')),
                             Positioned(left: 10, right: 10, bottom: 10, child: Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13))),
                           ],
@@ -541,7 +550,7 @@ class PartnersPage extends StatelessWidget {
                                     height: 56,
                                     padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-                                    child: sponsor.logoUrl == null ? const Icon(Icons.handshake_rounded, color: ink) : Image.network(api.media(sponsor.logoUrl), fit: BoxFit.contain, errorBuilder: (_, _, _) => const Icon(Icons.handshake_rounded, color: ink)),
+                                    child: sponsor.logoUrl == null ? const FaIcon(FontAwesomeIcons.handshake, color: ink) : Image.network(api.media(sponsor.logoUrl), fit: BoxFit.contain, errorBuilder: (_, _, _) => const FaIcon(FontAwesomeIcons.handshake, color: ink)),
                                   ),
                                   const SizedBox(width: 14),
                                   Expanded(
@@ -690,9 +699,9 @@ class _ContactPageState extends State<ContactPage> {
               children: [
                 Row(
                   children: [
-                    Expanded(child: OutlinedButton.icon(onPressed: () => openExternal('https://www.facebook.com/share/1Bxhkk4L97/?mibextid=wwXIfr'), icon: const Icon(Icons.facebook_rounded), label: const Text('FACEBOOK'))),
+                    Expanded(child: OutlinedButton.icon(onPressed: () => openExternal('https://www.facebook.com/share/1Bxhkk4L97/?mibextid=wwXIfr'), icon: const FaIcon(FontAwesomeIcons.facebookF, size: 16), label: const Text('FACEBOOK'))),
                     const SizedBox(width: 10),
-                    Expanded(child: OutlinedButton.icon(onPressed: () => openExternal('https://www.instagram.com/unitedtigers.ae'), icon: const Icon(Icons.camera_alt_rounded), label: const Text('INSTAGRAM'))),
+                    Expanded(child: OutlinedButton.icon(onPressed: () => openExternal('https://www.instagram.com/unitedtigers.ae'), icon: const FaIcon(FontAwesomeIcons.instagram, size: 17), label: const Text('INSTAGRAM'))),
                   ],
                 ),
                 const SectionTitle('Send a message'),
@@ -922,7 +931,7 @@ class _StatsPageState extends State<StatsPage> {
       StatScope.t20 => 'T20 Internationals only. Players without a T20I are listed with a link to their All T20 record.',
     };
     return Scaffold(
-      appBar: ClubAppBar('Stats centre', actions: [IconButton(tooltip: 'Records', onPressed: () => _push(context, const RecordsPage()), icon: const Icon(Icons.emoji_events_rounded, color: goldLight))]),
+      appBar: ClubAppBar('Stats centre', actions: [IconButton(tooltip: 'Records', onPressed: () => _push(context, const RecordsPage()), icon: const FaIcon(FontAwesomeIcons.trophy, color: goldLight, size: 19))]),
       body: error != null
           ? MessageView(error!, onRetry: () { setState(() => loading = true); _load(); })
           : loading
@@ -1012,30 +1021,34 @@ class _LeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final first = rank == 1;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
+    return Reveal(
+      delay: Duration(milliseconds: 90 * rank),
+      scale: 0.85,
+      child: Pressable(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Ink(
-          height: 132,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: first ? accentGradient : const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF3A0B66), Color(0xFF2A0750)]),
-            border: first ? null : Border.all(color: gold.withValues(alpha: 0.35)),
-            boxShadow: first ? [BoxShadow(color: pink.withValues(alpha: 0.4), blurRadius: 18, offset: const Offset(0, 8))] : null,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('#$rank', style: displayStyle(18, color: first ? Colors.white : goldLight)),
-              const Spacer(),
-              GoldText(value, style: displayStyle(34)),
-              Text(label.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1, color: Color(0xFFF1E6F7))),
-              const SizedBox(height: 4),
-              Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
-            ],
+        child: GlowFrame(
+          radius: 16,
+          width: first ? 1.8 : 1.2,
+          colors: first ? neonGold : softRim,
+          bloom: first ? 0.75 : 0.3,
+          offset: rank * 0.21,
+          child: Container(
+            height: 132,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: first ? accentGradient : const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF3A0B66), Color(0xFF2A0750)]),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('#$rank', style: displayStyle(18, color: first ? Colors.white : goldLight)),
+                const Spacer(),
+                CountUp(value, builder: (text) => GoldText(text, style: displayStyle(34))),
+                Text(label.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1, color: Color(0xFFF1E6F7))),
+                const SizedBox(height: 4),
+                Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+              ],
+            ),
           ),
         ),
       ),

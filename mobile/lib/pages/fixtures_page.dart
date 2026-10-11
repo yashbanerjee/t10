@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
 import 'package:united_tigers/scope.dart';
@@ -111,8 +112,8 @@ class _MatchList extends StatelessWidget {
                       const SizedBox(height: 12),
                       Text('UNITED TIGERS v ${match.opponent.toUpperCase()}', style: displayStyle(19, color: Colors.white, height: 1.05)),
                       const SizedBox(height: 6),
-                      Row(children: [const Icon(Icons.event_rounded, size: 15, color: goldLight), const SizedBox(width: 6), Expanded(child: Text(when(match.date), style: const TextStyle(color: Color(0xFFD9CCE6), fontSize: 13)))]),
-                      if (match.venueName != null) Row(children: [const Icon(Icons.place_rounded, size: 15, color: goldLight), const SizedBox(width: 6), Expanded(child: Text(match.venueName!, style: const TextStyle(color: Color(0xFFD9CCE6), fontSize: 13)))]),
+                      Row(children: [const SizedBox(width: 16, child: FaIcon(FontAwesomeIcons.calendarDays, size: 13, color: goldLight)), const SizedBox(width: 6), Expanded(child: Text(when(match.date), style: const TextStyle(color: Color(0xFFD9CCE6), fontSize: 13)))]),
+                      if (match.venueName != null) Row(children: [const SizedBox(width: 16, child: FaIcon(FontAwesomeIcons.locationDot, size: 13, color: goldLight)), const SizedBox(width: 6), Expanded(child: Text(match.venueName!, style: const TextStyle(color: Color(0xFFD9CCE6), fontSize: 13)))]),
                       if (match.result != null) ...[const SizedBox(height: 8), Text(match.result!, style: TextStyle(color: match.won ? const Color(0xFF6BE3A0) : Colors.white, fontWeight: FontWeight.w800))],
                     ],
                   ),
@@ -165,10 +166,10 @@ class _MatchPageState extends State<MatchPage> {
     if (current == null) {
       return Scaffold(appBar: const ClubAppBar('Match'), body: error == null ? const LoadingView() : MessageView(error!));
     }
-    final details = <(IconData, String)>[
-      (Icons.event_rounded, when(current.date)),
-      if (current.venueName != null) (Icons.place_rounded, [current.venueName, current.venueCity].whereType<String>().join(', ')),
-      if (current.toss != null) (Icons.toll_rounded, 'Toss · ${current.toss}'),
+    final details = <(FaIconData, String)>[
+      (FontAwesomeIcons.calendarDays, when(current.date)),
+      if (current.venueName != null) (FontAwesomeIcons.locationDot, [current.venueName, current.venueCity].whereType<String>().join(', ')),
+      if (current.toss != null) (FontAwesomeIcons.coins, 'Toss · ${current.toss}'),
     ];
     return Scaffold(
       appBar: const ClubAppBar('Match centre'),
@@ -186,7 +187,7 @@ class _MatchPageState extends State<MatchPage> {
                 for (final (icon, text) in details)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(children: [Icon(icon, size: 16, color: goldLight), const SizedBox(width: 8), Expanded(child: Text(text, style: const TextStyle(color: Color(0xFFE6DDF0))))]),
+                    child: Row(children: [SizedBox(width: 18, child: FaIcon(icon, size: 14, color: goldLight)), const SizedBox(width: 8), Expanded(child: Text(text, style: const TextStyle(color: Color(0xFFE6DDF0))))]),
                   ),
                 if (current.result != null) ...[
                   const SizedBox(height: 6),

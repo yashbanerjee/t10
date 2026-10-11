@@ -169,21 +169,31 @@ class _FigureGrid extends StatelessWidget {
       crossAxisSpacing: 8,
       childAspectRatio: 1.35,
       children: [
-        for (final (label, value) in figures)
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xEB33085E), Color(0xEB4B0C66)]),
-              border: Border.all(color: gold.withValues(alpha: 0.25)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(label.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 9.5, fontWeight: FontWeight.w800, letterSpacing: 0.7)),
-                GoldText(value, style: displayStyle(24), maxLines: 1),
-              ],
+        for (final (index, (label, value)) in figures.indexed)
+          Reveal(
+            delay: Duration(milliseconds: 40 * index),
+            scale: 0.85,
+            offset: 14,
+            child: GlowFrame(
+              radius: 14,
+              width: 1.2,
+              colors: softRim,
+              bloom: 0.3,
+              offset: index * 0.17,
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xEB33085E), Color(0xEB4B0C66)]),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(label.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 9.5, fontWeight: FontWeight.w800, letterSpacing: 0.7)),
+                    CountUp(value, builder: (text) => GoldText(text, style: displayStyle(24), maxLines: 1)),
+                  ],
+                ),
+              ),
             ),
           ),
       ],
