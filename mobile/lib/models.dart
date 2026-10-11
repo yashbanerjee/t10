@@ -680,6 +680,88 @@ class PlayerReport {
   }
 }
 
+class Franchise {
+  const Franchise({required this.name, required this.slug, required this.league, this.logoUrl, this.facebook, this.instagram, this.x, this.youtube});
+
+  final String name;
+  final String slug;
+  final String league;
+  final String? logoUrl;
+  final String? facebook;
+  final String? instagram;
+  final String? x;
+  final String? youtube;
+
+  bool get isHome => slug == 'united-tigers';
+
+  List<(String, String)> get channels => [
+        if (facebook != null) ('Facebook', facebook!),
+        if (instagram != null) ('Instagram', instagram!),
+        if (x != null) ('X', x!),
+        if (youtube != null) ('YouTube', youtube!),
+      ];
+
+  factory Franchise.fromJson(Map<String, dynamic> json) => Franchise(
+        name: json['name']?.toString() ?? '',
+        slug: json['slug']?.toString() ?? '',
+        league: json['league']?.toString() ?? '',
+        logoUrl: asText(json['logoUrl']),
+        facebook: asText(json['facebook']),
+        instagram: asText(json['instagram']),
+        x: asText(json['x']),
+        youtube: asText(json['youtube']),
+      );
+
+  static List<Franchise> list(dynamic value) => asList(value).map(Franchise.fromJson).toList();
+}
+
+class TrackedItem {
+  const TrackedItem({required this.productName, required this.color, required this.size, required this.quantity, required this.unitPrice});
+
+  final String productName;
+  final String color;
+  final String size;
+  final int quantity;
+  final double unitPrice;
+
+  factory TrackedItem.fromJson(Map<String, dynamic> json) => TrackedItem(
+        productName: json['productName']?.toString() ?? '',
+        color: json['color']?.toString() ?? '',
+        size: json['size']?.toString() ?? '',
+        quantity: asInt(json['quantity']),
+        unitPrice: asDouble(json['unitPrice']),
+      );
+}
+
+/// What the public tracking endpoint reveals about a booking: no address or contact details.
+class TrackedOrder {
+  const TrackedOrder({required this.number, required this.status, required this.paymentStatus, required this.name, required this.total, this.createdAt, this.paidAt, this.city, this.country, this.items = const []});
+
+  final String number;
+  final String status;
+  final String paymentStatus;
+  final String name;
+  final double total;
+  final DateTime? createdAt;
+  final DateTime? paidAt;
+  final String? city;
+  final String? country;
+  final List<TrackedItem> items;
+
+  factory TrackedOrder.fromJson(Map<String, dynamic> json) => TrackedOrder(
+        number: json['number']?.toString() ?? '',
+        status: json['status']?.toString() ?? 'PENDING',
+        paymentStatus: json['paymentStatus']?.toString() ?? 'UNPAID',
+        name: json['name']?.toString() ?? '',
+        total: asDouble(json['total']),
+        createdAt: asDate(json['createdAt']),
+        paidAt: asDate(json['paidAt']),
+        city: asText(json['city']),
+        country: asText(json['country']),
+        items: asList(json['items']).map(TrackedItem.fromJson).toList(),
+      );
+}
+
 class ClubCatalog {
   const ClubCatalog({
     this.players = const [],

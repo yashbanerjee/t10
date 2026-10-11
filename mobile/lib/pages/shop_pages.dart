@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:united_tigers/cart_store.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
+import 'package:united_tigers/pages/club_pages.dart';
 import 'package:united_tigers/scope.dart';
 import 'package:united_tigers/widgets.dart';
 
@@ -37,7 +38,10 @@ class ShopPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final api = ClubScope.of(context).api;
     return Scaffold(
-      appBar: const ClubAppBar('Shop', actions: [_BagButton()]),
+      appBar: ClubAppBar('Shop', actions: [
+        IconButton(tooltip: 'Track your booking', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TrackOrderPage())), icon: const Icon(Icons.local_shipping_rounded, color: goldLight)),
+        const _BagButton(),
+      ]),
       body: AnimatedBuilder(
         animation: api,
         builder: (context, _) {

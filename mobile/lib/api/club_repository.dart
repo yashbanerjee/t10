@@ -1,4 +1,5 @@
 import 'package:united_tigers/api/api_client.dart';
+import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
 
 /// Loads the same public collections the website reads for each screen.
@@ -62,6 +63,13 @@ class ClubRepository {
   Future<List<ClubRecord>> records() async => ClubRecord.list(await client.get('/api/v1/records'));
 
   Future<List<PointsRow>> points() async => PointsRow.list(await client.get('/api/v1/points'));
+
+  Future<List<Franchise>> franchises() async => Franchise.list(await client.get('/api/v1/franchises'));
+
+  Future<TrackedOrder> trackOrder(String number, String email) async => TrackedOrder.fromJson(_map(await client.postData('/api/v1/shop/track', {'number': number, 'email': email})));
+
+  /// Returns the brochure link when the club has uploaded one.
+  Future<String?> partnerRequest(Map<String, dynamic> payload) async => asText(_map(await client.postData('/api/v1/partners/brochure', payload))['brochureUrl']);
 
   Future<String> contact(Map<String, dynamic> payload) => client.post('/api/v1/contact', payload);
 

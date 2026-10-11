@@ -52,7 +52,7 @@ class HomePage extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
               children: [
                 SizedBox(
-                  height: 460,
+                  height: HomeHero.heroHeight(context),
                   child: OverflowBox(
                     minWidth: MediaQuery.sizeOf(context).width,
                     maxWidth: MediaQuery.sizeOf(context).width,
@@ -311,15 +311,18 @@ class HomeHero extends StatelessWidget {
     '/images/hero-cast/05-confident.webp',
   ];
 
+  static double heroHeight(BuildContext context) => 460 + MediaQuery.paddingOf(context).top;
+
   @override
   Widget build(BuildContext context) {
     final api = ClubScope.of(context).api;
     final art = banner.isImage ? api.media(banner.image) : api.media('/images/hero-art.webp');
     final title = displayStyle(42, height: 0.9);
+    final inset = MediaQuery.paddingOf(context).top;
     return GestureDetector(
       onTap: () => openClubPath(context, banner.ctaHref),
       child: SizedBox(
-        height: 460,
+        height: heroHeight(context),
         width: double.infinity,
         child: Stack(
           clipBehavior: Clip.hardEdge,
@@ -349,7 +352,7 @@ class HomeHero extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              padding: EdgeInsets.fromLTRB(16, 16 + inset, 16, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -361,15 +364,39 @@ class HomeHero extends StatelessWidget {
                   Text(banner.tagline, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.6)),
                   const SizedBox(height: 10),
                   const GoldText('United', style: TextStyle(fontSize: 28, fontStyle: FontStyle.italic, fontWeight: FontWeight.w800, height: 0.95)),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 28),
-                    child: GoldText('AS ONE', style: TextStyle(fontSize: 15, fontStyle: FontStyle.italic, fontWeight: FontWeight.w800)),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 28),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Positioned(
+                          left: -12,
+                          right: -8,
+                          bottom: 2,
+                          height: 7,
+                          child: Transform(
+                            transform: Matrix4.skewX(-0.38),
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(3),
+                                gradient: const LinearGradient(colors: [Color(0x00FB3BA6), Color(0xFFFB3BA6), pink], stops: [0, 0.22, 1]),
+                                boxShadow: [BoxShadow(color: const Color(0xFFFB3BA6).withValues(alpha: 0.6), blurRadius: 8)],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4),
+                          child: GoldText('AS ONE', style: TextStyle(fontSize: 15, fontStyle: FontStyle.italic, fontWeight: FontWeight.w800)),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
             Positioned(
-              top: 124,
+              top: 124 + inset,
               right: 10,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,

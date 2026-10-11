@@ -127,4 +127,10 @@ class ClubApi extends ChangeNotifier {
   Future<List<ClubRecord>> fetchRecords() => repository.records();
 
   Future<List<PointsRow>> fetchPoints() => repository.points();
+
+  Future<List<Franchise>> fetchFranchises() => repository.franchises();
+
+  Future<TrackedOrder> trackOrder(String number, String email) => repository.trackOrder(number, email);
+
+  Future<String?> requestPartnerBrochure(Map<String, dynamic> payload) => repository.partnerRequest(payload);
 }

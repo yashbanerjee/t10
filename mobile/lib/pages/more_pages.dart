@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:united_tigers/api/api_client.dart';
 import 'package:united_tigers/pages/admin_pages.dart';
+import 'package:united_tigers/pages/club_pages.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
 import 'package:united_tigers/pages/fan_pages.dart';
@@ -22,6 +23,17 @@ void openSiteLink(BuildContext context, String href) {
   if (path.startsWith('/terms')) return _push(context, const LegalScreen(kind: LegalKind.terms));
   if (path.startsWith('/vote') || path.startsWith('/polls') || path.startsWith('/contests')) return _push(context, const VotePage());
   if (path.startsWith('/news')) return _push(context, const NewsPage());
+  if (path.startsWith('/become-a-partner')) return _push(context, const BecomePartnerPage());
+  if (path.startsWith('/partners')) return _push(context, const PartnersPage());
+  if (path.startsWith('/track-order')) return _push(context, const TrackOrderPage());
+  if (path.startsWith('/franchises') || path.startsWith('/about')) return _push(context, const FranchisesPage());
+  if (path.startsWith('/draft')) return _push(context, const DraftPage());
+  if (path.startsWith('/season')) return _push(context, const SeasonPage());
+  if (path.startsWith('/gallery')) return _push(context, const GalleryPage());
+  if (path.startsWith('/updates')) return _push(context, const UpdatesPage());
+  if (path.startsWith('/stats')) return _push(context, const StatsPage());
+  if (path.startsWith('/records')) return _push(context, const RecordsPage());
+  if (path.startsWith('/points-table')) return _push(context, const PointsPage());
   openExternal('${ClubScope.of(context).api.base}$path');
 }
 
@@ -52,6 +64,10 @@ class MorePage extends StatelessWidget {
       _MenuItem(Icons.celebration_rounded, 'Fan Zone', 'Coming soon', FanZonePage()),
       _MenuItem(Icons.handshake_rounded, 'Partners', 'Our sponsors', PartnersPage()),
       _MenuItem(Icons.auto_stories_rounded, 'Our story', 'About the club', AboutPage()),
+      _MenuItem(Icons.calendar_month_rounded, '2026 season', 'Results & leaders', SeasonPage()),
+      _MenuItem(Icons.video_library_rounded, 'Player draft', 'Draft night', DraftPage()),
+      _MenuItem(Icons.shield_rounded, 'Franchises', 'The Tigers family', FranchisesPage()),
+      _MenuItem(Icons.local_shipping_rounded, 'Track booking', 'Shop orders', TrackOrderPage()),
     ];
     return AnimatedBuilder(
       animation: api,
@@ -73,6 +89,7 @@ class MorePage extends StatelessWidget {
             ),
             const SectionTitle('Get in touch'),
             _MenuRow(icon: Icons.mail_rounded, title: 'Contact', subtitle: 'Partnership, media & supporter enquiries', onTap: () => _push(context, const ContactPage())),
+            _MenuRow(icon: Icons.workspace_premium_rounded, title: 'Become a partner', subtitle: 'Get the partnership brochure', onTap: () => _push(context, const BecomePartnerPage())),
             _MenuRow(icon: Icons.privacy_tip_rounded, title: 'Privacy', subtitle: 'How we handle your information', onTap: () => _push(context, const LegalScreen(kind: LegalKind.privacy))),
             _MenuRow(icon: Icons.gavel_rounded, title: 'Terms', subtitle: 'Using the app, shop, polls & contests', onTap: () => _push(context, const LegalScreen(kind: LegalKind.terms))),
             const SectionTitle('Club team'),
@@ -544,6 +561,24 @@ class PartnersPage extends StatelessWidget {
                         )
                         .toList(),
                   ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
+            child: ClubCard(
+              highlight: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Eyebrow('Build with the Tigers'),
+                  const SizedBox(height: 6),
+                  GoldText('LET’S MAKE A MARK.', style: displayStyle(28)),
+                  const SizedBox(height: 4),
+                  const Text('Talk to our team about 2026 partnership opportunities.', style: TextStyle(color: Color(0xFFE6DDF0))),
+                  const SizedBox(height: 12),
+                  FilledButton(style: goldButtonStyle(), onPressed: () => _push(context, const BecomePartnerPage()), child: const Text('BECOME A PARTNER')),
+                ],
+              ),
+            ),
           ),
         ],
       ),
