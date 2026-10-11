@@ -7,7 +7,7 @@ import { AlertTriangle, Check } from "lucide-react";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { ContestEntries, OptionEditor, OrderSummary, VariantEditor, type EntryRow, type OptionDraft, type OrderView, type VariantDraft } from "@/components/CatalogFields";
 import { adminSections, type Field } from "@/components/AdminWorkspace";
-import { flattenCareer } from "@/lib/career-record";
+import { flattenCareer, t20FormKeys } from "@/lib/career-record";
 import { flattenLinks } from "@/lib/player-links";
 import { describeIssues } from "@/lib/admin-validation";
 
@@ -45,6 +45,7 @@ function PlayerCareerFields({ fields, form, role, onChange }: { fields: Field[];
     <section className="catalog-block"><div className="catalog-block-head"><h3>Career batting</h3></div><p className="catalog-note">Lifetime figures from before this season. Matches, runs, strike rate and best score appear on the player’s career tab and are added to scorecard totals.</p><CareerInputs fields={visible("batting")} form={form} onChange={onChange} /></section>
     {bowling.length > 0 && <section className="catalog-block"><div className="catalog-block-head"><h3>Career bowling</h3></div><p className="catalog-note">Shown for bowlers and all-rounders. Use cricket overs such as 48.2 and best figures such as 4/18.</p><CareerInputs fields={bowling} form={form} onChange={onChange} /></section>}
     <section className="catalog-block"><div className="catalog-block-head"><h3>Career fielding</h3></div><p className="catalog-note">Catches, run outs and stumpings from the player’s career.</p><CareerInputs fields={visible("fielding")} form={form} onChange={onChange} /></section>
+    <section className="catalog-block"><div className="catalog-block-head"><h3>T20 International career</h3></div><p className="catalog-note">The player’s T20I record for his country. Shown in its own section on the profile and never added to United Tigers figures. Leave every box empty if he has not played a T20I.</p><CareerInputs fields={visible("t20")} form={form} onChange={onChange} /></section>
   </>;
 }
 
@@ -91,7 +92,7 @@ export function AdminRecordForm({ section, recordId }: { section: string; record
         if (!response.ok) throw new Error(result.message || "Could not load this record.");
         if (!cancelled) {
           const item = result.data ?? {};
-          setForm(formFromRecord(section, definition.fields ?? [], section === "players" ? { ...item, ...flattenCareer(item.careerRecord), ...flattenLinks(item.socialLinks) } : item));
+          setForm(formFromRecord(section, definition.fields ?? [], section === "players" ? { ...item, ...flattenCareer(item.careerRecord), ...flattenCareer(item.t20Record, t20FormKeys), ...flattenLinks(item.socialLinks) } : item));
           if (section === "products" && Array.isArray(item.variants)) setVariants(item.variants.map((variant: VariantDraft & { stock: number; price: number | null }) => ({ color: variant.color, size: variant.size, stock: String(variant.stock ?? 0), price: variant.price == null ? "" : String(variant.price), image: variant.image || "" })));
           if (section === "polls" && Array.isArray(item.options)) setOptions(item.options.map((option: OptionDraft) => ({ id: option.id, label: option.label })));
           if (section === "contests" && Array.isArray(item.entries)) setEntries(item.entries);

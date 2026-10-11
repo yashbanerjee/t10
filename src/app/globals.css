@@ -3021,6 +3021,10 @@ a.partner-item:hover {
   padding-top: 0;
 }
 
+.t20-career-section {
+  border-top: 1px solid var(--border);
+}
+
 .article-hero {
   padding: 30px 0 44px;
   border-bottom: 1px solid var(--border);

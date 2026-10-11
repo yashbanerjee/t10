@@ -73,16 +73,30 @@ export const careerFormKeys = {
   careerStumpings: "stumpings",
 } as const;
 
-export function careerFromForm(body: Record<string, unknown>) {
+/** Form field key → stored T20 International record key. Kept apart from the club career record. */
+export const t20FormKeys = Object.fromEntries(Object.entries(careerFormKeys).map(([formKey, recordKey]) => [formKey.replace(/^career/, "t20"), recordKey])) as Record<string, keyof CareerRecord>;
+
+function recordFromForm(body: Record<string, unknown>, keys: Record<string, string>, jsonKey: string) {
   const record: Record<string, unknown> = {};
-  for (const [formKey, recordKey] of Object.entries(careerFormKeys)) {
-    if (formKey in body) record[recordKey] = body[formKey];
+  let touched = false;
+  for (const [formKey, recordKey] of Object.entries(keys)) {
+    if (formKey in body) { record[recordKey] = body[formKey]; touched = true; }
     delete body[formKey];
   }
-  if ("careerRecord" in body && body.careerRecord && typeof body.careerRecord === "object") {
-    Object.assign(record, body.careerRecord);
+  if (jsonKey in body) {
+    touched = true;
+    if (body[jsonKey] && typeof body[jsonKey] === "object") Object.assign(record, body[jsonKey]);
   }
-  return cleanCareer(record);
+  return { ...cleanCareer(record), touched };
+}
+
+export function careerFromForm(body: Record<string, unknown>) {
+  return recordFromForm(body, careerFormKeys, "careerRecord");
+}
+
+/** `touched` is false when the request carried no T20 fields, so the stored record is left alone. */
+export function t20FromForm(body: Record<string, unknown>) {
+  return recordFromForm(body, t20FormKeys, "t20Record");
 }
 
 export function cleanCareer(value: unknown): { ok: true; value: CareerRecord | null } | { ok: false; message: string } {
@@ -98,10 +112,10 @@ export function readCareer(value: unknown): CareerRecord | null {
   return cleaned.ok ? cleaned.value : null;
 }
 
-export function flattenCareer(record: unknown) {
+export function flattenCareer(record: unknown, keys: Record<string, string> = careerFormKeys) {
   const cleaned = readCareer(record);
   const values: Record<string, string | number> = {};
-  for (const [formKey, recordKey] of Object.entries(careerFormKeys)) {
+  for (const [formKey, recordKey] of Object.entries(keys)) {
     const item = cleaned?.[recordKey as keyof CareerRecord];
     values[formKey] = item == null ? "" : item;
   }

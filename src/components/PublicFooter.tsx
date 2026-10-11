@@ -33,7 +33,7 @@ export function PublicFooter() {
     <div className="footer-bottom wrap">
       <span>© 2026 United Tigers. All rights reserved.</span>
       <span className="footer-league"><LeagueMark height={13} /><i aria-hidden="true" />UNITED ARAB EMIRATES</span>
-      <div className="footer-legal"><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/admin/login">Club admin</Link></div>
+      <div className="footer-legal"><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></div>
     </div>
   </footer>;
 }
