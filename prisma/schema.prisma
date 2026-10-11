@@ -178,6 +178,7 @@ model Player {
   socialLinks   Json?
   careerRecord  Json?
   t20Record     Json?
+  allT20Record  Json?
   teamId        String
   team          Team                  @relation(fields: [teamId], references: [id])
   seasons       PlayerSeason[]

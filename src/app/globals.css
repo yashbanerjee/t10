@@ -3025,6 +3025,17 @@ a.partner-item:hover {
   border-top: 1px solid var(--border);
 }
 
+.t20-record + .t20-record {
+  margin-top: 34px;
+}
+
+.t20-record-title {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1;
+}
+
 .article-hero {
   padding: 30px 0 44px;
   border-bottom: 1px solid var(--border);
@@ -3350,6 +3361,23 @@ a.partner-item:hover {
 
 .stats-footnote {
   margin-top: 13px;
+}
+
+.stats-table td.stats-no-record {
+  color: #b6a7c4;
+  font-style: italic;
+}
+
+.stats-no-record button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #EEC873;
+  font: inherit;
+  font-style: normal;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .leader-cards {

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { getSession, hasPermission, recordAudit } from "@/lib/auth";
 import { failure, success } from "@/lib/api";
 import { normalizeSiteSetting, redactSettingRow, redactSettingValue, SECRET_SETTING_KEYS } from "@/lib/site-settings";
-import { careerFromForm, careerRecordSchema, t20FromForm } from "@/lib/career-record";
+import { allT20FromForm, careerFromForm, careerRecordSchema, t20FromForm } from "@/lib/career-record";
 import { linksFromForm } from "@/lib/player-links";
 import { personName, playerTextRules } from "@/lib/admin-validation";
 import { getHomeTeam, getTeams, opponentIdentity, setHomeTeam } from "@/lib/teams";
@@ -24,7 +24,7 @@ const permissions: Record<string, { read: string; write: string }> = {
 };
 const assetUrl = z.string().trim().max(1000).regex(/^(https?:\/\/|\/)/).nullable().optional();
 const optionalInt = (min: number, max: number) => z.union([z.null(), z.coerce.number().int().min(min).max(max)]).optional();
-const playerInput = z.object({ fullName: personName(100), ...playerTextRules, slug: z.string().trim().max(120).nullable().optional(), role: z.enum(["BATTER", "BOWLER", "ALL_ROUNDER", "WICKETKEEPER"]).nullable().optional(), profileImage: assetUrl, coverImage: assetUrl, bio: z.string().trim().max(2500).nullable().optional(), isCaptain: z.boolean().optional(), isViceCaptain: z.boolean().optional(), isIconPlayer: z.boolean().optional(), isActive: z.boolean().optional(), careerRecord: careerRecordSchema.nullable().optional(), t20Record: careerRecordSchema.nullable().optional() });
+const playerInput = z.object({ fullName: personName(100), ...playerTextRules, slug: z.string().trim().max(120).nullable().optional(), role: z.enum(["BATTER", "BOWLER", "ALL_ROUNDER", "WICKETKEEPER"]).nullable().optional(), profileImage: assetUrl, coverImage: assetUrl, bio: z.string().trim().max(2500).nullable().optional(), isCaptain: z.boolean().optional(), isViceCaptain: z.boolean().optional(), isIconPlayer: z.boolean().optional(), isActive: z.boolean().optional(), careerRecord: careerRecordSchema.nullable().optional(), t20Record: careerRecordSchema.nullable().optional(), allT20Record: careerRecordSchema.nullable().optional() });
 const articleInput = z.object({ title: z.string().trim().min(3).max(180), slug: z.string().trim().max(200).optional(), excerpt: z.string().trim().min(3).max(400), content: z.string().trim().min(3).max(50000), category: z.string().trim().min(2).max(50), authorName: z.string().trim().max(100).nullable().optional(), coverImage: assetUrl, seoTitle: z.string().trim().max(180).nullable().optional(), seoDescription: z.string().trim().max(300).nullable().optional(), status: z.enum(["DRAFT", "PUBLISHED", "SCHEDULED"]).default("DRAFT"), publishedAt: z.string().datetime().nullable().optional(), isFeatured: z.boolean().optional() });
 const updateInput = z.object({ title: z.string().trim().min(3).max(180), slug: z.string().trim().max(200).optional(), description: z.string().trim().min(3).max(500), content: z.string().trim().max(10000).nullable().optional(), category: z.enum(["TRAINING", "MATCH_DAY", "TEAM_NEWS", "PLAYER_NEWS", "ANNOUNCEMENT", "BEHIND_THE_SCENES", "MEDIA", "TRAVEL", "COMMUNITY"]), image: assetUrl, video: assetUrl, publishedAt: z.string().datetime(), isFeatured: z.boolean().optional(), isPublished: z.boolean().optional() });
 const optionalLabel = (max: number) => z.union([z.null(), z.literal(""), z.string().trim().max(max)]).optional();
@@ -104,10 +104,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const incoming = body && typeof body === "object" && !Array.isArray(body) ? { ...body as Record<string, unknown> } : {};
       const career = careerFromForm(incoming); if (!career.ok) return failure(career.message, 400);
       const t20 = t20FromForm(incoming); if (!t20.ok) return failure(t20.message, 400);
+      const allT20 = allT20FromForm(incoming); if (!allT20.ok) return failure(allT20.message, 400);
       const links = linksFromForm(incoming); if (!links.ok) return failure(links.message, 400);
-      const parsed = playerInput.safeParse({ ...incoming, careerRecord: career.value, t20Record: t20.value }); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
+      const parsed = playerInput.safeParse({ ...incoming, careerRecord: career.value, t20Record: t20.value, allT20Record: allT20.value }); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
       const team = await getHomeTeam(); if (!team) return failure("Create our team in the Teams section before adding players", 409);
-      const { dateOfBirth, slug, displayOrder, careerRecord, t20Record, ...playerFields } = parsed.data; result = await prisma.player.create({ data: { ...playerFields, careerRecord: careerRecord ?? undefined, t20Record: t20Record ?? undefined, socialLinks: links.value ?? undefined, dateOfBirth: dateOfBirth ? new Date(`${dateOfBirth}T00:00:00.000Z`) : null, displayOrder: displayOrder ?? 0, slug: slug ? slugify(slug) : slugify(parsed.data.fullName), teamId: team.id } });
+      const { dateOfBirth, slug, displayOrder, careerRecord, t20Record, allT20Record, ...playerFields } = parsed.data; result = await prisma.player.create({ data: { ...playerFields, careerRecord: careerRecord ?? undefined, t20Record: t20Record ?? undefined, allT20Record: allT20Record ?? undefined, socialLinks: links.value ?? undefined, dateOfBirth: dateOfBirth ? new Date(`${dateOfBirth}T00:00:00.000Z`) : null, displayOrder: displayOrder ?? 0, slug: slug ? slugify(slug) : slugify(parsed.data.fullName), teamId: team.id } });
     } else if (collection === "staff") {
       const parsed = z.object({ fullName: z.string().trim().min(2).max(100), title: z.string().trim().min(2).max(100), category: z.enum(["COACHING", "SUPPORT", "MANAGEMENT"]), bio: z.string().trim().max(2500).nullable().optional(), profileImage: assetUrl, displayOrder: optionalInt(0, 9999), isActive: z.boolean().optional() }).safeParse(body);
       if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);

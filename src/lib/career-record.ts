@@ -73,8 +73,11 @@ export const careerFormKeys = {
   careerStumpings: "stumpings",
 } as const;
 
+const prefixedKeys = (prefix: string) => Object.fromEntries(Object.entries(careerFormKeys).map(([formKey, recordKey]) => [formKey.replace(/^career/, prefix), recordKey])) as Record<string, keyof CareerRecord>;
 /** Form field key → stored T20 International record key. Kept apart from the club career record. */
-export const t20FormKeys = Object.fromEntries(Object.entries(careerFormKeys).map(([formKey, recordKey]) => [formKey.replace(/^career/, "t20"), recordKey])) as Record<string, keyof CareerRecord>;
+export const t20FormKeys = prefixedKeys("t20");
+/** Form field key → stored record key for every recognised T20 the player has played. */
+export const allT20FormKeys = prefixedKeys("allT20");
 
 function recordFromForm(body: Record<string, unknown>, keys: Record<string, string>, jsonKey: string) {
   const record: Record<string, unknown> = {};
@@ -97,6 +100,10 @@ export function careerFromForm(body: Record<string, unknown>) {
 /** `touched` is false when the request carried no T20 fields, so the stored record is left alone. */
 export function t20FromForm(body: Record<string, unknown>) {
   return recordFromForm(body, t20FormKeys, "t20Record");
+}
+
+export function allT20FromForm(body: Record<string, unknown>) {
+  return recordFromForm(body, allT20FormKeys, "allT20Record");
 }
 
 export function cleanCareer(value: unknown): { ok: true; value: CareerRecord | null } | { ok: false; message: string } {

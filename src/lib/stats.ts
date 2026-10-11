@@ -110,6 +110,18 @@ export function mergeCareer(scorecard: ReturnType<typeof summarize>, record: Car
   };
 }
 
+/** A saved T20 record in the same keys as `summarize`, for the leaderboard. */
+function t20Stats(record: CareerRecord | null) {
+  if (!record) return null;
+  return {
+    matches: record.matches ?? null, innings: record.innings ?? null, runs: record.runs ?? null, average: record.average ?? null, strikeRate: record.strikeRate ?? null,
+    highestScore: record.bestScore ?? null, fifties: record.fifties ?? null, hundreds: record.hundreds ?? null, fours: record.fours ?? null, sixes: record.sixes ?? null,
+    bowlingOvers: record.overs ?? null, bowlingRuns: record.bowlingRuns ?? null, wickets: record.wickets ?? null, economy: record.economy ?? null,
+    bowlingAverage: record.bowlingAverage ?? null, bowlingStrikeRate: record.bowlingStrikeRate ?? null, bestBowling: record.bestBowling ?? null,
+    catches: record.catches ?? null, runOuts: record.runOuts ?? null, stumpings: record.stumpings ?? null,
+  };
+}
+
 export async function getStatsLeaderboard(year = 2026) {
   try {
     const players = await prisma.player.findMany({
@@ -121,7 +133,7 @@ export async function getStatsLeaderboard(year = 2026) {
       },
       orderBy: [{ displayOrder: "asc" }, { fullName: "asc" }],
     });
-    return players.map((player) => ({ player, stats: summarize(player.batting as unknown as Batting[], player.bowling as unknown as Bowling[], player.fielding, year) }));
+    return players.map((player) => ({ player: { fullName: player.fullName, slug: player.slug }, stats: summarize(player.batting as unknown as Batting[], player.bowling as unknown as Bowling[], player.fielding, year), t20: t20Stats(readCareer(player.t20Record)), allT20: t20Stats(readCareer(player.allT20Record)) }));
   } catch {
     return [];
   }
