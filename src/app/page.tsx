@@ -84,7 +84,7 @@ export default async function HomePage() {
           <span className="poster-league"><LeagueMark height={24} priority /></span>
           <h1 className="poster-title"><span>{banner.title}</span><strong>{banner.accent}</strong></h1>
           <span className="poster-tagline">{banner.tagline.split(/\s+/).map((word, index) => <span key={`${word}-${index}`}>{word}</span>)}</span>
-          <span className="poster-unity" aria-hidden="true"><b>United</b><em>as one</em></span>
+          <span className="poster-unity" aria-hidden="true"><b>United</b><em><span>as one</span></em></span>
         </span>
         {banner.roar ? <span className="poster-roar">{banner.roar.split(/\s+/).map((word, index) => <span key={`${word}-${index}`}>{word}</span>)}</span> : null}
         <span className="poster-crest">
