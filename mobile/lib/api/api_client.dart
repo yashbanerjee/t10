@@ -1,7 +1,4 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
-
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,11 +13,9 @@ class ApiClient {
   String base;
   String? token;
 
-  static String _defaultBase() {
-    if (kIsWeb) return 'http://localhost:3001';
-    if (Platform.isAndroid) return 'http://10.0.2.2:3001';
-    return 'http://localhost:3001';
-  }
+  static const liveBase = 'https://unitedtigers.ae';
+
+  static String _defaultBase() => liveBase;
 
   Future<void> loadSavedBase() async {
     try {

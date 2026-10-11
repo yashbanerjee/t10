@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:united_tigers/api/api_client.dart';
 import 'package:united_tigers/pages/admin_pages.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
@@ -776,7 +777,7 @@ class _ServerPageState extends State<ServerPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Point the app at the United Tigers API. On an Android emulator, use http://10.0.2.2:3001. On a phone, use your computer’s address, or https://unitedtigers.ae for the live site.', style: TextStyle(color: Color(0xFFE6DDF0))),
+          const Text('The app uses the live United Tigers site, https://unitedtigers.ae. For local testing, point it at your computer instead (an Android emulator reaches it at http://10.0.2.2:3001).', style: TextStyle(color: Color(0xFFE6DDF0))),
           const SizedBox(height: 16),
           ClubField(label: 'API address', controller: address!),
           FilledButton(
@@ -785,6 +786,14 @@ class _ServerPageState extends State<ServerPage> {
               if (context.mounted) Navigator.pop(context);
             },
             child: const Text('SAVE'),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton(
+            onPressed: () async {
+              await ClubScope.of(context).api.setBase(ApiClient.liveBase);
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('USE LIVE SITE'),
           ),
         ],
       ),
