@@ -127,6 +127,7 @@ class _ClubShellState extends State<ClubShell> {
       animation: cart,
       builder: (context, _) => Scaffold(
         backgroundColor: Colors.transparent,
+        extendBody: true,
         body: AnimatedSwitcher(
           duration: const Duration(milliseconds: 320),
           switchInCurve: Curves.easeOutCubic,

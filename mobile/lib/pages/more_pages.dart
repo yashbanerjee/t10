@@ -75,7 +75,7 @@ class MorePage extends StatelessWidget {
       builder: (context, _) => Scaffold(
         appBar: const ClubAppBar('United Tigers'),
         body: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+          padding: EdgeInsets.fromLTRB(16, 18, 16, 28 + navClearance(context)),
           children: [
             Row(children: [for (final item in featured) Expanded(child: Padding(padding: EdgeInsets.only(right: item == featured.first ? 6 : 0, left: item == featured.first ? 0 : 6), child: _FeatureTile(item: item)))]),
             const SectionTitle('The club'),

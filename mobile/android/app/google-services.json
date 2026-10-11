@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "851590629201",
+    "project_id": "united-tigers",
+    "storage_bucket": "united-tigers.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:851590629201:android:812b73a975fc810ab53570",
+        "android_client_info": {
+          "package_name": "com.vedha.united.tigers"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMx_t_2Fd79LRTEC4Hc0eNmZXOj_2-p_E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

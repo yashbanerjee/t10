@@ -76,7 +76,7 @@ class _MatchList extends StatelessWidget {
       child: matches.isEmpty
           ? ListView(padding: const EdgeInsets.all(16), children: [EmptyPanel(title: 'Nothing here yet', message: empty)])
           : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 28 + navClearance(context)),
               itemCount: matches.length,
               separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (context, index) {

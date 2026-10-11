@@ -51,7 +51,7 @@ class HomePage extends StatelessWidget {
           body: RefreshIndicator(
             onRefresh: api.refresh,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 24 + navClearance(context)),
               children: [
                 SizedBox(
                   height: HomeHero.heroHeight(context),

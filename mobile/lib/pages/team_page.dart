@@ -67,6 +67,7 @@ class TeamPage extends StatelessWidget {
                   )
                 else
                   const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                SliverToBoxAdapter(child: SizedBox(height: navClearance(context))),
               ],
             ),
           ),

@@ -57,7 +57,7 @@ class ShopPage extends StatelessWidget {
                   const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.all(16), child: EmptyPanel(title: 'Kit coming soon', message: 'Kit will appear here.')))
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+                    padding: EdgeInsets.fromLTRB(16, 18, 16, 28 + navClearance(context)),
                     sliver: SliverGrid(
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.64),
                       delegate: SliverChildBuilderDelegate((context, index) {

@@ -43,6 +43,9 @@ const headerGradient = LinearGradient(
   colors: [Color(0xF52B074D), Color(0xEB23053E)],
 );
 
+/// Room to leave under a tab page's last item so it can scroll clear of the floating navigation bar.
+double navClearance(BuildContext context) => MediaQuery.paddingOf(context).bottom;
+
 TextStyle displayStyle(double size, {Color? color, double height = 0.95, double spacing = 0.5}) =>
     TextStyle(fontFamily: display, fontSize: size, height: height, letterSpacing: spacing, color: color);
 
