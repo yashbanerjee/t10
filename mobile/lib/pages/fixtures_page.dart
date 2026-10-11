@@ -34,31 +34,101 @@ class FixturesPage extends StatelessWidget {
   }
 }
 
-String _short(String name) {
-  final words = name.split(RegExp(r'\s+')).where((word) => word.isNotEmpty).toList();
-  if (words.length > 1) return words.take(3).map((word) => word[0]).join().toUpperCase();
-  return name.length <= 3 ? name.toUpperCase() : name.substring(0, 3).toUpperCase();
-}
+/// Fixture times are published in Gulf Standard Time, as on the website.
+DateTime _gst(DateTime date) => date.toUtc().add(const Duration(hours: 4));
 
-class _TeamMark extends StatelessWidget {
-  const _TeamMark({required this.label, this.ours = false});
-  final String label;
-  final bool ours;
+const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+class _FixtureCrest extends StatelessWidget {
+  const _FixtureCrest({this.asset, this.url});
+  final String? asset;
+  final String? url;
 
   @override
   Widget build(BuildContext context) {
+    final api = ClubScope.of(context).api;
     return Container(
-      width: 58,
-      height: 58,
-      padding: EdgeInsets.all(ours ? 6 : 0),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: ours ? goldSurface : const LinearGradient(colors: [Color(0xFF6A1290), Color(0xFF2A0750)]),
-        border: Border.all(color: gold.withValues(alpha: 0.5)),
-        boxShadow: [BoxShadow(color: (ours ? gold : pink).withValues(alpha: 0.25), blurRadius: 14)],
+      width: 34,
+      height: 34,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
+      child: asset != null
+          ? Image.asset(asset!, fit: BoxFit.contain)
+          : Image.network(api.media(url), fit: BoxFit.contain, errorBuilder: (_, _, _) => const SizedBox.shrink()),
+    );
+  }
+}
+
+class _FixtureRow extends StatelessWidget {
+  const _FixtureRow({required this.match, required this.lead});
+  final ClubMatch match;
+  final bool lead;
+
+  @override
+  Widget build(BuildContext context) {
+    final date = match.date == null ? null : _gst(match.date!);
+    final score = match.innings.map((entry) => '${entry.runs}/${entry.wickets}').join(' · ');
+    final team = displayStyle(19, color: Colors.white, height: 1.05);
+    return ClubCard(
+      highlight: lead,
+      padding: const EdgeInsets.all(14),
+      onTap: () => openMatch(context, match),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 72,
+            child: date == null
+                ? Text('TBC', style: displayStyle(19, color: goldLight))
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${date.day.toString().padLeft(2, '0')} ${_months[date.month - 1]}', style: displayStyle(19, color: goldLight, height: 1.1)),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')} GST',
+                        style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12, letterSpacing: 1.1),
+                      ),
+                      if (match.isLive || lead) ...[const SizedBox(height: 8), StatusChip(match.statusLabel)],
+                    ],
+                  ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    Row(mainAxisSize: MainAxisSize.min, children: [const _FixtureCrest(asset: 'assets/brand/united-tigers.png'), const SizedBox(width: 8), Text('UNITED TIGERS', style: team)]),
+                    const Text('vs', style: TextStyle(color: Color(0xFF8E7F9F), fontSize: 14, fontWeight: FontWeight.w900)),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (match.opponentLogoUrl != null) ...[_FixtureCrest(url: match.opponentLogoUrl), const SizedBox(width: 8)],
+                        Flexible(child: Text(match.opponent.toUpperCase(), style: team)),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${match.competition ?? 'Abu Dhabi T10'} · ${match.venueName ?? 'Venue TBC'}',
+                  style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 13),
+                ),
+                if (score.isNotEmpty) ...[const SizedBox(height: 8), GoldText(score, style: displayStyle(20))],
+                if (match.result != null) ...[
+                  const SizedBox(height: 4),
+                  Text(match.result!, style: TextStyle(color: match.won ? const Color(0xFF6BE3A0) : Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
-      alignment: Alignment.center,
-      child: ours ? Image.asset('assets/brand/united-tigers.png', fit: BoxFit.contain) : Text(label, style: displayStyle(20, color: Colors.white)),
     );
   }
 }
@@ -82,43 +152,7 @@ class _MatchList extends StatelessWidget {
               separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final match = matches[index];
-                return ClubCard(
-                  highlight: match.isLive || (!match.isCompleted && index == 0),
-                  onTap: () => openMatch(context, match),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          StatusChip(match.statusLabel),
-                          const Spacer(),
-                          Flexible(child: Text(match.competition ?? 'Abu Dhabi T10', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: goldLight, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6))),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          const _TeamMark(label: 'UT', ours: true),
-                          Expanded(
-                            child: Column(
-                              children: [
-                                GoldText('VS', style: displayStyle(26)),
-                                if (match.innings.isNotEmpty) Text(match.scoreLine, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
-                              ],
-                            ),
-                          ),
-                          _TeamMark(label: match.opponentShort ?? _short(match.opponent)),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text('UNITED TIGERS v ${match.opponent.toUpperCase()}', style: displayStyle(19, color: Colors.white, height: 1.05)),
-                      const SizedBox(height: 6),
-                      Row(children: [const SizedBox(width: 16, child: FaIcon(FontAwesomeIcons.calendarDays, size: 13, color: goldLight)), const SizedBox(width: 6), Expanded(child: Text(when(match.date), style: const TextStyle(color: Color(0xFFD9CCE6), fontSize: 13)))]),
-                      if (match.venueName != null) Row(children: [const SizedBox(width: 16, child: FaIcon(FontAwesomeIcons.locationDot, size: 13, color: goldLight)), const SizedBox(width: 6), Expanded(child: Text(match.venueName!, style: const TextStyle(color: Color(0xFFD9CCE6), fontSize: 13)))]),
-                      if (match.result != null) ...[const SizedBox(height: 8), Text(match.result!, style: TextStyle(color: match.won ? const Color(0xFF6BE3A0) : Colors.white, fontWeight: FontWeight.w800))],
-                    ],
-                  ),
-                );
+                return _FixtureRow(match: match, lead: match.isLive || (!match.isCompleted && index == 0));
               },
             ),
     );

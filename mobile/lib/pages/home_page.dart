@@ -1,4 +1,8 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
@@ -61,11 +65,13 @@ class HomePage extends StatelessWidget {
                     child: HomeHero(banner: api.banner),
                   ),
                 ),
-                const SectionTitle('NEXT MATCH'),
-                if (upcoming == null)
-                  const ClubCard(child: Text('The next fixture will appear here as soon as it is confirmed.'))
-                else
-                  Reveal(child: ClubCard(highlight: true, onTap: () => openMatch(context, upcoming), child: _NextMatch(match: upcoming))),
+                if (upcoming == null) ...[
+                  const SectionTitle('NEXT MATCH'),
+                  const ClubCard(child: Text('The next fixture will appear here as soon as it is confirmed.')),
+                ] else ...[
+                  const SizedBox(height: 22),
+                  ClubCard(highlight: true, padding: EdgeInsets.zero, onTap: () => openMatch(context, upcoming), child: _NextMatch(match: upcoming)),
+                ],
                 SectionTitle('MEET OUR TIGERS', action: 'View all', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamPage()))),
                 SizedBox(
                   height: 214,
@@ -268,17 +274,19 @@ class HomePage extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SectionTitle('OUR PARTNERS'),
-                ClubCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Wrap(spacing: 8, runSpacing: 8, children: catalog.sponsors.map((sponsor) => Chip(label: Text(sponsor.name))).toList()),
-                      const SizedBox(height: 8),
-                      const Text('CRICKET UNITES PEOPLE', style: TextStyle(color: gold, fontWeight: FontWeight.w800, letterSpacing: 1)),
-                    ],
+                if (catalog.sponsors.isNotEmpty) ...[
+                  SectionTitle('OUR PARTNERS', action: 'View all', onAction: () => openClubPath(context, '/partners')),
+                  SizedBox(
+                    height: 96,
+                    child: OverflowBox(
+                      minWidth: MediaQuery.sizeOf(context).width,
+                      maxWidth: MediaQuery.sizeOf(context).width,
+                      child: _PartnerMarquee(sponsors: catalog.sponsors),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 4),
+                  const Center(child: Text('CRICKET UNITES PEOPLE', style: TextStyle(color: goldLight, fontStyle: FontStyle.italic, fontWeight: FontWeight.w800, letterSpacing: 1.6, fontSize: 12))),
+                ],
                 const HomeFranchises(),
               ],
             ),
@@ -616,6 +624,8 @@ void openClubPath(BuildContext context, String href) {
     page = const NewsPage();
   } else if (path.startsWith('/gallery')) {
     page = const GalleryPage();
+  } else if (path.startsWith('/partners')) {
+    page = const PartnersPage();
   } else {
     page = const TeamPage();
   }
@@ -672,34 +682,52 @@ Player? _faceFor(String label, List<Player> players) {
   return null;
 }
 
+/// Team badge for the next-match card: our gold tiger on a purple disc, rivals' crests on white, as on the website.
 class _Crest extends StatelessWidget {
-  const _Crest(this.mark, this.name, this.place, {this.ours = false});
-  final String mark;
+  const _Crest({required this.name, required this.place, this.logo, this.short, this.ours = false, this.phase = 0});
   final String name;
   final String place;
+  final String? logo;
+  final String? short;
   final bool ours;
+  final double phase;
 
   @override
   Widget build(BuildContext context) {
+    final api = ClubScope.of(context).api;
+    final initials = Text(_mark(short ?? name), style: displayStyle(24, color: goldLight));
+    final onWhite = !ours && logo != null;
     return Expanded(
       child: Column(
         children: [
-          Container(
-            width: 58,
-            height: 58,
-            padding: EdgeInsets.all(ours ? 6 : 0),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: ours ? goldSurface : const LinearGradient(colors: [Color(0xFF6A1290), Color(0xFF2A0750)]),
-              border: Border.all(color: gold.withValues(alpha: 0.5)),
-              boxShadow: [BoxShadow(color: (ours ? gold : pink).withValues(alpha: 0.25), blurRadius: 14)],
+          Floating(
+            phase: phase,
+            distance: 3,
+            period: const Duration(milliseconds: 3200),
+            child: Container(
+              width: 84,
+              height: 84,
+              padding: EdgeInsets.all(ours ? 16 : 11),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: onWhite
+                    ? const RadialGradient(center: Alignment(-0.36, -0.44), colors: [Colors.white, Color(0xFFEBE6F2)])
+                    : const RadialGradient(center: Alignment(-0.36, -0.44), colors: [Color(0xFF8830DB), Color(0xFF460B7D), Color(0xFF310858)], stops: [0, 0.58, 1]),
+                border: Border.all(color: gold, width: 2),
+                boxShadow: [BoxShadow(color: pink.withValues(alpha: 0.45), blurRadius: 24)],
+              ),
+              child: ours
+                  ? Image.asset('assets/brand/tiger-gold.png', fit: BoxFit.contain)
+                  : logo == null
+                      ? initials
+                      : Image.network(api.media(logo), fit: BoxFit.contain, errorBuilder: (_, _, _) => initials),
             ),
-            child: ours ? Image.asset('assets/brand/united-tigers.png', fit: BoxFit.contain) : Text(mark, style: displayStyle(20, color: Colors.white)),
           ),
-          const SizedBox(height: 8),
-          Text(name.toUpperCase(), maxLines: 2, textAlign: TextAlign.center, style: displayStyle(16, color: Colors.white, height: 1)),
-          Text(place, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12)),
+          const SizedBox(height: 10),
+          Text(name, maxLines: 2, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800, height: 1.15)),
+          const SizedBox(height: 2),
+          Text(place, style: const TextStyle(color: Color(0x9EFFFFFF), fontSize: 13)),
         ],
       ),
     );
@@ -709,31 +737,341 @@ class _Crest extends StatelessWidget {
 String _mark(String name) {
   final compact = name.replaceAll(RegExp(r'[^A-Za-z]'), '');
   if (compact.isEmpty) return 'UT';
-  return compact.substring(0, compact.length < 2 ? 1 : 2).toUpperCase();
+  return compact.substring(0, compact.length < 3 ? compact.length : 3).toUpperCase();
 }
 
-class _NextMatch extends StatelessWidget {
+String _day(DateTime date) {
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  final local = date.toLocal();
+  return '${days[local.weekday - 1]} ${local.day} ${months[local.month - 1]}';
+}
+
+String _time(DateTime date) {
+  final local = date.toLocal();
+  final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
+  return '$hour:${local.minute.toString().padLeft(2, '0')} ${local.hour >= 12 ? 'PM' : 'AM'}';
+}
+
+class _NextMatch extends StatefulWidget {
   const _NextMatch({required this.match});
   final ClubMatch match;
 
   @override
+  State<_NextMatch> createState() => _NextMatchState();
+}
+
+class _NextMatchState extends State<_NextMatch> {
+  Timer? _tick;
+
+  @override
+  void initState() {
+    super.initState();
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final match = widget.match;
+    final date = match.date;
+    final left = date?.difference(DateTime.now());
+    final counting = left != null && !left.isNegative && !match.isLive;
+    if (!counting) _tick?.cancel();
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Stack(
+        children: [
+          Positioned.fill(child: RepaintBoundary(child: CustomPaint(painter: _MatchNightPainter(GlowClock.of(context))))),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    if (match.isLive) ...[const Pulse(child: SizedBox.square(dimension: 8)), const SizedBox(width: 8)],
+                    Text(match.isLive ? 'LIVE NOW' : 'NEXT MATCH', style: displayStyle(18, color: goldLight)),
+                    const Spacer(),
+                    SizedBox(
+                      width: 96,
+                      height: 26,
+                      child: Image.asset('assets/brand/abu-dhabi-t10-landscape-white.png', fit: BoxFit.contain, alignment: Alignment.centerRight),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: RadialGradient(radius: 0.75, colors: [pink.withValues(alpha: 0.28), Colors.transparent]),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const _Crest(name: 'United Tigers', place: 'Abu Dhabi', ours: true),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 32),
+                          child: Pulse(speed: 8, child: Text('VS', style: displayStyle(18, color: pink).copyWith(fontWeight: FontWeight.w800))),
+                        ),
+                        _Crest(name: match.opponent, place: match.venueCity ?? 'Abu Dhabi', logo: match.opponentLogoUrl, short: match.opponentShort, phase: 0.5),
+                      ],
+                    ),
+                  ],
+                ),
+                if (counting) ...[const SizedBox(height: 16), _Countdown(left)],
+                const SizedBox(height: 14),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 14,
+                  runSpacing: 4,
+                  children: [
+                    if (date != null) _MetaItem(FontAwesomeIcons.calendarDays, '${_day(date)} · ${_time(date)}'),
+                    _MetaItem(FontAwesomeIcons.locationDot, match.venueName ?? match.venueCity ?? 'Abu Dhabi'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetaItem extends StatelessWidget {
+  const _MetaItem(this.icon, this.text);
+  final FaIconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          children: [
-            const _Crest('UT', 'United Tigers', 'Abu Dhabi', ours: true),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: GoldText('VS', style: displayStyle(28))),
-            _Crest(_mark(match.opponentShort ?? match.opponent), match.opponent, match.venueCity ?? 'Away'),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Row(children: [const SizedBox(width: 16, child: FaIcon(FontAwesomeIcons.calendarDays, size: 13, color: goldLight)), const SizedBox(width: 6), Expanded(child: Text(when(match.date)))]),
-        Row(children: [const SizedBox(width: 16, child: FaIcon(FontAwesomeIcons.locationDot, size: 13, color: goldLight)), const SizedBox(width: 6), Expanded(child: Text(match.venueName ?? 'Venue TBC'))]),
-        const SizedBox(height: 12),
-        const Row(children: [Text('MATCH CENTRE', style: TextStyle(color: goldLight, fontWeight: FontWeight.w900, letterSpacing: 1)), SizedBox(width: 6), Icon(Icons.arrow_outward, size: 15, color: goldLight)]),
+        FaIcon(icon, size: 13, color: gold),
+        const SizedBox(width: 6),
+        Flexible(child: Text(text, style: const TextStyle(color: Color(0xFFD3C8E6), fontSize: 14))),
       ],
+    );
+  }
+}
+
+class _Countdown extends StatelessWidget {
+  const _Countdown(this.left);
+  final Duration left;
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = [
+      (left.inDays, 'DAYS'),
+      (left.inHours % 24, 'HRS'),
+      (left.inMinutes % 60, 'MIN'),
+      (left.inSeconds % 60, 'SEC'),
+    ];
+    return Row(
+      children: [
+        for (final (index, part) in parts.indexed) ...[
+          if (index > 0) const SizedBox(width: 8),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0x66160326),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: gold.withValues(alpha: 0.35)),
+              ),
+              child: Column(
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 280),
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(position: Tween(begin: const Offset(0, -0.35), end: Offset.zero).animate(animation), child: child),
+                    ),
+                    child: GoldText(part.$1.toString().padLeft(2, '0'), key: ValueKey(part.$1), style: displayStyle(24, height: 1)),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(part.$2, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Match-night backdrop: gold and magenta floodlights drift across the card while a light beam sweeps through.
+class _MatchNightPainter extends CustomPainter {
+  _MatchNightPainter(this.clock) : super(repaint: clock);
+  final Animation<double> clock;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final a = clock.value * 2 * math.pi;
+    final w = size.width;
+    final h = size.height;
+    void glow(Offset centre, double radius, Color colour) {
+      canvas.drawCircle(
+        centre,
+        radius,
+        Paint()..shader = RadialGradient(colors: [colour, colour.withValues(alpha: 0)]).createShader(Rect.fromCircle(center: centre, radius: radius)),
+      );
+    }
+
+    glow(Offset(w * (0.5 + 0.38 * math.sin(a * 2)), h * (0.02 + 0.06 * math.cos(a * 3))), w * 0.62, const Color(0x40F4C35A));
+    glow(Offset(w * (0.5 - 0.42 * math.sin(a * 3 + 1)), h * (0.98 - 0.05 * math.sin(a * 2))), w * 0.66, const Color(0x45FF7A2E));
+    glow(Offset(w * (0.5 + 0.3 * math.cos(a * 4)), h * 0.42), w * 0.42, pink.withValues(alpha: 0.16 + 0.08 * math.sin(a * 6)));
+
+    final sweep = (clock.value * 4) % 1;
+    if (sweep < 0.45) {
+      final x = -w * 0.4 + (w * 1.8) * (sweep / 0.45);
+      final beam = Path()
+        ..moveTo(x, 0)
+        ..lineTo(x + w * 0.16, 0)
+        ..lineTo(x - w * 0.14, h)
+        ..lineTo(x - w * 0.3, h)
+        ..close();
+      canvas.drawPath(
+        beam,
+        Paint()
+          ..shader = LinearGradient(colors: [Colors.white.withValues(alpha: 0), Colors.white.withValues(alpha: 0.07), Colors.white.withValues(alpha: 0)])
+              .createShader(Rect.fromLTWH(x - w * 0.3, 0, w * 0.46, h)),
+      );
+    }
+
+    final stars = Paint()..color = goldLight;
+    for (var i = 0; i < 14; i++) {
+      final seed = i * 37.0;
+      final twinkle = (math.sin(a * (3 + i % 4) + seed) + 1) / 2;
+      stars.color = goldLight.withValues(alpha: 0.12 + 0.45 * twinkle);
+      canvas.drawCircle(Offset((seed * 13.7) % w, (seed * 7.3 + h * 0.1) % h), 0.8 + twinkle, stars);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_MatchNightPainter oldDelegate) => oldDelegate.clock != clock;
+}
+
+/// Website-style partner rail: an endless, auto-scrolling strip of sponsor logos that the fan can also swipe.
+class _PartnerMarquee extends StatefulWidget {
+  const _PartnerMarquee({required this.sponsors});
+  final List<Sponsor> sponsors;
+
+  @override
+  State<_PartnerMarquee> createState() => _PartnerMarqueeState();
+}
+
+class _PartnerMarqueeState extends State<_PartnerMarquee> with SingleTickerProviderStateMixin {
+  static const _speed = 34.0;
+  final _scroll = ScrollController();
+  late final Ticker _ticker = createTicker(_advance);
+  Duration _last = Duration.zero;
+  bool _held = false;
+  Timer? _resume;
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker.start();
+  }
+
+  void _advance(Duration elapsed) {
+    final step = (elapsed - _last).inMicroseconds / 1e6;
+    _last = elapsed;
+    if (_held || !_scroll.hasClients) return;
+    _scroll.jumpTo(_scroll.offset + _speed * step);
+  }
+
+  bool _onScroll(ScrollNotification note) {
+    if (note is ScrollStartNotification && note.dragDetails != null) {
+      _resume?.cancel();
+      _held = true;
+    } else if (note is ScrollEndNotification && _held) {
+      _resume?.cancel();
+      _resume = Timer(const Duration(seconds: 2), () => _held = false);
+    }
+    return false;
+  }
+
+  @override
+  void dispose() {
+    _resume?.cancel();
+    _ticker.dispose();
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final api = ClubScope.of(context).api;
+    final sponsors = widget.sponsors;
+    return SizedBox(
+      height: 96,
+      child: ShaderMask(
+        blendMode: BlendMode.dstIn,
+        shaderCallback: (rect) => const LinearGradient(
+          colors: [Colors.transparent, Colors.black, Colors.black, Colors.transparent],
+          stops: [0, 0.08, 0.92, 1],
+        ).createShader(rect),
+        child: NotificationListener<ScrollNotification>(
+          onNotification: _onScroll,
+          child: ListView.builder(
+            controller: _scroll,
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemBuilder: (context, index) {
+              final sponsor = sponsors[index % sponsors.length];
+              final logo = sponsor.logoUrl;
+              final fallback = Center(child: Text(sponsor.name, textAlign: TextAlign.center, maxLines: 2, style: displayStyle(14, color: goldLight)));
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Pressable(
+                  onTap: sponsor.website == null ? () => openClubPath(context, '/partners') : () => openExternal(sponsor.website!),
+                  child: SizedBox(
+                    width: 132,
+                    child: Column(
+                      children: [
+                        Container(
+                          height: 64,
+                          width: 132,
+                          clipBehavior: Clip.antiAlias,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: const Color(0x33160326),
+                            border: Border.all(color: gold.withValues(alpha: 0.3)),
+                          ),
+                          child: logo == null ? fallback : Image.network(api.media(logo), fit: BoxFit.contain, errorBuilder: (_, _, _) => fallback),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          sponsor.name.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: goldLight, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.2),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
     );
   }
 }

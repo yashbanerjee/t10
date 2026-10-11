@@ -196,52 +196,63 @@ class _HomeFranchisesState extends State<HomeFranchises> {
           children: [
             SectionTitle('Our franchises', action: 'About', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FranchisesPage()))),
             for (final franchise in home) _FranchiseCard(franchise: franchise),
-            LayoutBuilder(
-              builder: (context, box) {
-                final width = (box.maxWidth - 12) / 2;
-                return Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    for (final (index, franchise) in others.indexed)
-                      SizedBox(
-                        width: width,
-                        height: 222,
-                        child: Reveal(
-                          delay: Duration(milliseconds: 70 * (index % 2)),
-                          child: GlowFrame(
-                            radius: 16,
-                            width: 1.2,
-                            colors: softRim,
-                            bloom: 0.3,
-                            offset: index * 0.19,
-                            child: Container(
-                              padding: const EdgeInsets.fromLTRB(10, 14, 10, 10),
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xEB33085E), Color(0xEB2A0750), Color(0xEB4B0C66)]),
-                              ),
-                              child: Column(
-                                children: [
-                                  _FranchiseCrest(franchise: franchise, size: 62),
-                                  const SizedBox(height: 10),
-                                  Text(franchise.league.toUpperCase(), maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: const TextStyle(color: goldLight, fontSize: 9.5, fontWeight: FontWeight.w800, letterSpacing: 0.8, height: 1.2)),
-                                  const SizedBox(height: 2),
-                                  Text(franchise.name.toUpperCase(), maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: displayStyle(16.5, color: Colors.white, height: 1.02)),
-                                  const Spacer(),
-                                  if (franchise.channels.isNotEmpty) _FranchiseSocials(franchise: franchise, size: 12, center: true),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
+            for (var start = 0; start < others.length; start += 2)
+              Padding(
+                padding: EdgeInsets.only(bottom: start + 2 < others.length ? 12 : 0),
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: _FranchiseTile(franchise: others[start], index: start)),
+                      const SizedBox(width: 12),
+                      Expanded(child: start + 1 < others.length ? _FranchiseTile(franchise: others[start + 1], index: start + 1) : const SizedBox.shrink()),
+                    ],
+                  ),
+                ),
+              ),
           ],
         );
       },
+    );
+  }
+}
+
+class _FranchiseTile extends StatelessWidget {
+  const _FranchiseTile({required this.franchise, required this.index});
+  final Franchise franchise;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    return Reveal(
+      delay: Duration(milliseconds: 70 * (index % 2)),
+      child: GlowFrame(
+        radius: 16,
+        width: 1.2,
+        colors: softRim,
+        bloom: 0.3,
+        offset: index * 0.19,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xEB33085E), Color(0xEB2A0750), Color(0xEB4B0C66)]),
+          ),
+          child: Column(
+            children: [
+              _FranchiseCrest(franchise: franchise, size: 56),
+              const SizedBox(height: 8),
+              Text(franchise.league.toUpperCase(), maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: const TextStyle(color: goldLight, fontSize: 9.5, fontWeight: FontWeight.w800, letterSpacing: 0.8, height: 1.2)),
+              const SizedBox(height: 2),
+              Text(franchise.name.toUpperCase(), maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: displayStyle(16.5, color: Colors.white, height: 1.02)),
+              if (franchise.channels.isNotEmpty) ...[
+                const Spacer(),
+                const SizedBox(height: 10),
+                _FranchiseSocials(franchise: franchise, size: 12, center: true),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

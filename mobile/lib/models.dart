@@ -174,6 +174,14 @@ class InningsCard {
       );
 }
 
+const _leagueTeams = {'arabian aces', 'emirates eagles', 'royal desert champions', 'uae bulls', 'united tigers', 'yas lions'};
+
+/// Logo path for a 2026 Abu Dhabi T10 franchise, matching the website's league identity sheet.
+String? _leagueLogo(String? name) {
+  final key = (name ?? '').toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
+  return _leagueTeams.contains(key) ? '/brand/teams/${key.replaceAll(' ', '-')}.png' : null;
+}
+
 class ClubMatch {
   const ClubMatch({
     required this.slug,
@@ -181,6 +189,7 @@ class ClubMatch {
     required this.status,
     required this.opponent,
     this.opponentShort,
+    this.opponentLogoUrl,
     this.competition,
     this.venueName,
     this.venueCity,
@@ -194,6 +203,9 @@ class ClubMatch {
   final String status;
   final String opponent;
   final String? opponentShort;
+
+  /// Club crest from Admin, or the league identity sheet path for the six franchises.
+  final String? opponentLogoUrl;
   final String? competition;
   final String? venueName;
   final String? venueCity;
@@ -224,6 +236,7 @@ class ClubMatch {
       status: json['status']?.toString() ?? 'UPCOMING',
       opponent: json['opponent']?.toString() ?? 'Opponent',
       opponentShort: asText(json['opponentShort']),
+      opponentLogoUrl: asText(json['opponentLogoUrl']) ?? _leagueLogo(json['opponent']?.toString()),
       competition: asText(json['competition']),
       venueName: asText(venue['name']),
       venueCity: asText(venue['city']),
