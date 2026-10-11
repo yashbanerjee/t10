@@ -13,6 +13,16 @@ String when(DateTime? date) {
   return '${local.day.toString().padLeft(2, '0')} ${months[local.month - 1]} ${local.year} · $hour:$minute $suffix';
 }
 
+/// Fixture day and time in Gulf Standard Time, as the website publishes them: "Wed 07 Oct · 8:30 PM".
+String matchWhen(DateTime date) {
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  final gst = date.toUtc().add(const Duration(hours: 4));
+  final hour = gst.hour % 12 == 0 ? 12 : gst.hour % 12;
+  final minute = gst.minute.toString().padLeft(2, '0');
+  return '${days[gst.weekday - 1]} ${gst.day.toString().padLeft(2, '0')} ${months[gst.month - 1]} · $hour:$minute ${gst.hour >= 12 ? 'PM' : 'AM'}';
+}
+
 String roleLabel(String? role) {
   final value = (role ?? '').trim();
   if (value.isEmpty) return 'Player';

@@ -13,6 +13,7 @@ import 'package:united_tigers/pages/more_pages.dart';
 import 'package:united_tigers/pages/shop_pages.dart';
 import 'package:united_tigers/pages/team_page.dart';
 import 'package:united_tigers/scope.dart';
+import 'package:united_tigers/video.dart';
 import 'package:united_tigers/widgets.dart';
 
 class HomePage extends StatelessWidget {
@@ -151,14 +152,17 @@ class HomePage extends StatelessWidget {
                                   final tile = Stack(
                                     fit: StackFit.expand,
                                     children: [
-                                      RemoteImage(api.media(item.isVideo ? null : item.mediaUrl), height: 140, radius: 0),
+                                      if (item.isVideo) VideoThumb(api.media(item.mediaUrl)) else RemoteImage(api.media(item.mediaUrl), height: 140, radius: 0),
                                       if (item.isVideo) const Center(child: Floating(distance: 3, child: FaIcon(FontAwesomeIcons.circlePlay, color: goldLight, size: 38))),
                                       Positioned(left: 8, bottom: 8, child: MediaBadge(label: item.isVideo ? 'VIDEO' : 'PHOTO')),
                                     ],
                                   );
-                                  return index == 0
-                                      ? GlowFrame(radius: 14, colors: neonPink, offset: 0.4, child: tile)
-                                      : ClipRRect(borderRadius: BorderRadius.circular(12), child: tile);
+                                  return GestureDetector(
+                                    onTap: () => openGallery(context, clips, item, api.media),
+                                    child: index == 0
+                                        ? GlowFrame(radius: 14, colors: neonPink, offset: 0.4, child: tile)
+                                        : ClipRRect(borderRadius: BorderRadius.circular(12), child: tile),
+                                  );
                                 }),
                               ),
                               const SizedBox(height: 6),
@@ -187,14 +191,20 @@ class HomePage extends StatelessWidget {
                       scrollDirection: Axis.horizontal,
                       itemCount: moments.length,
                       separatorBuilder: (_, _) => const SizedBox(width: 8),
-                      itemBuilder: (context, index) => SizedBox(
-                        width: 160,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            RemoteImage(api.media(moments[index].mediaUrl), height: 120),
-                            Positioned(left: 8, bottom: 8, child: MediaBadge(label: moments[index].isVideo ? 'VIDEO' : 'PHOTO')),
-                          ],
+                      itemBuilder: (context, index) => GestureDetector(
+                        onTap: () => openGallery(context, moments, moments[index], api.media),
+                        child: SizedBox(
+                          width: 160,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              if (moments[index].isVideo)
+                                ClipRRect(borderRadius: BorderRadius.circular(14), child: VideoThumb(api.media(moments[index].mediaUrl)))
+                              else
+                                RemoteImage(api.media(moments[index].mediaUrl), height: 120),
+                              Positioned(left: 8, bottom: 8, child: MediaBadge(label: moments[index].isVideo ? 'VIDEO' : 'PHOTO')),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -695,8 +705,6 @@ class _Crest extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final api = ClubScope.of(context).api;
-    final initials = Text(_mark(short ?? name), style: displayStyle(24, color: goldLight));
-    final onWhite = !ours && logo != null;
     return Expanded(
       child: Column(
         children: [
@@ -704,25 +712,7 @@ class _Crest extends StatelessWidget {
             phase: phase,
             distance: 3,
             period: const Duration(milliseconds: 3200),
-            child: Container(
-              width: 84,
-              height: 84,
-              padding: EdgeInsets.all(ours ? 16 : 11),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: onWhite
-                    ? const RadialGradient(center: Alignment(-0.36, -0.44), colors: [Colors.white, Color(0xFFEBE6F2)])
-                    : const RadialGradient(center: Alignment(-0.36, -0.44), colors: [Color(0xFF8830DB), Color(0xFF460B7D), Color(0xFF310858)], stops: [0, 0.58, 1]),
-                border: Border.all(color: gold, width: 2),
-                boxShadow: [BoxShadow(color: pink.withValues(alpha: 0.45), blurRadius: 24)],
-              ),
-              child: ours
-                  ? Image.asset('assets/brand/tiger-gold.png', fit: BoxFit.contain)
-                  : logo == null
-                      ? initials
-                      : Image.network(api.media(logo), fit: BoxFit.contain, errorBuilder: (_, _, _) => initials),
-            ),
+            child: TeamCrest(ours: ours, logo: logo == null ? null : api.media(logo), label: _mark(short ?? name)),
           ),
           const SizedBox(height: 10),
           Text(name, maxLines: 2, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800, height: 1.15)),
@@ -738,19 +728,6 @@ String _mark(String name) {
   final compact = name.replaceAll(RegExp(r'[^A-Za-z]'), '');
   if (compact.isEmpty) return 'UT';
   return compact.substring(0, compact.length < 3 ? compact.length : 3).toUpperCase();
-}
-
-String _day(DateTime date) {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  final local = date.toLocal();
-  return '${days[local.weekday - 1]} ${local.day} ${months[local.month - 1]}';
-}
-
-String _time(DateTime date) {
-  final local = date.toLocal();
-  final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
-  return '$hour:${local.minute.toString().padLeft(2, '0')} ${local.hour >= 12 ? 'PM' : 'AM'}';
 }
 
 class _NextMatch extends StatefulWidget {
@@ -825,45 +802,19 @@ class _NextMatchState extends State<_NextMatch> {
                           padding: const EdgeInsets.only(top: 32),
                           child: Pulse(speed: 8, child: Text('VS', style: displayStyle(18, color: pink).copyWith(fontWeight: FontWeight.w800))),
                         ),
-                        _Crest(name: match.opponent, place: match.venueCity ?? 'Abu Dhabi', logo: match.opponentLogoUrl, short: match.opponentShort, phase: 0.5),
+                        _Crest(name: match.opponent, place: 'Abu Dhabi', logo: match.opponentLogoUrl, short: match.opponentShort, phase: 0.5),
                       ],
                     ),
                   ],
                 ),
                 if (counting) ...[const SizedBox(height: 16), _Countdown(left)],
                 const SizedBox(height: 14),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 14,
-                  runSpacing: 4,
-                  children: [
-                    if (date != null) _MetaItem(FontAwesomeIcons.calendarDays, '${_day(date)} · ${_time(date)}'),
-                    _MetaItem(FontAwesomeIcons.locationDot, match.venueName ?? match.venueCity ?? 'Abu Dhabi'),
-                  ],
-                ),
+                MatchMeta(date: date),
               ],
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _MetaItem extends StatelessWidget {
-  const _MetaItem(this.icon, this.text);
-  final FaIconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FaIcon(icon, size: 13, color: gold),
-        const SizedBox(width: 6),
-        Flexible(child: Text(text, style: const TextStyle(color: Color(0xFFD3C8E6), fontSize: 14))),
-      ],
     );
   }
 }
@@ -1045,16 +996,17 @@ class _PartnerMarqueeState extends State<_PartnerMarquee> with SingleTickerProvi
                     width: 132,
                     child: Column(
                       children: [
-                        Container(
+                        SizedBox(
                           height: 64,
                           width: 132,
-                          clipBehavior: Clip.antiAlias,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: const Color(0x33160326),
-                            border: Border.all(color: gold.withValues(alpha: 0.3)),
-                          ),
-                          child: logo == null ? fallback : Image.network(api.media(logo), fit: BoxFit.contain, errorBuilder: (_, _, _) => fallback),
+                          child: logo == null
+                              ? fallback
+                              : Center(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: Image.network(api.media(logo), fit: BoxFit.contain, errorBuilder: (_, _, _) => fallback),
+                                  ),
+                                ),
                         ),
                         const SizedBox(height: 8),
                         Text(

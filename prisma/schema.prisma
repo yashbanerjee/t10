@@ -679,6 +679,24 @@ model ContestEntry {
   @@index([contestId, createdAt])
 }
 
+/// API and app failures reported by the mobile app, shown under Admin > App errors.
+model AppErrorLog {
+  id         String   @id @default(cuid())
+  platform   String
+  appVersion String?
+  screen     String?
+  method     String?
+  endpoint   String?
+  statusCode Int?
+  message    String
+  details    String?
+  device     String?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model AuditLog {
   id        String   @id @default(cuid())
   userId    String?

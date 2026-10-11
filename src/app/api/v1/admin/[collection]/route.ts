@@ -19,7 +19,7 @@ const permissions: Record<string, { read: string; write: string }> = {
   products: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, polls: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
   contests: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, orders: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
   pollVotes: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, contestEntries: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
-  settings: { read: "SETTINGS_WRITE", write: "SETTINGS_WRITE" }, audit: { read: "AUDIT_READ", write: "AUDIT_READ" },
+  settings: { read: "SETTINGS_WRITE", write: "SETTINGS_WRITE" }, audit: { read: "AUDIT_READ", write: "AUDIT_READ" }, appErrors: { read: "AUDIT_READ", write: "AUDIT_READ" },
   franchises: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
 };
 const assetUrl = z.string().trim().max(1000).regex(/^(https?:\/\/|\/)/).nullable().optional();
@@ -70,9 +70,10 @@ async function list(collection: string) {
     contests: { include: { _count: { select: { entries: true } } }, orderBy: { createdAt: "desc" } },
     orders: { include: { items: true }, orderBy: { createdAt: "desc" } },
     settings: { orderBy: { key: "asc" } }, audit: { include: { user: { select: { email: true, name: true } } }, orderBy: { createdAt: "desc" }, take: 100 },
+    appErrors: { orderBy: { createdAt: "desc" }, take: 500 },
   };
   if (!(collection in args)) throw new Error("NOT_FOUND");
-  const model = collection === "contacts" || collection === "partnerRequests" ? "contactSubmission" : collection === "updates" ? "teamUpdate" : collection === "news" ? "newsArticle" : collection === "gallery" ? "gallery" : collection === "sponsors" ? "sponsor" : collection === "franchises" ? "franchise" : collection === "records" ? "teamRecord" : collection === "settings" ? "siteSetting" : collection === "audit" ? "auditLog" : collection === "matches" ? "match" : collection === "staff" ? "staffMember" : collection === "products" ? "product" : collection === "polls" ? "poll" : collection === "contests" ? "contest" : collection === "orders" ? "order" : "player";
+  const model = collection === "contacts" || collection === "partnerRequests" ? "contactSubmission" : collection === "updates" ? "teamUpdate" : collection === "news" ? "newsArticle" : collection === "gallery" ? "gallery" : collection === "sponsors" ? "sponsor" : collection === "franchises" ? "franchise" : collection === "records" ? "teamRecord" : collection === "settings" ? "siteSetting" : collection === "audit" ? "auditLog" : collection === "appErrors" ? "appErrorLog" : collection === "matches" ? "match" : collection === "staff" ? "staffMember" : collection === "products" ? "product" : collection === "polls" ? "poll" : collection === "contests" ? "contest" : collection === "orders" ? "order" : "player";
   const rows = await db[model].findMany(args[collection]) as Array<Record<string, unknown>>;
   return rows.map((row) => {
     const count = row._count as { variants?: number; votes?: number; options?: number; entries?: number } | undefined;

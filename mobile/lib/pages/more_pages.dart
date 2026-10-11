@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:united_tigers/api/api_client.dart';
-import 'package:united_tigers/pages/admin_pages.dart';
 import 'package:united_tigers/pages/club_pages.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
 import 'package:united_tigers/pages/fan_pages.dart';
 import 'package:united_tigers/pages/team_page.dart';
 import 'package:united_tigers/scope.dart';
+import 'package:united_tigers/video.dart';
 import 'package:united_tigers/widgets.dart';
 
 void _push(BuildContext context, Widget page) => Navigator.push(context, MaterialPageRoute(builder: (_) => page));
@@ -79,13 +79,11 @@ class MorePage extends StatelessWidget {
           children: [
             Row(children: [for (final item in featured) Expanded(child: Padding(padding: EdgeInsets.only(right: item == featured.first ? 6 : 0, left: item == featured.first ? 0 : 6), child: _FeatureTile(item: item)))]),
             const SectionTitle('The club'),
-            GridView.count(
-              crossAxisCount: 2,
+            GridView(
               shrinkWrap: true,
+              padding: EdgeInsets.zero,
               physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 1.55,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 10, crossAxisSpacing: 10, mainAxisExtent: 70),
               children: [for (final item in club) _MenuTile(item: item)],
             ),
             const SectionTitle('Get in touch'),
@@ -119,20 +117,34 @@ class _FeatureTile extends StatelessWidget {
           width: 1.8,
           offset: item.title.length * 0.13,
           child: Container(
-            height: 128,
-            padding: const EdgeInsets.all(14),
+            height: 84,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: const BoxDecoration(gradient: accentGradient),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
                 Floating(
                   distance: 3,
                   phase: item.title.length * 0.1 % 1,
-                  child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(12)), child: FaIcon(item.icon, color: Colors.white, size: 20)),
+                  child: Container(
+                    width: 42,
+                    height: 42,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(12)),
+                    child: FaIcon(item.icon, color: Colors.white, size: 19),
+                  ),
                 ),
-                const Spacer(),
-                Text(item.title.toUpperCase(), style: displayStyle(21, color: Colors.white)),
-                Text(item.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFFBE3F1), fontSize: 12)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(item.title.toUpperCase(), maxLines: 1, style: displayStyle(18, color: Colors.white, height: 1.1))),
+                      const SizedBox(height: 2),
+                      Text(item.subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFFBE3F1), fontSize: 11, height: 1.2)),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -149,16 +161,36 @@ class _MenuTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClubCard(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       onTap: () => _push(context, item.page),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ShaderMask(blendMode: BlendMode.srcIn, shaderCallback: (bounds) => goldSurface.createShader(bounds), child: FaIcon(item.icon, size: 22)),
-          const Spacer(),
-          Text(item.title.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: displayStyle(17, color: Colors.white)),
-          Text(item.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 11.5)),
-        ],
+      child: SizedBox.expand(
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.06),
+                border: Border.all(color: gold.withValues(alpha: 0.35)),
+              ),
+              child: ShaderMask(blendMode: BlendMode.srcIn, shaderCallback: (bounds) => goldSurface.createShader(bounds), child: FaIcon(item.icon, size: 16)),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(item.title.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: displayStyle(15, color: Colors.white, height: 1.1)),
+                  const SizedBox(height: 2),
+                  Text(item.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 11)),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -442,7 +474,7 @@ class _UpdatePageState extends State<UpdatePage> {
                 ClubMarkdown(update.content.isEmpty ? update.description : update.content, mediaUrl: api.media, onLink: (href) => openSiteLink(context, href)),
                 if (update.video != null) ...[
                   const SizedBox(height: 12),
-                  FilledButton.icon(onPressed: () => openExternal(api.media(update.video)), icon: const FaIcon(FontAwesomeIcons.play, size: 15), label: const Text('WATCH')),
+                  FilledButton.icon(onPressed: () => playVideo(context, api.media(update.video), title: update.title), icon: const FaIcon(FontAwesomeIcons.play, size: 15), label: const Text('WATCH')),
                 ],
               ],
             ),
@@ -476,13 +508,13 @@ class GalleryPage extends StatelessWidget {
                   (context, index) {
                     final item = items[index];
                     return GestureDetector(
-                      onTap: item.isVideo ? () => openExternal(api.media(item.mediaUrl)) : () => _showPhoto(context, api.media(item.mediaUrl), item.title),
+                      onTap: () => openGallery(context, items, item, api.media),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            RemoteImage(api.media(item.isVideo ? null : item.mediaUrl), height: 200, radius: 0),
+                            if (item.isVideo) VideoThumb(api.media(item.mediaUrl)) else RemoteImage(api.media(item.mediaUrl), height: 200, radius: 0),
                             const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0xD91C0432)], stops: [0.5, 1]))),
                             if (item.isVideo) const Center(child: FaIcon(FontAwesomeIcons.circlePlay, color: goldLight, size: 40)),
                             Positioned(left: 8, top: 8, child: MediaBadge(label: item.isVideo ? 'VIDEO' : 'PHOTO')),
@@ -500,20 +532,6 @@ class GalleryPage extends StatelessWidget {
       ),
     );
   }
-}
-
-void _showPhoto(BuildContext context, String url, String title) {
-  showDialog(
-    context: context,
-    builder: (context) => Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(12),
-      child: GestureDetector(
-        onTap: () => Navigator.pop(context),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [ClipRRect(borderRadius: BorderRadius.circular(16), child: InteractiveViewer(child: Image.network(url, fit: BoxFit.contain))), const SizedBox(height: 10), Text(title, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800))]),
-      ),
-    ),
-  );
 }
 
 class PartnersPage extends StatelessWidget {

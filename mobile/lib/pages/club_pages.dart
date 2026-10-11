@@ -5,6 +5,7 @@ import 'package:united_tigers/models.dart';
 import 'package:united_tigers/pages/fixtures_page.dart';
 import 'package:united_tigers/pages/more_pages.dart';
 import 'package:united_tigers/scope.dart';
+import 'package:united_tigers/video.dart';
 import 'package:united_tigers/widgets.dart';
 
 String _clean(Object reason) => '$reason'.replaceFirst('Exception: ', '');
@@ -126,10 +127,9 @@ class _FranchiseCrest extends StatelessWidget {
 }
 
 class _FranchiseSocials extends StatelessWidget {
-  const _FranchiseSocials({required this.franchise, this.size = 16, this.center = false});
+  const _FranchiseSocials({required this.franchise, this.size = 16});
   final Franchise franchise;
   final double size;
-  final bool center;
 
   static FaIconData _icon(String label) => switch (label) {
         'Facebook' => FontAwesomeIcons.facebookF,
@@ -144,7 +144,6 @@ class _FranchiseSocials extends StatelessWidget {
     return Wrap(
       spacing: 6,
       runSpacing: 6,
-      alignment: center ? WrapAlignment.center : WrapAlignment.start,
       children: [
         for (final (label, href) in franchise.channels)
           Tooltip(
@@ -196,19 +195,10 @@ class _HomeFranchisesState extends State<HomeFranchises> {
           children: [
             SectionTitle('Our franchises', action: 'About', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FranchisesPage()))),
             for (final franchise in home) _FranchiseCard(franchise: franchise),
-            for (var start = 0; start < others.length; start += 2)
+            for (final (index, franchise) in others.indexed)
               Padding(
-                padding: EdgeInsets.only(bottom: start + 2 < others.length ? 12 : 0),
-                child: IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(child: _FranchiseTile(franchise: others[start], index: start)),
-                      const SizedBox(width: 12),
-                      Expanded(child: start + 1 < others.length ? _FranchiseTile(franchise: others[start + 1], index: start + 1) : const SizedBox.shrink()),
-                    ],
-                  ),
-                ),
+                padding: EdgeInsets.only(bottom: index + 1 < others.length ? 10 : 0),
+                child: _FranchiseTile(franchise: franchise, index: index),
               ),
           ],
         );
@@ -225,7 +215,7 @@ class _FranchiseTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Reveal(
-      delay: Duration(milliseconds: 70 * (index % 2)),
+      delay: Duration(milliseconds: 50 * (index % 3)),
       child: GlowFrame(
         radius: 16,
         width: 1.2,
@@ -233,22 +223,28 @@ class _FranchiseTile extends StatelessWidget {
         bloom: 0.3,
         offset: index * 0.19,
         child: Container(
-          padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           decoration: const BoxDecoration(
             gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xEB33085E), Color(0xEB2A0750), Color(0xEB4B0C66)]),
           ),
-          child: Column(
+          child: Row(
             children: [
-              _FranchiseCrest(franchise: franchise, size: 56),
-              const SizedBox(height: 8),
-              Text(franchise.league.toUpperCase(), maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: const TextStyle(color: goldLight, fontSize: 9.5, fontWeight: FontWeight.w800, letterSpacing: 0.8, height: 1.2)),
-              const SizedBox(height: 2),
-              Text(franchise.name.toUpperCase(), maxLines: 2, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: displayStyle(16.5, color: Colors.white, height: 1.02)),
-              if (franchise.channels.isNotEmpty) ...[
-                const Spacer(),
-                const SizedBox(height: 10),
-                _FranchiseSocials(franchise: franchise, size: 12, center: true),
-              ],
+              _FranchiseCrest(franchise: franchise, size: 58),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(franchise.league.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: goldLight, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.8)),
+                    const SizedBox(height: 2),
+                    Text(franchise.name.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: displayStyle(18, color: Colors.white, height: 1.05)),
+                    if (franchise.channels.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      _FranchiseSocials(franchise: franchise, size: 11),
+                    ],
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -500,7 +496,7 @@ class DraftPage extends StatelessWidget {
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
           childAspectRatio: 0.85,
-          children: [for (final item in list) _MediaTile(item: item)],
+          children: [for (final item in list) _MediaTile(item: item, group: list)],
         );
     return Scaffold(
       appBar: const ClubAppBar('Player draft'),
@@ -527,30 +523,22 @@ class DraftPage extends StatelessWidget {
 }
 
 class _MediaTile extends StatelessWidget {
-  const _MediaTile({required this.item});
+  const _MediaTile({required this.item, required this.group});
   final GalleryItem item;
+  final List<GalleryItem> group;
 
   @override
   Widget build(BuildContext context) {
     final api = ClubScope.of(context).api;
     final url = api.media(item.mediaUrl);
     return GestureDetector(
-      onTap: item.isVideo
-          ? () => openExternal(url)
-          : () => showDialog(
-                context: context,
-                builder: (context) => Dialog(
-                  backgroundColor: Colors.transparent,
-                  insetPadding: const EdgeInsets.all(12),
-                  child: GestureDetector(onTap: () => Navigator.pop(context), child: ClipRRect(borderRadius: BorderRadius.circular(16), child: InteractiveViewer(child: Image.network(url, fit: BoxFit.contain)))),
-                ),
-              ),
+      onTap: () => openGallery(context, group, item, api.media),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: Stack(
           fit: StackFit.expand,
           children: [
-            RemoteImage(item.isVideo ? '' : url, height: 200, radius: 0),
+            if (item.isVideo) VideoThumb(url) else RemoteImage(url, height: 200, radius: 0),
             const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0xD91C0432)], stops: [0.5, 1]))),
             if (item.isVideo) const Center(child: FaIcon(FontAwesomeIcons.circlePlay, color: goldLight, size: 42)),
             Positioned(left: 8, top: 8, child: MediaBadge(label: item.isVideo ? 'VIDEO' : 'PHOTO')),

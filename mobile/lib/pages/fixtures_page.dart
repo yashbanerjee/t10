@@ -34,29 +34,9 @@ class FixturesPage extends StatelessWidget {
   }
 }
 
-/// Fixture times are published in Gulf Standard Time, as on the website.
-DateTime _gst(DateTime date) => date.toUtc().add(const Duration(hours: 4));
-
-const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-class _FixtureCrest extends StatelessWidget {
-  const _FixtureCrest({this.asset, this.url});
-  final String? asset;
-  final String? url;
-
-  @override
-  Widget build(BuildContext context) {
-    final api = ClubScope.of(context).api;
-    return Container(
-      width: 34,
-      height: 34,
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
-      child: asset != null
-          ? Image.asset(asset!, fit: BoxFit.contain)
-          : Image.network(api.media(url), fit: BoxFit.contain, errorBuilder: (_, _, _) => const SizedBox.shrink()),
-    );
-  }
+String _short(ClubMatch match) {
+  final source = match.opponentShort ?? match.opponent.split(RegExp(r'\s+')).where((part) => part.isNotEmpty).map((part) => part[0]).join();
+  return source.toUpperCase();
 }
 
 class _FixtureRow extends StatelessWidget {
@@ -66,67 +46,49 @@ class _FixtureRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final date = match.date == null ? null : _gst(match.date!);
-    final score = match.innings.map((entry) => '${entry.runs}/${entry.wickets}').join(' · ');
-    final team = displayStyle(19, color: Colors.white, height: 1.05);
+    final api = ClubScope.of(context).api;
+    final score = match.innings.map((entry) => '${entry.runs}/${entry.wickets}').join('  ·  ');
+    const name = TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w800, height: 1.15);
     return ClubCard(
       highlight: lead,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
       onTap: () => openMatch(context, match),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
         children: [
-          SizedBox(
-            width: 72,
-            child: date == null
-                ? Text('TBC', style: displayStyle(19, color: goldLight))
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('${date.day.toString().padLeft(2, '0')} ${_months[date.month - 1]}', style: displayStyle(19, color: goldLight, height: 1.1)),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')} GST',
-                        style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12, letterSpacing: 1.1),
-                      ),
-                      if (match.isLive || lead) ...[const SizedBox(height: 8), StatusChip(match.statusLabel)],
-                    ],
-                  ),
+          Row(
+            children: [
+              if (lead || match.isLive || match.isCompleted) StatusChip(match.statusLabel),
+              const Spacer(),
+              Text((match.competition ?? 'Abu Dhabi T10').toUpperCase(), style: const TextStyle(color: goldLight, fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 1)),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8,
-                  runSpacing: 6,
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Expanded(child: Column(children: [TeamCrest(size: 62, ours: true), SizedBox(height: 8), Text('United Tigers', textAlign: TextAlign.center, style: name)])),
+              Padding(
+                padding: const EdgeInsets.only(top: 20),
+                child: Text('VS', style: displayStyle(18, color: pink).copyWith(fontWeight: FontWeight.w800)),
+              ),
+              Expanded(
+                child: Column(
                   children: [
-                    Row(mainAxisSize: MainAxisSize.min, children: [const _FixtureCrest(asset: 'assets/brand/united-tigers.png'), const SizedBox(width: 8), Text('UNITED TIGERS', style: team)]),
-                    const Text('vs', style: TextStyle(color: Color(0xFF8E7F9F), fontSize: 14, fontWeight: FontWeight.w900)),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (match.opponentLogoUrl != null) ...[_FixtureCrest(url: match.opponentLogoUrl), const SizedBox(width: 8)],
-                        Flexible(child: Text(match.opponent.toUpperCase(), style: team)),
-                      ],
-                    ),
+                    TeamCrest(size: 62, logo: match.opponentLogoUrl == null ? null : api.media(match.opponentLogoUrl), label: _short(match)),
+                    const SizedBox(height: 8),
+                    Text(match.opponent, textAlign: TextAlign.center, maxLines: 2, style: name),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  '${match.competition ?? 'Abu Dhabi T10'} · ${match.venueName ?? 'Venue TBC'}',
-                  style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 13),
-                ),
-                if (score.isNotEmpty) ...[const SizedBox(height: 8), GoldText(score, style: displayStyle(20))],
-                if (match.result != null) ...[
-                  const SizedBox(height: 4),
-                  Text(match.result!, style: TextStyle(color: match.won ? const Color(0xFF6BE3A0) : Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
-                ],
-              ],
-            ),
+              ),
+            ],
           ),
+          if (score.isNotEmpty) ...[const SizedBox(height: 10), GoldText(score, style: displayStyle(20))],
+          if (match.result != null) ...[
+            const SizedBox(height: 4),
+            Text(match.result!, textAlign: TextAlign.center, style: TextStyle(color: match.won ? const Color(0xFF6BE3A0) : Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
+          ],
+          const SizedBox(height: 12),
+          MatchMeta(date: match.date),
         ],
       ),
     );

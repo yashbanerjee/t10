@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:united_tigers/format.dart';
 import 'package:united_tigers/motion.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -470,6 +472,65 @@ class MediaBadge extends StatelessWidget {
         border: Border.all(color: gold.withValues(alpha: 0.5)),
       ),
       child: Text(label, style: const TextStyle(color: goldLight, fontSize: 10.5, fontWeight: FontWeight.w800, height: 1, letterSpacing: 0.9)),
+    );
+  }
+}
+
+/// Team badge as on the website's match cards: our gold tiger on a purple disc, rival crests on white.
+/// [logo] is a full URL; without one the rival shows its short name on purple.
+class TeamCrest extends StatelessWidget {
+  const TeamCrest({super.key, this.size = 84, this.ours = false, this.logo, this.label = ''});
+  final double size;
+  final bool ours;
+  final String? logo;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final initials = Text(label, style: displayStyle(size * 0.28, color: goldLight));
+    final onWhite = !ours && logo != null;
+    return Container(
+      width: size,
+      height: size,
+      padding: EdgeInsets.all(size * (ours ? 0.19 : 0.13)),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: onWhite
+            ? const RadialGradient(center: Alignment(-0.36, -0.44), colors: [Colors.white, Color(0xFFEBE6F2)])
+            : const RadialGradient(center: Alignment(-0.36, -0.44), colors: [Color(0xFF8830DB), Color(0xFF460B7D), Color(0xFF310858)], stops: [0, 0.58, 1]),
+        border: Border.all(color: gold, width: size > 60 ? 2 : 1.5),
+        boxShadow: [BoxShadow(color: pink.withValues(alpha: 0.45), blurRadius: size * 0.28)],
+      ),
+      child: ours
+          ? Image.asset('assets/brand/tiger-gold.png', fit: BoxFit.contain)
+          : logo == null
+              ? initials
+              : Image.network(logo!, fit: BoxFit.contain, errorBuilder: (_, _, _) => initials),
+    );
+  }
+}
+
+/// One-line fixture footer: kick-off day and time, then the host city.
+class MatchMeta extends StatelessWidget {
+  const MatchMeta({super.key, this.date, this.center = true});
+  final DateTime? date;
+  final bool center;
+
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(color: Color(0xFFD3C8E6), fontSize: 13.5);
+    return Row(
+      mainAxisAlignment: center ? MainAxisAlignment.center : MainAxisAlignment.start,
+      children: [
+        const FaIcon(FontAwesomeIcons.calendarDays, size: 13, color: gold),
+        const SizedBox(width: 6),
+        Flexible(child: Text(date == null ? 'Date TBC' : matchWhen(date!), maxLines: 1, overflow: TextOverflow.ellipsis, style: style)),
+        const SizedBox(width: 14),
+        const FaIcon(FontAwesomeIcons.locationDot, size: 13, color: gold),
+        const SizedBox(width: 6),
+        const Text('Abu Dhabi', style: style),
+      ],
     );
   }
 }
