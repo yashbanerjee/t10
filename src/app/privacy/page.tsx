@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
-export const metadata: Metadata = { title: "Privacy" };
-export default function PrivacyPage() { return <div className="inner-page"><section className="inner-hero"><div className="wrap"><span className="eyebrow">UNITED TIGERS</span><h1>PRIVACY.</h1><p>How we handle information submitted through this website.</p></div></section><section className="section"><div className="wrap article-content"><h2>Contact information</h2><p>When you send a message through the contact form, your name, email address and message are stored so the club can respond. Access is limited to authorized administrators.</p><h2>Website analytics</h2><p>This website uses Google Analytics, through Firebase, to see which pages are visited and how the site is used. Google sets analytics cookies for that measurement. Contact form messages are not sent to analytics.</p><h2>Questions</h2><p>For a privacy enquiry, please use the contact page.</p></div></section></div>; }
+import { LegalPageView } from "@/components/LegalPageView";
+import { getLegalPage } from "@/lib/legal-page-data";
 
+export async function generateMetadata(): Promise<Metadata> { const page = await getLegalPage("privacy"); return { title: page.title, description: page.intro || undefined, alternates: { canonical: "/privacy" } }; }
+export default async function PrivacyPage() { return <LegalPageView page={await getLegalPage("privacy")} />; }

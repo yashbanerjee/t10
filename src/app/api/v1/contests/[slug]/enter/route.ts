@@ -43,7 +43,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         intro: "Thanks for entering. We have your entry, and one entry is kept for each email address. Good luck!",
         details: [{ label: "Contest", value: contest.title }, ...prize],
         message: { label: "Your answer", body: entry.answer },
-        cta: { label: "Visit the Fan Zone", href: "/fan" },
+        cta: { label: "See more polls and contests", href: "/vote" },
       }),
     });
     return success({ ok: true }, "Entry received", { status: 201 });

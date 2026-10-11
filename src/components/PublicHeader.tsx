@@ -67,7 +67,7 @@ export function PublicHeader() {
       <nav className="desktop-nav" aria-label="Main navigation">
         {links.map(([label, href]) => {
           const path = href.split("#")[0] || "/";
-          const active = label === "Vote" ? pathname === "/vote" || pathname.startsWith("/polls") : label === "Fan Zone" ? pathname === "/fan" || pathname.startsWith("/contests") : label === "Stats" ? pathname === "/stats" || pathname === "/records" : path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
+          const active = label === "Vote" ? pathname === "/vote" || pathname.startsWith("/polls") || pathname.startsWith("/contests") : label === "Fan Zone" ? pathname === "/fan" : label === "Stats" ? pathname === "/stats" || pathname === "/records" : path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
           return <Link key={label} className={active ? "is-active" : ""} href={href}>{label}</Link>;
         })}
       </nav>

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { readBrochureUrl } from "@/lib/partner-brochure";
+import { LEGAL_SETTING_KEYS, legalPageSchema } from "@/lib/legal-pages";
 
 /** Settings that must never be sent to public pages. */
 export const PRIVATE_SETTING_KEYS = new Set(["storage", "smtp", "stripe"]);
@@ -118,6 +119,11 @@ export function normalizeSiteSetting(key: string, value: unknown, previous?: unk
     const url = readBrochureUrl(value);
     if (typeof value === "string" && value.trim() && !url) return { ok: false, message: "Partner brochure must be a site path or an http(s) URL." };
     return { ok: true, value: url };
+  }
+  if (key === LEGAL_SETTING_KEYS.privacy || key === LEGAL_SETTING_KEYS.terms) {
+    const parsed = legalPageSchema.safeParse(value ?? {});
+    if (!parsed.success) return { ok: false, message: "Legal page needs a title, a date and at least a few lines of content." };
+    return { ok: true, value: parsed.data };
   }
   if (key === "homepage") {
     const parsed = homepageSchema.safeParse(value ?? {});

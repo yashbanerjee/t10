@@ -2693,8 +2693,20 @@ a.partner-item:hover {
   color: #d0c5dc;
 }
 
+.article-content ul {
+  list-style: disc;
+}
+
+.article-content ol {
+  list-style: decimal;
+}
+
 .article-content li {
   padding: 3px 0;
+}
+
+.article-content li::marker {
+  color: #EEC873;
 }
 
 .article-content blockquote {
@@ -3361,6 +3373,34 @@ a.partner-item:hover {
 
 .stats-footnote {
   margin-top: 13px;
+}
+
+.legal-updated {
+  color: #b6a7c4;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.legal-editor .rich-editor textarea {
+  min-height: 420px;
+}
+
+.legal-editor .admin-panel-header a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #0C66E4;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .stats-table td.stats-no-record {
