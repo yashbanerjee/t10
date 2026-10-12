@@ -22,40 +22,96 @@ class TeamPage extends StatelessWidget {
             child: CustomScrollView(
               scrollCacheExtent: pageCacheExtent,
               slivers: [
-                const SliverToBoxAdapter(child: PageHero(eyebrow: 'Abu Dhabi T10 · 2026', title: 'Meet our\nTigers.', intro: 'The names announced for the Tigers’ first season.')),
+                const SliverToBoxAdapter(
+                  child: PageHero(
+                    eyebrow: 'Abu Dhabi T10 · 2026',
+                    title: 'Meet our\nTigers.',
+                    intro: 'The names announced for the Tigers’ first season.',
+                  ),
+                ),
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
                   sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.66),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.66,
+                        ),
                     delegate: SliverChildBuilderDelegate(
-                      (context, index) => _PlayerCard(player: api.catalog.players[index]),
+                      (context, index) =>
+                          _PlayerCard(player: api.catalog.players[index]),
                       childCount: api.catalog.players.length,
                     ),
                   ),
                 ),
-                if (api.catalog.staff.isNotEmpty)
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
+                // Keep staff entirely API-driven, but render each CMS category
+                // in its own section to match the website.
+                ..._staffSections(api.catalog.staff).map(
+                  (section) => SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                     sliver: SliverList.list(
                       children: [
-                        const SectionTitle('Coaching & staff'),
-                        ...api.catalog.staff.map(
+                        SectionTitle(section.label),
+                        ...section.members.map(
                           (member) => Padding(
                             padding: const EdgeInsets.only(bottom: 10),
                             child: ClubCard(
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  SizedBox(width: 68, height: 68, child: RemoteImage(api.media(member.profileImage), height: 68, radius: 34)),
+                                  SizedBox(
+                                    width: 68,
+                                    height: 68,
+                                    child: RemoteImage(
+                                      api.media(member.profileImage),
+                                      height: 68,
+                                      radius: 34,
+                                    ),
+                                  ),
                                   const SizedBox(width: 14),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Text(member.category.toUpperCase(), style: const TextStyle(color: goldLight, fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 1)),
-                                        Text(member.fullName.toUpperCase(), style: displayStyle(20, color: Colors.white)),
-                                        Text(member.title, style: const TextStyle(color: Color(0xFFD9CCE6), fontWeight: FontWeight.w700)),
-                                        if (member.bio != null) ...[const SizedBox(height: 6), Text(member.bio!, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12.5))],
+                                        Text(
+                                          member.category.toUpperCase(),
+                                          style: const TextStyle(
+                                            color: goldLight,
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 1,
+                                          ),
+                                        ),
+                                        Text(
+                                          member.fullName.toUpperCase(),
+                                          style: displayStyle(
+                                            20,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        Text(
+                                          member.title,
+                                          style: const TextStyle(
+                                            color: Color(0xFFD9CCE6),
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        if (member.bio != null &&
+                                            member.bio!.trim().isNotEmpty) ...[
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            member.bio!,
+                                            maxLines: 3,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              color: Color(0xFFBDAED0),
+                                              fontSize: 12.5,
+                                            ),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),
@@ -66,10 +122,13 @@ class TeamPage extends StatelessWidget {
                         ),
                       ],
                     ),
-                  )
-                else
+                  ),
+                ),
+                if (api.catalog.staff.isEmpty)
                   const SliverToBoxAdapter(child: SizedBox(height: 28)),
-                SliverToBoxAdapter(child: SizedBox(height: navClearance(context))),
+                SliverToBoxAdapter(
+                  child: SizedBox(height: navClearance(context)),
+                ),
               ],
             ),
           ),
@@ -79,6 +138,46 @@ class TeamPage extends StatelessWidget {
   }
 }
 
+/// A display group derived from staff category values returned by the API.
+class _StaffSection {
+  const _StaffSection(this.label, this.members);
+
+  final String label;
+  final List<dynamic> members;
+}
+
+/// Maps API categories to the website's section headings without hardcoding
+/// staff names or staff content. Unknown categories remain visible under
+/// "Other Staff" instead of being silently discarded.
+List<_StaffSection> _staffSections(List<dynamic> staff) {
+  final coaching = <dynamic>[];
+  final support = <dynamic>[];
+  final management = <dynamic>[];
+  final other = <dynamic>[];
+
+  for (final member in staff) {
+    final category = member.category.trim().toLowerCase();
+    if (category.contains('coach')) {
+      coaching.add(member);
+    } else if (category.contains('support') || category == 'staff') {
+      support.add(member);
+    } else if (category.contains('management') ||
+        category.contains('manager') ||
+        category.contains('leadership')) {
+      management.add(member);
+    } else {
+      other.add(member);
+    }
+  }
+
+  return [
+    if (coaching.isNotEmpty) _StaffSection('Coaching Staff', coaching),
+    if (support.isNotEmpty) _StaffSection('Support Staff', support),
+    if (management.isNotEmpty) _StaffSection('Management', management),
+    if (other.isNotEmpty) _StaffSection('Other Staff', other),
+  ];
+}
+
 class _PlayerCard extends StatelessWidget {
   const _PlayerCard({required this.player});
   final Player player;
@@ -86,7 +185,8 @@ class _PlayerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final api = ClubScope.of(context).api;
-    final special = player.isCaptain || player.isViceCaptain || player.isIconPlayer;
+    final special =
+        player.isCaptain || player.isViceCaptain || player.isIconPlayer;
     return ClubCard(
       padding: EdgeInsets.zero,
       highlight: special,
@@ -96,15 +196,54 @@ class _PlayerCard extends StatelessWidget {
         children: [
           Expanded(
             child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(15),
+              ),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF8A1BA6), Color(0xFF4B0C66), Color(0xFF2A0750)]))),
-                  RemoteImage(api.media(player.profileImage), height: 200, radius: 0),
-                  const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0xE61C0432)], stops: [0.55, 1]))),
-                  Positioned(right: 10, top: 6, child: GoldText('${player.jerseyNumber ?? 'UT'}', style: displayStyle(30))),
-                  if (special) Positioned(left: 8, top: 8, child: MediaBadge(label: player.badge)),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0xFF8A1BA6),
+                          Color(0xFF4B0C66),
+                          Color(0xFF2A0750),
+                        ],
+                      ),
+                    ),
+                  ),
+                  RemoteImage(
+                    api.media(player.profileImage),
+                    height: 200,
+                    radius: 0,
+                  ),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Color(0xE61C0432)],
+                        stops: [0.55, 1],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 10,
+                    top: 6,
+                    child: GoldText(
+                      '${player.jerseyNumber ?? 'UT'}',
+                      style: displayStyle(30),
+                    ),
+                  ),
+                  if (special)
+                    Positioned(
+                      left: 8,
+                      top: 8,
+                      child: MediaBadge(label: player.badge),
+                    ),
                 ],
               ),
             ),
@@ -114,9 +253,22 @@ class _PlayerCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(player.fullName.toUpperCase(), maxLines: 2, overflow: TextOverflow.ellipsis, style: displayStyle(17, color: Colors.white, height: 1)),
+                Text(
+                  player.fullName.toUpperCase(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: displayStyle(17, color: Colors.white, height: 1),
+                ),
                 const SizedBox(height: 4),
-                Text(roleLabel(player.role), style: const TextStyle(color: goldLight, fontSize: 11.5, fontWeight: FontWeight.w800, letterSpacing: 0.6)),
+                Text(
+                  roleLabel(player.role),
+                  style: const TextStyle(
+                    color: goldLight,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                  ),
+                ),
               ],
             ),
           ),
@@ -139,20 +291,22 @@ class _StatsBlock extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionTitle(label),
-        _FigureGrid(figures: [
-          ('Matches', '${stats.matches}'),
-          ('Runs', '${stats.runs}'),
-          ('Wickets', '${stats.wickets}'),
-          ('High score', '${stats.highestScore}'),
-          ('Average', _rate(stats.average)),
-          ('Strike rate', _rate(stats.strikeRate)),
-          ('Economy', _rate(stats.economy)),
-          ('Best', stats.bestBowling ?? '–'),
-          ('Fours', '${stats.fours}'),
-          ('Sixes', '${stats.sixes}'),
-          ('Catches', '${stats.catches}'),
-          ('Overs', stats.bowlingOvers ?? '–'),
-        ]),
+        _FigureGrid(
+          figures: [
+            ('Matches', '${stats.matches}'),
+            ('Runs', '${stats.runs}'),
+            ('Wickets', '${stats.wickets}'),
+            ('High score', '${stats.highestScore}'),
+            ('Average', _rate(stats.average)),
+            ('Strike rate', _rate(stats.strikeRate)),
+            ('Economy', _rate(stats.economy)),
+            ('Best', stats.bestBowling ?? '–'),
+            ('Fours', '${stats.fours}'),
+            ('Sixes', '${stats.sixes}'),
+            ('Catches', '${stats.catches}'),
+            ('Overs', stats.bowlingOvers ?? '–'),
+          ],
+        ),
       ],
     );
   }
@@ -186,14 +340,32 @@ class _FigureGrid extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: const BoxDecoration(
-                  gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xEB33085E), Color(0xEB4B0C66)]),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xEB33085E), Color(0xEB4B0C66)],
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(label.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 9.5, fontWeight: FontWeight.w800, letterSpacing: 0.7)),
-                    CountUp(value, builder: (text) => GoldText(text, style: displayStyle(24), maxLines: 1)),
+                    Text(
+                      label.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFFBDAED0),
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.7,
+                      ),
+                    ),
+                    CountUp(
+                      value,
+                      builder: (text) =>
+                          GoldText(text, style: displayStyle(24), maxLines: 1),
+                    ),
                   ],
                 ),
               ),
@@ -209,12 +381,18 @@ String _recordFigure(FigureSet set, String key) {
   if (text == null) return '–';
   final number = num.tryParse(text);
   if (number == null) return text;
-  return number % 1 == 0 ? number.toInt().toString() : number.toStringAsFixed(2);
+  return number % 1 == 0
+      ? number.toInt().toString()
+      : number.toStringAsFixed(2);
 }
 
 /// A T20 record from Admin, in Batting, Bowling (if he bowled) and Fielding (if any) groups.
 class _T20Record extends StatelessWidget {
-  const _T20Record({required this.title, required this.record, required this.empty});
+  const _T20Record({
+    required this.title,
+    required this.record,
+    required this.empty,
+  });
   final String title;
   final FigureSet? record;
   final String empty;
@@ -225,33 +403,57 @@ class _T20Record extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(padding: const EdgeInsets.only(top: 18, bottom: 10), child: GoldText(title, style: displayStyle(22))),
+        Padding(
+          padding: const EdgeInsets.only(top: 18, bottom: 10),
+          child: GoldText(title, style: displayStyle(22)),
+        ),
         if (set == null || !set.played)
-          ClubCard(child: Text(empty, style: const TextStyle(color: Color(0xFFD9CCE6), fontStyle: FontStyle.italic)))
+          ClubCard(
+            child: Text(
+              empty,
+              style: const TextStyle(
+                color: Color(0xFFD9CCE6),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          )
         else ...[
           const _GroupLabel('Batting'),
-          _FigureGrid(figures: [
-            ('Matches', _recordFigure(set, 'matches')),
-            ('Runs', _recordFigure(set, 'runs')),
-            ('High score', _recordFigure(set, 'highestScore')),
-            ('Average', _recordFigure(set, 'average')),
-            ('Strike rate', _recordFigure(set, 'strikeRate')),
-            ('50s / 100s', '${_recordFigure(set, 'fifties')} / ${_recordFigure(set, 'hundreds')}'),
-          ]),
+          _FigureGrid(
+            figures: [
+              ('Matches', _recordFigure(set, 'matches')),
+              ('Runs', _recordFigure(set, 'runs')),
+              ('High score', _recordFigure(set, 'highestScore')),
+              ('Average', _recordFigure(set, 'average')),
+              ('Strike rate', _recordFigure(set, 'strikeRate')),
+              (
+                '50s / 100s',
+                '${_recordFigure(set, 'fifties')} / ${_recordFigure(set, 'hundreds')}',
+              ),
+            ],
+          ),
           if (set.hasBowling) ...[
             const _GroupLabel('Bowling'),
-            _FigureGrid(figures: [
-              ('Wickets', _recordFigure(set, 'wickets')),
-              ('Best', _recordFigure(set, 'bestBowling')),
-              ('Economy', _recordFigure(set, 'economy')),
-              ('Average', _recordFigure(set, 'bowlingAverage')),
-              ('Strike rate', _recordFigure(set, 'bowlingStrikeRate')),
-              ('Overs', _recordFigure(set, 'bowlingOvers')),
-            ]),
+            _FigureGrid(
+              figures: [
+                ('Wickets', _recordFigure(set, 'wickets')),
+                ('Best', _recordFigure(set, 'bestBowling')),
+                ('Economy', _recordFigure(set, 'economy')),
+                ('Average', _recordFigure(set, 'bowlingAverage')),
+                ('Strike rate', _recordFigure(set, 'bowlingStrikeRate')),
+                ('Overs', _recordFigure(set, 'bowlingOvers')),
+              ],
+            ),
           ],
           if (set.hasFielding) ...[
             const _GroupLabel('Fielding'),
-            _FigureGrid(figures: [('Catches', _recordFigure(set, 'catches')), ('Stumpings', _recordFigure(set, 'stumpings')), ('Run outs', _recordFigure(set, 'runOuts'))]),
+            _FigureGrid(
+              figures: [
+                ('Catches', _recordFigure(set, 'catches')),
+                ('Stumpings', _recordFigure(set, 'stumpings')),
+                ('Run outs', _recordFigure(set, 'runOuts')),
+              ],
+            ),
           ],
         ],
       ],
@@ -264,12 +466,20 @@ class _GroupLabel extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.only(top: 6, bottom: 8), child: Eyebrow(text));
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 6, bottom: 8),
+    child: Eyebrow(text),
+  );
 }
 
 void openPlayer(BuildContext context, Player player) {
   ClubAnalytics.viewPlayer(player.slug, player.fullName);
-  Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerPage(slug: player.slug, preview: player)));
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => PlayerPage(slug: player.slug, preview: player),
+    ),
+  );
 }
 
 class PlayerPage extends StatefulWidget {
@@ -306,7 +516,8 @@ class _PlayerPageState extends State<PlayerPage> {
         if (mounted) setState(() => report = stats);
       } catch (_) {}
     } catch (reason) {
-      if (mounted && player == null) setState(() => error = '$reason'.replaceFirst('Exception: ', ''));
+      if (mounted && player == null)
+        setState(() => error = '$reason'.replaceFirst('Exception: ', ''));
     }
   }
 
@@ -314,7 +525,10 @@ class _PlayerPageState extends State<PlayerPage> {
   Widget build(BuildContext context) {
     final current = player;
     if (current == null) {
-      return Scaffold(appBar: const ClubAppBar('Player'), body: error == null ? const LoadingView() : MessageView(error!));
+      return Scaffold(
+        appBar: const ClubAppBar('Player'),
+        body: error == null ? const LoadingView() : MessageView(error!),
+      );
     }
     final api = ClubScope.of(context).api;
     final facts = <(String, String)>[
@@ -322,7 +536,8 @@ class _PlayerPageState extends State<PlayerPage> {
       if (current.nationality != null) ('Nationality', current.nationality!),
       if (current.battingStyle != null) ('Batting', current.battingStyle!),
       if (current.bowlingStyle != null) ('Bowling', current.bowlingStyle!),
-      if (current.dateOfBirth != null) ('Born', when(current.dateOfBirth).split(' · ').first),
+      if (current.dateOfBirth != null)
+        ('Born', when(current.dateOfBirth).split(' · ').first),
       if (current.heightCm != null) ('Height', '${current.heightCm} cm'),
     ];
     final name = current.heading;
@@ -337,10 +552,43 @@ class _PlayerPageState extends State<PlayerPage> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, colors: [Color(0xFFC9177E), Color(0xFF6A1290), Color(0xFF2A0750)]))),
-                Positioned(right: -30, top: 20, bottom: 40, child: Opacity(opacity: 0.18, child: Image.asset('assets/brand/united-tigers.png'))),
-                RemoteImage(api.media(current.coverImage ?? current.profileImage), height: 380, radius: 0),
-                const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0xF2340A5F)], stops: [0.45, 1]))),
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomLeft,
+                      colors: [
+                        Color(0xFFC9177E),
+                        Color(0xFF6A1290),
+                        Color(0xFF2A0750),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: -30,
+                  top: 20,
+                  bottom: 40,
+                  child: Opacity(
+                    opacity: 0.18,
+                    child: Image.asset('assets/brand/united-tigers.png'),
+                  ),
+                ),
+                RemoteImage(
+                  api.media(current.coverImage ?? current.profileImage),
+                  height: 380,
+                  radius: 0,
+                ),
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.transparent, Color(0xF2340A5F)],
+                      stops: [0.45, 1],
+                    ),
+                  ),
+                ),
                 Positioned(
                   left: 18,
                   right: 18,
@@ -353,8 +601,16 @@ class _PlayerPageState extends State<PlayerPage> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Expanded(child: GoldText(name.toUpperCase(), style: displayStyle(44, height: 0.9))),
-                          GoldText('#${current.jerseyNumber ?? 'UT'}', style: displayStyle(46)),
+                          Expanded(
+                            child: GoldText(
+                              name.toUpperCase(),
+                              style: displayStyle(44, height: 0.9),
+                            ),
+                          ),
+                          GoldText(
+                            '#${current.jerseyNumber ?? 'UT'}',
+                            style: displayStyle(46),
+                          ),
                         ],
                       ),
                     ],
@@ -374,19 +630,65 @@ class _PlayerPageState extends State<PlayerPage> {
                   children: [
                     for (final (label, value) in facts)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(color: purple.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(12), border: Border.all(color: gold.withValues(alpha: 0.3))),
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [Text(label.toUpperCase(), style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 9.5, fontWeight: FontWeight.w800, letterSpacing: 0.8)), Text(value, style: const TextStyle(fontWeight: FontWeight.w800))]),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: purple.withValues(alpha: 0.7),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: gold.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              label.toUpperCase(),
+                              style: const TextStyle(
+                                color: Color(0xFFBDAED0),
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                            Text(
+                              value,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                Text(current.bio ?? 'Player profile details are being completed.', style: const TextStyle(color: Color(0xFFE6DDF0), fontSize: 15, height: 1.55)),
-                if (report?.currentSeason != null) _StatsBlock('This season', report!.currentSeason!),
-                if (report?.career != null) _StatsBlock('Career', report!.career!),
+                Text(
+                  current.bio ?? 'Player profile details are being completed.',
+                  style: const TextStyle(
+                    color: Color(0xFFE6DDF0),
+                    fontSize: 15,
+                    height: 1.55,
+                  ),
+                ),
+                if (report?.currentSeason != null)
+                  _StatsBlock('This season', report!.currentSeason!),
+                if (report?.career != null)
+                  _StatsBlock('Career', report!.career!),
                 const SectionTitle('Beyond the Tigers'),
-                _T20Record(title: 'ALL T20 MATCHES', record: current.allT20Record, empty: 'No T20 record is available for $name yet.'),
-                _T20Record(title: 'T20 INTERNATIONALS', record: current.t20Record, empty: '$name has not played a T20 International yet.'),
+                _T20Record(
+                  title: 'ALL T20 MATCHES',
+                  record: current.allT20Record,
+                  empty: 'No T20 record is available for $name yet.',
+                ),
+                _T20Record(
+                  title: 'T20 INTERNATIONALS',
+                  record: current.t20Record,
+                  empty: '$name has not played a T20 International yet.',
+                ),
               ],
             ),
           ),
