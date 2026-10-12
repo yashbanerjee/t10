@@ -561,13 +561,14 @@ class DraftPage extends StatelessWidget {
     final items = api.catalog.gallery.where((item) => (item.category ?? '').toLowerCase().contains('draft')).toList();
     final videos = items.where((item) => item.isVideo).toList();
     final photos = items.where((item) => !item.isVideo).toList();
+    final columns = MediaQuery.sizeOf(context).shortestSide >= 600 ? 4 : 2;
     Widget grid(List<GalleryItem> list) => GridView.count(
-          crossAxisCount: 2,
+          crossAxisCount: columns,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 0.85,
+          childAspectRatio: 0.8,
           children: [for (final item in list) _MediaTile(item: item, group: list)],
         );
     return Scaffold(
@@ -616,7 +617,7 @@ class _MediaTile extends StatelessWidget {
             children: [
               if (item.isVideo) VideoThumb(url) else RemoteImage(url, height: 200, radius: 0),
               const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0xD91C0432)], stops: [0.5, 1]))),
-              if (item.isVideo) const Center(child: FaIcon(FontAwesomeIcons.circlePlay, color: goldLight, size: 42)),
+              if (item.isVideo) const Center(child: FaIcon(FontAwesomeIcons.circlePlay, color: goldLight, size: 40)),
               Positioned(left: 8, top: 8, child: MediaBadge(label: item.isVideo ? 'VIDEO' : 'PHOTO')),
               Positioned(left: 10, right: 10, bottom: 10, child: Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13))),
             ],

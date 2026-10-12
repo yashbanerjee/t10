@@ -832,19 +832,30 @@ class ClubCatalog {
       final replacement = linked != null && !_demoAsset(linked) ? linked : (aboutCaptain ? captain : null);
       if (replacement != null) live.add(update.withImage(replacement));
     }
-    return ClubCatalog(
-      players: players,
-      staff: staff,
-      matches: matches,
-      news: news,
-      updates: live,
-      products: products,
-      polls: polls,
-      contests: contests,
-      gallery: gallery,
-      sponsors: sponsors,
-    );
+    return withUpdates(live);
   }
+
+  ClubCatalog withUpdates(List<TeamUpdate> updates) => ClubCatalog(
+        players: players,
+        staff: staff,
+        matches: matches,
+        news: news,
+        updates: updates,
+        products: products,
+        polls: polls,
+        contests: contests,
+        gallery: gallery,
+        sponsors: sponsors,
+      );
+}
+
+/// Keeps the card and the story on one photo. A real upload wins over a demo file.
+String? matchingUpdateImage(String? outside, String? inside) {
+  final card = outside != null && outside.isNotEmpty ? outside : null;
+  final story = inside != null && inside.isNotEmpty ? inside : null;
+  if (card != null && !_demoAsset(card) && (story == null || _demoAsset(story) || story == card)) return card;
+  if (story != null && !_demoAsset(story)) return story;
+  return card ?? story;
 }
 
 bool _demoAsset(String? path) => path != null && path.contains('/images/demo/');

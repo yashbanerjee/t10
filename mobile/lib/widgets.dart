@@ -203,7 +203,7 @@ class PageHero extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 22, 18, 24),
+            padding: EdgeInsets.fromLTRB(18, 22, 120 * clubScale(context), 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -552,6 +552,97 @@ class MatchMeta extends StatelessWidget {
         const SizedBox(width: 6),
         const Text('Abu Dhabi', style: style),
       ],
+    );
+  }
+}
+
+/// Full photograph for a Tigers Daily card and its story, so both show the same frame.
+class UpdatePhoto extends StatefulWidget {
+  const UpdatePhoto(this.url, {super.key, this.radius = 15});
+  final String url;
+  final double radius;
+
+  @override
+  State<UpdatePhoto> createState() => _UpdatePhotoState();
+}
+
+class _UpdatePhotoState extends State<UpdatePhoto> {
+  ImageStream? _stream;
+  ImageStreamListener? _listener;
+  double? _aspect;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _resolve();
+  }
+
+  @override
+  void didUpdateWidget(UpdatePhoto oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.url != widget.url) _resolve();
+  }
+
+  void _resolve() {
+    if (widget.url.isEmpty) return;
+    final next = NetworkImage(widget.url).resolve(createLocalImageConfiguration(context));
+    if (next.key == _stream?.key) return;
+    _stop();
+    _aspect = null;
+    _listener = ImageStreamListener((info, _) {
+      final image = info.image;
+      if (!mounted || image.height == 0) return;
+      setState(() => _aspect = image.width / image.height);
+    }, onError: (_, _) {});
+    _stream = next;
+    next.addListener(_listener!);
+  }
+
+  void _stop() {
+    if (_stream != null && _listener != null) _stream!.removeListener(_listener!);
+    _stream = null;
+    _listener = null;
+  }
+
+  @override
+  void dispose() {
+    _stop();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.url.isEmpty) return RemoteImage('', height: 180, radius: widget.radius);
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.62;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final aspect = _aspect;
+        final natural = aspect == null || aspect == 0 ? 200.0 * clubScale(context) : width / aspect;
+        final height = math.min(natural, maxHeight);
+        final shownWidth = aspect == null || aspect == 0 ? width : math.min(width, height * aspect);
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(widget.radius),
+          child: ColoredBox(
+            color: const Color(0xFF24063F),
+            child: SizedBox(
+              width: double.infinity,
+              height: height,
+              child: Center(
+                child: Image.network(
+                  widget.url,
+                  width: shownWidth,
+                  height: height,
+                  fit: BoxFit.contain,
+                  alignment: Alignment.center,
+                  filterQuality: FilterQuality.medium,
+                  errorBuilder: (_, _, _) => RemoteImage('', height: height, radius: 0),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

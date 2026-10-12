@@ -127,7 +127,20 @@ class ClubApi extends ChangeNotifier {
 
   Future<PlayerReport> fetchPlayerStats(String slug) => repository.playerStats(slug);
 
-  Future<TeamUpdate> fetchUpdate(String slug) => repository.update(slug);
+  Future<TeamUpdate> fetchUpdate(String slug) async {
+    final loaded = await repository.update(slug);
+    final index = catalog.updates.indexWhere((item) => item.slug == slug);
+    final card = index >= 0 ? catalog.updates[index] : null;
+    final image = matchingUpdateImage(card?.image, loaded.image);
+    final shown = image != null && image != loaded.image ? loaded.withImage(image) : loaded;
+    if (index >= 0 && card!.image != shown.image && shown.image != null) {
+      final next = [...catalog.updates];
+      next[index] = card.withImage(shown.image!);
+      catalog = catalog.withUpdates(next);
+      notifyListeners();
+    }
+    return shown;
+  }
 
   Future<ClubMatch> fetchMatch(String slug) => repository.match(slug);
 

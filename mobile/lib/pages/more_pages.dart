@@ -404,7 +404,7 @@ class UpdatesPage extends StatelessWidget {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          if (update.image != null) RemoteImage(api.media(update.image), height: 160, radius: 15),
+                                          if (update.image != null) UpdatePhoto(api.media(update.image), radius: 15),
                                           Padding(
                                             padding: const EdgeInsets.all(16),
                                             child: Column(
@@ -454,7 +454,9 @@ class _UpdatePageState extends State<UpdatePage> {
     current = widget.update;
     if (widget.update.slug.isEmpty) return;
     ClubScope.of(context).api.fetchUpdate(widget.update.slug).then((loaded) {
-      if (mounted) setState(() => current = loaded);
+      if (!mounted) return;
+      final image = matchingUpdateImage(widget.update.image, loaded.image);
+      setState(() => current = image != null && image != loaded.image ? loaded.withImage(image) : loaded);
     }).catchError((_) {});
   }
 
@@ -462,6 +464,9 @@ class _UpdatePageState extends State<UpdatePage> {
   Widget build(BuildContext context) {
     final update = current ?? widget.update;
     final api = ClubScope.of(context).api;
+    final body = update.content.trim();
+    final intro = update.description.trim();
+    final showBody = body.isNotEmpty && body != intro;
     return Scaffold(
       appBar: const ClubAppBar('Tigers Daily'),
       body: ListView(
@@ -474,9 +479,9 @@ class _UpdatePageState extends State<UpdatePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (update.image != null) ...[RemoteImage(api.media(update.image), height: 220, radius: 16), const SizedBox(height: 16)],
+                if (update.image != null) ...[UpdatePhoto(api.media(update.image), radius: 15), const SizedBox(height: 16)],
                 if (update.playerName != null) ...[Eyebrow(update.playerName!), const SizedBox(height: 12)],
-                ClubMarkdown(update.content.isEmpty ? update.description : update.content, mediaUrl: api.media, onLink: (href) => openSiteLink(context, href)),
+                if (showBody) ClubMarkdown(update.content, mediaUrl: api.media, onLink: (href) => openSiteLink(context, href)),
                 if (update.video != null) ...[
                   const SizedBox(height: 12),
                   FilledButton.icon(onPressed: () => playVideo(context, api.media(update.video), title: update.title), icon: const FaIcon(FontAwesomeIcons.play, size: 15), label: const Text('WATCH')),
@@ -1128,6 +1133,7 @@ class _RecordsPageState extends State<RecordsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final columns = MediaQuery.sizeOf(context).shortestSide >= 600 ? 4 : 2;
     return Scaffold(
       appBar: const ClubAppBar('Records'),
       body: loading
@@ -1142,11 +1148,11 @@ class _RecordsPageState extends State<RecordsPage> {
                   child: rows.isEmpty
                       ? const EmptyPanel(title: 'The record book is open.', message: 'Records will be written as the season is played.')
                       : GridView.count(
-                          crossAxisCount: 2,
+                          crossAxisCount: columns,
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
                           childAspectRatio: 0.9,
                           children: rows
                               .map(
