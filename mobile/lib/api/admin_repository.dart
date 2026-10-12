@@ -16,6 +16,7 @@ class AdminRepository {
     'contacts',
     'gallery',
     'sponsors',
+    'franchises',
     'records',
     'products',
     'polls',
@@ -65,6 +66,11 @@ class AdminRepository {
   Future<AdminRecord> createRecord(String name, Map<String, dynamic> payload) async => AdminRecord.fromJson(asMap(await client.postData('/api/v1/admin/$name', payload)));
 
   Future<AdminRecord> updateRecord(String name, String id, Map<String, dynamic> payload) async => AdminRecord.fromJson(asMap(await client.patch('/api/v1/admin/$name/$id', payload)));
+
+  /// Saving post links waits while the server fetches each new post's cover.
+  Future<void> saveFranchisePosts(String id, String links) async {
+    await client.patch('/api/v1/admin/franchises/$id', {'posts': links}, limit: const Duration(minutes: 2));
+  }
 
   Future<void> deleteRecord(String name, String id) async {
     await client.delete('/api/v1/admin/$name/$id');

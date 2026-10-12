@@ -264,6 +264,8 @@ class _AdminRecordPageState extends State<AdminRecordPage> {
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AdminScorecardPage(matchId: widget.id))),
               child: const Text('SCORECARD'),
             ),
+          if (widget.collection == 'franchises' && widget.id.isNotEmpty)
+            FilledButton(onPressed: () => _editPosts(current.fields['posts'] ?? ''), child: const Text('SOCIAL POSTS')),
           if (widget.collection != 'audit' && widget.id.isNotEmpty) ...[
             const SizedBox(height: 8),
             OutlinedButton(onPressed: _delete, child: const Text('DELETE')),
@@ -271,6 +273,48 @@ class _AdminRecordPageState extends State<AdminRecordPage> {
         ],
       ),
     );
+  }
+
+  /// One post link per line, saved the same way as the website admin: the server fetches each new post's cover.
+  Future<void> _editPosts(String current) async {
+    final controller = TextEditingController(text: current);
+    final text = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Social posts'),
+        content: SizedBox(
+          width: 520,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('One link per line, in display order. Instagram, Facebook, YouTube, X, TikTok, Threads, LinkedIn or any other page. Delete a line to remove that post.', style: TextStyle(fontSize: 12.5)),
+              const SizedBox(height: 10),
+              TextField(controller: controller, minLines: 6, maxLines: 12, keyboardType: TextInputType.multiline, decoration: const InputDecoration(hintText: 'https://www.instagram.com/reel/…')),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+          TextButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('SAVE')),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (text == null || !mounted) return;
+    final admin = ClubScope.of(context).api.admin;
+    final messenger = ScaffoldMessenger.of(context)..showSnackBar(const SnackBar(content: Text('Saving posts and fetching covers…'), duration: Duration(minutes: 2)));
+    try {
+      await admin.saveFranchisePosts(widget.id, text);
+      messenger.hideCurrentSnackBar();
+      final loaded = await admin.record(widget.collection, widget.id);
+      if (!mounted) return;
+      setState(() => record = loaded);
+      await showClubMessage(context, 'Social posts saved. Covers are fetched automatically.');
+    } catch (reason) {
+      messenger.hideCurrentSnackBar();
+      if (mounted) await showClubMessage(context, '$reason'.replaceFirst('Exception: ', ''));
+    }
   }
 
   Future<void> _delete() async {

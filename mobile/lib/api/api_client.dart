@@ -68,9 +68,9 @@ class ApiClient {
 
   static const timeout = Duration(seconds: 20);
 
-  Future<http.Response> _send(Future<http.Response> Function() request) async {
+  Future<http.Response> _send(Future<http.Response> Function() request, {Duration limit = timeout}) async {
     try {
-      return await request().timeout(timeout);
+      return await request().timeout(limit);
     } on TimeoutException {
       throw Exception('The club server is taking too long. Check your connection and try again.');
     } on http.ClientException {
@@ -93,8 +93,8 @@ class ApiClient {
     return _data(await _send(() => http.post(_uri(path), headers: _headers(json: true), body: jsonEncode(payload))));
   }
 
-  Future<dynamic> patch(String path, Map<String, dynamic> payload) async {
-    return _data(await _send(() => http.patch(_uri(path), headers: _headers(json: true), body: jsonEncode(payload))));
+  Future<dynamic> patch(String path, Map<String, dynamic> payload, {Duration limit = timeout}) async {
+    return _data(await _send(() => http.patch(_uri(path), headers: _headers(json: true), body: jsonEncode(payload)), limit: limit));
   }
 
   Future<dynamic> put(String path, Map<String, dynamic> payload) async {

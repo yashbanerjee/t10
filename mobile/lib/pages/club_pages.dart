@@ -146,6 +146,8 @@ class _FranchisePostTile extends StatelessWidget {
         'YOUTUBE' => (FontAwesomeIcons.youtube, const LinearGradient(colors: [Color(0xFFFF0000), Color(0xFFFF0000)])),
         'X' => (FontAwesomeIcons.xTwitter, const LinearGradient(colors: [Color(0xFF111111), Color(0xFF111111)])),
         'TIKTOK' => (FontAwesomeIcons.tiktok, const LinearGradient(colors: [Color(0xFF111111), Color(0xFF111111)])),
+        'THREADS' => (FontAwesomeIcons.threads, const LinearGradient(colors: [Color(0xFF111111), Color(0xFF111111)])),
+        'LINKEDIN' => (FontAwesomeIcons.linkedinIn, const LinearGradient(colors: [Color(0xFF0A66C2), Color(0xFF0A66C2)])),
         _ => (FontAwesomeIcons.link, const LinearGradient(colors: [Color(0xFF111111), Color(0xFF111111)])),
       };
 

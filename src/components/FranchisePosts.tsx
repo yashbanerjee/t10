@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Facebook, Instagram, Link2, Music2, Play, Twitter, Youtube } from "lucide-react";
+import { AtSign, Facebook, Instagram, Link2, Linkedin, Music2, Play, Twitter, Youtube } from "lucide-react";
 import type { getFranchises } from "@/lib/data";
 
 type Franchise = Awaited<ReturnType<typeof getFranchises>>[number];
@@ -10,6 +10,8 @@ const platforms: Record<string, { Icon: typeof Facebook; label: string; tone: st
   YOUTUBE: { Icon: Youtube, label: "YouTube", tone: "youtube" },
   X: { Icon: Twitter, label: "X", tone: "x" },
   TIKTOK: { Icon: Music2, label: "TikTok", tone: "x" },
+  THREADS: { Icon: AtSign, label: "Threads", tone: "x" },
+  LINKEDIN: { Icon: Linkedin, label: "LinkedIn", tone: "linkedin" },
   LINK: { Icon: Link2, label: "the web", tone: "link" },
 };
 const VIDEO = /\/(reels?|tv|videos?|watch|shorts)\b|\/share\/[vr]\/|fb\.watch|youtu\.be/i;
