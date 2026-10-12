@@ -482,6 +482,43 @@ void openPlayer(BuildContext context, Player player) {
   );
 }
 
+class _PlayerStyleDetail extends StatelessWidget {
+  const _PlayerStyleDetail({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 280),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: const TextStyle(
+              color: goldLight,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              height: 1.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class PlayerPage extends StatefulWidget {
   const PlayerPage({super.key, required this.slug, this.preview});
   final String slug;
@@ -531,11 +568,7 @@ class _PlayerPageState extends State<PlayerPage> {
       );
     }
     final api = ClubScope.of(context).api;
-    final facts = <(String, String)>[
-      ('Role', roleLabel(current.role)),
-      if (current.nationality != null) ('Nationality', current.nationality!),
-      if (current.battingStyle != null) ('Batting', current.battingStyle!),
-      if (current.bowlingStyle != null) ('Bowling', current.bowlingStyle!),
+    final additionalFacts = <(String, String)>[
       if (current.dateOfBirth != null)
         ('Born', when(current.dateOfBirth).split(' · ').first),
       if (current.heightCm != null) ('Height', '${current.heightCm} cm'),
@@ -548,7 +581,7 @@ class _PlayerPageState extends State<PlayerPage> {
         padding: EdgeInsets.zero,
         children: [
           SizedBox(
-            height: 380,
+            height: 350,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -576,7 +609,7 @@ class _PlayerPageState extends State<PlayerPage> {
                 ),
                 RemoteImage(
                   api.media(current.coverImage ?? current.profileImage),
-                  height: 380,
+                  height: 430,
                   radius: 0,
                 ),
                 const DecoratedBox(
@@ -604,12 +637,56 @@ class _PlayerPageState extends State<PlayerPage> {
                           Expanded(
                             child: GoldText(
                               name.toUpperCase(),
-                              style: displayStyle(44, height: 0.9),
+                              style: displayStyle(36, height: 0.95),
                             ),
                           ),
                           GoldText(
                             '#${current.jerseyNumber ?? 'UT'}',
-                            style: displayStyle(46),
+                            style: displayStyle(38),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 4,
+                        children: [
+                          Text(
+                            roleLabel(current.role).toUpperCase(),
+                            style: const TextStyle(
+                              color: Color(0xFFE6DDF0),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                          const Text(
+                            '/',
+                            style: TextStyle(color: goldLight, fontSize: 11),
+                          ),
+                          if (current.nationality != null) ...[
+                            Text(
+                              current.nationality!.toUpperCase(),
+                              style: const TextStyle(
+                                color: Color(0xFFE6DDF0),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            const Text(
+                              '/',
+                              style: TextStyle(color: goldLight, fontSize: 11),
+                            ),
+                          ],
+                          Text(
+                            'SQUAD #${current.jerseyNumber ?? 'UT'}',
+                            style: const TextStyle(
+                              color: Color(0xFFE6DDF0),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1,
+                            ),
                           ),
                         ],
                       ),
@@ -624,48 +701,6 @@ class _PlayerPageState extends State<PlayerPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final (label, value) in facts)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: purple.withValues(alpha: 0.7),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: gold.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              label.toUpperCase(),
-                              style: const TextStyle(
-                                color: Color(0xFFBDAED0),
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                            Text(
-                              value,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 16),
                 Text(
                   current.bio ?? 'Player profile details are being completed.',
                   style: const TextStyle(
@@ -674,6 +709,71 @@ class _PlayerPageState extends State<PlayerPage> {
                     height: 1.55,
                   ),
                 ),
+                if (current.battingStyle != null ||
+                    current.bowlingStyle != null) ...[
+                  const SizedBox(height: 18),
+                  Wrap(
+                    spacing: 28,
+                    runSpacing: 14,
+                    children: [
+                      if (current.battingStyle != null)
+                        _PlayerStyleDetail(
+                          label: 'Batting',
+                          value: current.battingStyle!,
+                        ),
+                      if (current.bowlingStyle != null)
+                        _PlayerStyleDetail(
+                          label: 'Bowling',
+                          value: current.bowlingStyle!,
+                        ),
+                    ],
+                  ),
+                ],
+                if (additionalFacts.isNotEmpty) ...[
+                  const SizedBox(height: 18),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final (label, value) in additionalFacts)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: purple.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: gold.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                label.toUpperCase(),
+                                style: const TextStyle(
+                                  color: Color(0xFFBDAED0),
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                              Text(
+                                value,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 16),
                 if (report?.currentSeason != null)
                   _StatsBlock('This season', report!.currentSeason!),
                 if (report?.career != null)
