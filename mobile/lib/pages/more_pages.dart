@@ -84,7 +84,7 @@ class MorePage extends StatelessWidget {
               shrinkWrap: true,
               padding: EdgeInsets.zero,
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 10, crossAxisSpacing: 10, mainAxisExtent: 70),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 10, crossAxisSpacing: 10, mainAxisExtent: MediaQuery.textScalerOf(context).scale(70)),
               children: [for (final item in club) _MenuTile(item: item)],
             ),
             const SectionTitle('Get in touch'),
@@ -93,7 +93,7 @@ class MorePage extends StatelessWidget {
             _MenuRow(icon: FontAwesomeIcons.userShield, title: 'Privacy', subtitle: 'How we handle your information', onTap: () => _push(context, const LegalScreen(kind: LegalKind.privacy))),
             _MenuRow(icon: FontAwesomeIcons.scaleBalanced, title: 'Terms', subtitle: 'Using the app, shop, polls & contests', onTap: () => _push(context, const LegalScreen(kind: LegalKind.terms))),
             const SizedBox(height: 18),
-            Center(child: Opacity(opacity: 0.8, child: Image.asset('assets/brand/abu-dhabi-t10-landscape-white.png', height: 22))),
+            Center(child: Opacity(opacity: 0.8, child: Image.asset('assets/brand/abu-dhabi-t10-landscape-white.png', height: 22 * clubScale(context)))),
             const SizedBox(height: 8),
             const Center(child: Text('#LetsGoHunt', style: TextStyle(color: goldLight, fontWeight: FontWeight.w800, letterSpacing: 1.2))),
           ],
@@ -118,7 +118,7 @@ class _FeatureTile extends StatelessWidget {
           width: 1.8,
           offset: item.title.length * 0.13,
           child: Container(
-            height: 84,
+            height: MediaQuery.textScalerOf(context).scale(84),
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: const BoxDecoration(gradient: accentGradient),
             child: Row(
@@ -509,7 +509,7 @@ class GalleryPage extends StatelessWidget {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
               sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.8),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: MediaQuery.sizeOf(context).shortestSide >= 600 ? 4 : 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.8),
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final item = items[index];
@@ -572,8 +572,8 @@ class PartnersPage extends StatelessWidget {
                               child: Row(
                                 children: [
                                   Container(
-                                    width: 84,
-                                    height: 56,
+                                    width: 84 * clubScale(context),
+                                    height: 56 * clubScale(context),
                                     padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
                                     child: sponsor.logoUrl == null ? const FaIcon(FontAwesomeIcons.handshake, color: ink) : Image.network(api.media(sponsor.logoUrl), fit: BoxFit.contain, errorBuilder: (_, _, _) => const FaIcon(FontAwesomeIcons.handshake, color: ink)),
@@ -1064,7 +1064,7 @@ class _LeaderCard extends StatelessWidget {
           bloom: first ? 0.75 : 0.3,
           offset: rank * 0.21,
           child: Container(
-            height: 132,
+            height: 132 * clubScale(context),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               gradient: first ? accentGradient : const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF3A0B66), Color(0xFF2A0750)]),

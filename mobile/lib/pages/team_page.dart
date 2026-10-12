@@ -26,7 +26,7 @@ class TeamPage extends StatelessWidget {
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
                   sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.66),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: MediaQuery.sizeOf(context).shortestSide >= 600 ? 4 : 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.66),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => _PlayerCard(player: api.catalog.players[index]),
                       childCount: api.catalog.players.length,
@@ -46,7 +46,7 @@ class TeamPage extends StatelessWidget {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  SizedBox(width: 68, height: 68, child: RemoteImage(api.media(member.profileImage), height: 68, radius: 34)),
+                                  SizedBox(width: 68 * clubScale(context), height: 68 * clubScale(context), child: RemoteImage(api.media(member.profileImage), height: 68, radius: 34)),
                                   const SizedBox(width: 14),
                                   Expanded(
                                     child: Column(
@@ -333,7 +333,7 @@ class _PlayerPageState extends State<PlayerPage> {
         padding: EdgeInsets.zero,
         children: [
           SizedBox(
-            height: 380,
+            height: 380 * clubScale(context),
             child: Stack(
               fit: StackFit.expand,
               children: [

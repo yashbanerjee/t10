@@ -125,7 +125,14 @@ class _UnitedTigersAppState extends State<UnitedTigersApp> {
             bodyMedium: TextStyle(color: Color(0xFFF7F4FB), height: 1.35),
           ),
         ),
-        builder: (context, child) => GlowClock(child: child ?? const SizedBox.shrink()),
+        builder: (context, child) {
+          final media = MediaQuery.of(context);
+          final factor = media.textScaler.scale(deviceTextScale(media.size)).clamp(1.0, 2.0);
+          return MediaQuery(
+            data: media.copyWith(textScaler: TextScaler.linear(factor)),
+            child: GlowClock(child: child ?? const SizedBox.shrink()),
+          );
+        },
         home: const ClubShell(),
       ),
     );

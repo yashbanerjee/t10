@@ -1,15 +1,13 @@
 import { prisma } from "@/lib/db";
-import { demoPlayers, sampleNews, sampleUpdates } from "@/lib/demo";
 import { PRIVATE_SETTING_KEYS } from "@/lib/site-settings";
 import { LEAGUE_TEAMS, findLeagueTeam } from "@/lib/league";
 import { getTeams } from "@/lib/teams";
 
 export async function getPlayers() {
   try {
-    const players = await prisma.player.findMany({ where: { isActive: true, isDemo: false }, orderBy: [{ displayOrder: "asc" }, { fullName: "asc" }] });
-    return players.length ? players : demoPlayers;
+    return await prisma.player.findMany({ where: { isActive: true, isDemo: false }, orderBy: [{ displayOrder: "asc" }, { fullName: "asc" }] });
   } catch {
-    return demoPlayers;
+    return [];
   }
 }
 
@@ -21,9 +19,10 @@ export async function getStaff() {
 export async function getPlayerBySlug(slug: string) {
   try {
     const player = await prisma.player.findFirst({ where: { slug, isDemo: false } });
-    if (player) return player;
-  } catch { /* no database configured in the visual demo */ }
-  return demoPlayers.find((player) => player.slug === slug) ?? null;
+    return player;
+  } catch {
+    return null;
+  }
 }
 
 export async function getMatches() {
@@ -41,38 +40,64 @@ export async function getMatchBySlug(slug: string) {
   catch { return null; }
 }
 
+function demoAsset(value: unknown) {
+  return typeof value === "string" && value.includes("/images/demo/");
+}
+
 export async function getNews() {
   try {
-    const rows = await prisma.newsArticle.findMany({ where: { status: "PUBLISHED", isDemo: false, publishedAt: { lte: new Date() } }, orderBy: { publishedAt: "desc" }, take: 12 });
-    return rows.length ? rows : sampleNews;
+    return await prisma.newsArticle.findMany({ where: { status: "PUBLISHED", isDemo: false, publishedAt: { lte: new Date() } }, orderBy: { publishedAt: "desc" }, take: 12 });
   } catch {
-    return sampleNews;
+    return [];
   }
 }
 
 export async function getNewsBySlug(slug: string) {
   try {
-    const row = await prisma.newsArticle.findFirst({ where: { slug, status: "PUBLISHED" } });
-    if (row) return row;
-  } catch { /* visual demo fallback */ }
-  return sampleNews.find((item) => item.slug === slug) ?? null;
+    return await prisma.newsArticle.findFirst({ where: { slug, status: "PUBLISHED", isDemo: false } });
+  } catch {
+    return null;
+  }
+}
+
+async function captainPhoto() {
+  const captain = await prisma.player.findFirst({ where: { isCaptain: true, isActive: true, isDemo: false }, select: { profileImage: true } });
+  return captain?.profileImage && !demoAsset(captain.profileImage) ? captain.profileImage : null;
+}
+
+function presentUpdate<T extends { image: string | null; video: string | null; slug: string; title: string; player: { profileImage: string | null } | null }>(row: T, captainImage: string | null) {
+  if (demoAsset(row.video)) return null;
+  if (!demoAsset(row.image)) return row;
+  const linked = row.player?.profileImage;
+  const replacement = linked && !demoAsset(linked) ? linked : /captain/i.test(`${row.slug} ${row.title}`) ? captainImage : null;
+  return replacement ? { ...row, image: replacement } : null;
 }
 
 export async function getUpdates() {
   try {
-    const rows = await prisma.teamUpdate.findMany({ where: { isPublished: true, isDemo: false, publishedAt: { lte: new Date() } }, include: { player: true }, orderBy: { publishedAt: "desc" }, take: 20 });
-    return rows.length ? rows : sampleUpdates;
+    const [rows, captainImage] = await Promise.all([
+      prisma.teamUpdate.findMany({ where: { isPublished: true, isDemo: false, publishedAt: { lte: new Date() } }, include: { player: true }, orderBy: { publishedAt: "desc" }, take: 20 }),
+      captainPhoto(),
+    ]);
+    return rows.flatMap((row) => {
+      const update = presentUpdate(row, captainImage);
+      return update ? [update] : [];
+    });
   } catch {
-    return sampleUpdates;
+    return [];
   }
 }
 
 export async function getUpdateBySlug(slug: string) {
   try {
-    const row = await prisma.teamUpdate.findFirst({ where: { slug, isPublished: true }, include: { player: true } });
-    if (row) return row;
-  } catch { /* visual demo fallback */ }
-  return sampleUpdates.find((item) => item.slug === slug) ?? null;
+    const [row, captainImage] = await Promise.all([
+      prisma.teamUpdate.findFirst({ where: { slug, isPublished: true, isDemo: false }, include: { player: true } }),
+      captainPhoto(),
+    ]);
+    return row ? presentUpdate(row, captainImage) : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getPublicSettings() {

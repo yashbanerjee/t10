@@ -97,7 +97,7 @@ class ClubApi extends ChangeNotifier {
         repository.loadCatalog(),
         repository.loadSettings().catchError((_) => SiteContent.fallback),
       ]);
-      catalog = loaded[0] as ClubCatalog;
+      catalog = (loaded[0] as ClubCatalog).withoutDemoStories();
       site = loaded[1] as SiteContent;
       banner = site.banner;
     } catch (reason) {

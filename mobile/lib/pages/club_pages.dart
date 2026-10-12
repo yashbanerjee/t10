@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
 import 'package:united_tigers/pages/fixtures_page.dart';
@@ -7,6 +11,27 @@ import 'package:united_tigers/pages/more_pages.dart';
 import 'package:united_tigers/scope.dart';
 import 'package:united_tigers/video.dart';
 import 'package:united_tigers/widgets.dart';
+
+const _pdfChannel = MethodChannel('united_tigers/files');
+const _brochureAsset = 'assets/brand/United-Tigers-Partnership-Brochure.pdf';
+
+/// Copies the bundled brochure out of the app assets and opens it in the device PDF viewer.
+Future<void> openBundledBrochure() async {
+  final file = File('${(await getTemporaryDirectory()).path}/United-Tigers-Partnership-Brochure.pdf');
+  if (!await file.exists() || await file.length() < 5) {
+    final data = await rootBundle.load(_brochureAsset);
+    await file.writeAsBytes(data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes), flush: true);
+  }
+  if (!Platform.isIOS && !Platform.isAndroid) {
+    await openExternal(file.uri.toString());
+    return;
+  }
+  try {
+    await _pdfChannel.invokeMethod<void>('openPdf', {'path': file.path});
+  } on PlatformException {
+    throw Exception('No PDF viewer is available on this device.');
+  }
+}
 
 String _clean(Object reason) => '$reason'.replaceFirst('Exception: ', '');
 
@@ -109,12 +134,13 @@ class _FranchiseCrest extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final api = ClubScope.of(context).api;
+    final box = size * clubScale(context);
     final initials = franchise.name.split(RegExp(r'\s+')).where((part) => part.isNotEmpty).take(2).map((part) => part[0]).join().toUpperCase();
     final fallback = Text(initials, style: displayStyle(size * 0.32, color: franchise.isHome ? ink : Colors.white));
     return Container(
-      width: size,
-      height: size,
-      padding: EdgeInsets.all(size * 0.1),
+      width: box,
+      height: box,
+      padding: EdgeInsets.all(box * 0.1),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: franchise.isHome ? goldSurface : const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF6A1290), Color(0xFF2A0750)]),
@@ -278,44 +304,27 @@ class HomePartnerCta extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Pressable(
-                    onTap: open,
-                    child: AspectRatio(
-                      aspectRatio: 900 / 506,
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          RemoteImage(api.media('/brand/partner-brochure-cover.webp'), height: double.infinity, radius: 0),
-                          const DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x00000000), Color(0x00000000), Color(0xCC1C0432)], stops: [0, 0.55, 1]),
-                            ),
-                          ),
-                          Positioned(
-                            left: 12,
-                            bottom: 12,
-                            child: Floating(
-                              distance: 3,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  AspectRatio(
+                    aspectRatio: 900 / 506,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Pressable(
+                          onTap: open,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              RemoteImage(api.media('/brand/partner-brochure-cover.webp'), height: double.infinity, radius: 0),
+                              const DecoratedBox(
                                 decoration: BoxDecoration(
-                                  gradient: goldSurface,
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [BoxShadow(color: const Color(0xFFEEC873).withValues(alpha: 0.45), blurRadius: 14)],
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    FaIcon(FontAwesomeIcons.download, size: 12, color: ink),
-                                    SizedBox(width: 7),
-                                    Text('GET THE BROCHURE', style: TextStyle(color: ink, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.9)),
-                                  ],
+                                  gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x00000000), Color(0x00000000), Color(0xCC1C0432)], stops: [0, 0.55, 1]),
                                 ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                        const Positioned(left: 12, bottom: 12, child: _GetBrochureButton()),
+                      ],
                     ),
                   ),
                   Padding(
@@ -349,6 +358,59 @@ class HomePartnerCta extends StatelessWidget {
   }
 }
 
+/// Bottom-left control on the brochure cover. Opens the PDF bundled with the app.
+class _GetBrochureButton extends StatefulWidget {
+  const _GetBrochureButton();
+
+  @override
+  State<_GetBrochureButton> createState() => _GetBrochureButtonState();
+}
+
+class _GetBrochureButtonState extends State<_GetBrochureButton> {
+  bool busy = false;
+
+  Future<void> _open() async {
+    if (busy) return;
+    setState(() => busy = true);
+    try {
+      await openBundledBrochure();
+    } catch (reason) {
+      if (mounted) await showClubMessage(context, _clean(reason));
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _open,
+      child: Floating(
+        distance: 3,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            gradient: goldSurface,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [BoxShadow(color: const Color(0xFFEEC873).withValues(alpha: 0.45), blurRadius: 14)],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (busy)
+                const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: ink))
+              else
+                const FaIcon(FontAwesomeIcons.download, size: 12, color: ink),
+              const SizedBox(width: 7),
+              const Text('GET THE BROCHURE', style: TextStyle(color: ink, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.9)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 const _dialCodes = ['+971', '+92', '+91', '+880', '+94', '+93', '+966', '+974', '+968', '+965', '+973', '+977', '+20', '+63', '+44', '+1', '+61', '+27', '+64'];
 
 class BecomePartnerPage extends StatefulWidget {
@@ -364,7 +426,6 @@ class _BecomePartnerPageState extends State<BecomePartnerPage> {
   final mobile = TextEditingController();
   String dial = _dialCodes.first;
   bool busy = false;
-  String? brochure;
   bool sent = false;
 
   static const points = [
@@ -390,13 +451,14 @@ class _BecomePartnerPageState extends State<BecomePartnerPage> {
     }
     setState(() => busy = true);
     try {
-      final link = await ClubScope.of(context).api.requestPartnerBrochure({'name': name.text.trim(), 'email': email.text.trim(), 'phone': '$dial $digits'});
+      await ClubScope.of(context).api.requestPartnerBrochure({'name': name.text.trim(), 'email': email.text.trim(), 'phone': '$dial $digits'});
       if (!mounted) return;
-      setState(() {
-        sent = true;
-        brochure = link;
-      });
-      if (link != null) openExternal(ClubScope.of(context).api.media(link));
+      setState(() => sent = true);
+      try {
+        await openBundledBrochure();
+      } catch (reason) {
+        if (mounted) await showClubMessage(context, _clean(reason));
+      }
     } catch (reason) {
       if (mounted) await showClubMessage(context, _clean(reason));
     } finally {
@@ -406,7 +468,6 @@ class _BecomePartnerPageState extends State<BecomePartnerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final api = ClubScope.of(context).api;
     return Scaffold(
       appBar: const ClubAppBar('Become a partner'),
       body: ListView(
@@ -437,10 +498,19 @@ class _BecomePartnerPageState extends State<BecomePartnerPage> {
                         GoldText('THANK YOU.', style: displayStyle(28)),
                         const SizedBox(height: 6),
                         const Text('Our partnerships team has your details and will be in touch. A copy is on its way to your inbox.', style: TextStyle(color: Color(0xFFE6DDF0), height: 1.45)),
-                        if (brochure != null) ...[
-                          const SizedBox(height: 12),
-                          FilledButton.icon(style: goldButtonStyle(), onPressed: () => openExternal(api.media(brochure)), icon: const FaIcon(FontAwesomeIcons.filePdf, size: 17), label: const Text('OPEN BROCHURE')),
-                        ],
+                        const SizedBox(height: 12),
+                        FilledButton.icon(
+                          style: goldButtonStyle(),
+                          onPressed: () async {
+                            try {
+                              await openBundledBrochure();
+                            } catch (reason) {
+                              if (context.mounted) await showClubMessage(context, _clean(reason));
+                            }
+                          },
+                          icon: const FaIcon(FontAwesomeIcons.filePdf, size: 17),
+                          label: const Text('OPEN BROCHURE'),
+                        ),
                       ],
                     ),
                   )

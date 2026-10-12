@@ -61,7 +61,7 @@ class ShopPage extends StatelessWidget {
                   SliverPadding(
                     padding: EdgeInsets.fromLTRB(16, 18, 16, 28 + navClearance(context)),
                     sliver: SliverGrid(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.64),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: MediaQuery.sizeOf(context).shortestSide >= 600 ? 4 : 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.64),
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final product = products[index];
                         return ClubCard(
@@ -246,7 +246,7 @@ class CartPage extends StatelessWidget {
                       child: ClubCard(
                         child: Row(
                           children: [
-                            SizedBox(width: 64, height: 64, child: RemoteImage(line.image ?? '', height: 64, radius: 12)),
+                            SizedBox(width: 64 * clubScale(context), height: 64 * clubScale(context), child: RemoteImage(line.image ?? '', height: 64, radius: 12)),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(

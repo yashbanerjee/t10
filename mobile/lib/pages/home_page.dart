@@ -51,6 +51,7 @@ class HomePage extends StatelessWidget {
         final clips = [...pastMatches.where((item) => item.isVideo), ...pastPhotos].take(3).toList();
         final shown = clips.map((item) => item.mediaUrl).toSet();
         final moments = pastPhotos.where((item) => !shown.contains(item.mediaUrl)).take(4).toList();
+        final scale = clubScale(context);
 
         return Scaffold(
           body: RefreshIndicator(
@@ -76,7 +77,7 @@ class HomePage extends StatelessWidget {
                 ],
                 SectionTitle('MEET OUR TIGERS', action: 'View all', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamPage()))),
                 SizedBox(
-                  height: 214,
+                  height: 214 * scale,
                   child: ListView.separated(
                     scrollCacheExtent: pageCacheExtent,
                     scrollDirection: Axis.horizontal,
@@ -85,7 +86,7 @@ class HomePage extends StatelessWidget {
                     itemCount: roster.length,
                     separatorBuilder: (_, _) => const SizedBox(width: 12),
                     itemBuilder: (context, index) => SizedBox(
-                      width: 146,
+                      width: 146 * scale,
                       child: _TigerCard(player: roster[index], order: index, glowing: index.isEven),
                     ),
                   ),
@@ -103,7 +104,7 @@ class HomePage extends StatelessWidget {
                       const SizedBox(height: 12),
                       if (poll != null)
                         SizedBox(
-                          height: 54,
+                          height: 54 * scale,
                           child: ListView(
                             scrollCacheExtent: pageCacheExtent,
                             scrollDirection: Axis.horizontal,
@@ -112,7 +113,7 @@ class HomePage extends StatelessWidget {
                               return Padding(
                                 padding: const EdgeInsets.only(right: 8),
                                 child: CircleAvatar(
-                                  radius: 26,
+                                  radius: 26 * scale,
                                   backgroundColor: glow,
                                   backgroundImage: face?.profileImage == null ? null : NetworkImage(api.media(face!.profileImage)),
                                   child: face?.profileImage == null ? Text(option.label.isEmpty ? '?' : option.label[0]) : null,
@@ -138,7 +139,7 @@ class HomePage extends StatelessWidget {
                 if (clips.isNotEmpty) ...[
                   SectionTitle('PAST MATCHES', action: 'View all', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GalleryPage()))),
                   SizedBox(
-                    height: 168,
+                    height: 168 * scale,
                     child: ListView.separated(
                       scrollCacheExtent: pageCacheExtent,
                       scrollDirection: Axis.horizontal,
@@ -147,7 +148,7 @@ class HomePage extends StatelessWidget {
                       itemBuilder: (context, index) {
                         final item = clips[index];
                         return SizedBox(
-                          width: index == 0 ? 260 : 150,
+                          width: (index == 0 ? 260 : 150) * scale,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -190,7 +191,7 @@ class HomePage extends StatelessWidget {
                   SectionTitle('FEATURED MOMENTS', action: 'Gallery', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GalleryPage()))),
                 if (moments.isNotEmpty)
                   SizedBox(
-                    height: 120,
+                    height: 120 * scale,
                     child: ListView.separated(
                       scrollCacheExtent: pageCacheExtent,
                       scrollDirection: Axis.horizontal,
@@ -199,7 +200,7 @@ class HomePage extends StatelessWidget {
                       itemBuilder: (context, index) => GestureDetector(
                         onTap: () => openGallery(context, moments, moments[index], api.media),
                         child: SizedBox(
-                          width: 160,
+                          width: 160 * scale,
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
@@ -222,7 +223,7 @@ class HomePage extends StatelessWidget {
                       onTap: () => openProduct(context, product),
                       child: Row(
                         children: [
-                          SizedBox(width: 84, child: RemoteImage(api.media(product.image), height: 84, radius: 12)),
+                          SizedBox(width: 84 * scale, child: RemoteImage(api.media(product.image), height: 84, radius: 12)),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -292,7 +293,7 @@ class HomePage extends StatelessWidget {
                 if (catalog.sponsors.isNotEmpty) ...[
                   SectionTitle('OUR PARTNERS', action: 'View all', onAction: () => openClubPath(context, '/partners')),
                   SizedBox(
-                    height: 96,
+                    height: 96 * scale,
                     child: OverflowBox(
                       minWidth: MediaQuery.sizeOf(context).width,
                       maxWidth: MediaQuery.sizeOf(context).width,
@@ -324,7 +325,7 @@ class HomeHero extends StatelessWidget {
     '/images/hero-cast/05-confident.webp',
   ];
 
-  static double heroHeight(BuildContext context) => 460 + MediaQuery.paddingOf(context).top;
+  static double heroHeight(BuildContext context) => 460 * clubScale(context) + MediaQuery.paddingOf(context).top;
 
   @override
   Widget build(BuildContext context) {
@@ -332,6 +333,8 @@ class HomeHero extends StatelessWidget {
     final art = banner.isImage ? api.media(banner.image) : api.media('/images/hero-art.webp');
     final title = displayStyle(42, height: 0.9);
     final inset = MediaQuery.paddingOf(context).top;
+    final scale = clubScale(context);
+    double u(double value) => value * scale;
     return GestureDetector(
       onTap: () => openClubPath(context, banner.ctaHref),
       child: SizedBox(
@@ -345,10 +348,10 @@ class HomeHero extends StatelessWidget {
               top: 0,
               left: 0,
               right: 0,
-              height: 543,
+              height: u(543),
               child: Image.network(
                 art,
-                height: 543,
+                height: u(543),
                 cacheWidth: (MediaQuery.sizeOf(context).width * MediaQuery.devicePixelRatioOf(context)).round(),
                 fit: BoxFit.cover,
                 alignment: Alignment.topCenter,
@@ -410,7 +413,7 @@ class HomeHero extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: 124 + inset,
+              top: u(124) + inset,
               right: 10,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -423,11 +426,11 @@ class HomeHero extends StatelessWidget {
             Positioned(
               left: 12,
               right: 12,
-              bottom: banner.showPlayers ? 132 : 96,
+              bottom: banner.showPlayers ? u(132) : u(96),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset('assets/brand/tiger-gold.png', width: 42, height: 36),
+                  Image.asset('assets/brand/tiger-gold.png', width: u(42), height: u(36)),
                   const SizedBox(width: 8),
                   const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -443,7 +446,7 @@ class HomeHero extends StatelessWidget {
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: 8,
+                bottom: u(8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -453,8 +456,8 @@ class HomeHero extends StatelessWidget {
                         padding: EdgeInsets.only(left: index == 0 ? 0 : 6),
                         child: _Arch(
                           url: api.media(_cast[index]),
-                          width: const [46.0, 56.0, 68.0, 56.0, 46.0][index],
-                          height: const [74.0, 92.0, 112.0, 92.0, 74.0][index],
+                          width: u(const [46.0, 56.0, 68.0, 56.0, 46.0][index]),
+                          height: u(const [74.0, 92.0, 112.0, 92.0, 74.0][index]),
                           order: const [0, 1, 2, 1, 0][index],
                           lead: index == 2,
                         ),
@@ -551,8 +554,7 @@ class _TigerCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AspectRatio(
-            aspectRatio: 1,
+          Expanded(
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -783,8 +785,8 @@ class _NextMatchState extends State<_NextMatch> {
                     Text(match.isLive ? 'LIVE NOW' : 'NEXT MATCH', style: displayStyle(18, color: goldLight)),
                     const Spacer(),
                     SizedBox(
-                      width: 96,
-                      height: 26,
+                      width: 96 * clubScale(context),
+                      height: 26 * clubScale(context),
                       child: Image.asset('assets/brand/abu-dhabi-t10-landscape-white.png', fit: BoxFit.contain, alignment: Alignment.centerRight),
                     ),
                   ],
@@ -976,8 +978,9 @@ class _PartnerMarqueeState extends State<_PartnerMarquee> with SingleTickerProvi
   Widget build(BuildContext context) {
     final api = ClubScope.of(context).api;
     final sponsors = widget.sponsors;
+    final scale = clubScale(context);
     return SizedBox(
-      height: 96,
+      height: 96 * scale,
       child: ShaderMask(
         blendMode: BlendMode.dstIn,
         shaderCallback: (rect) => const LinearGradient(
@@ -1000,20 +1003,21 @@ class _PartnerMarqueeState extends State<_PartnerMarquee> with SingleTickerProvi
                 child: Pressable(
                   onTap: sponsor.website == null ? () => openClubPath(context, '/partners') : () => openExternal(sponsor.website!),
                   child: SizedBox(
-                    width: 132,
+                    width: 132 * scale,
                     child: Column(
                       children: [
-                        SizedBox(
-                          height: 64,
-                          width: 132,
-                          child: logo == null
-                              ? fallback
-                              : Center(
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(6),
-                                    child: Image.network(api.media(logo), fit: BoxFit.contain, errorBuilder: (_, _, _) => fallback),
+                        Expanded(
+                          child: SizedBox(
+                            width: 132 * scale,
+                            child: logo == null
+                                ? fallback
+                                : Center(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Image.network(api.media(logo), fit: BoxFit.contain, errorBuilder: (_, _, _) => fallback),
+                                    ),
                                   ),
-                                ),
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(

@@ -278,7 +278,7 @@ class NewsStory {
 }
 
 class TeamUpdate {
-  const TeamUpdate({required this.slug, required this.title, required this.description, required this.content, this.image, this.video, this.category, this.publishedAt, this.playerName});
+  const TeamUpdate({required this.slug, required this.title, required this.description, required this.content, this.image, this.video, this.category, this.publishedAt, this.playerName, this.playerImage});
 
   final String slug;
   final String title;
@@ -289,6 +289,9 @@ class TeamUpdate {
   final String? category;
   final DateTime? publishedAt;
   final String? playerName;
+  final String? playerImage;
+
+  TeamUpdate withImage(String image) => TeamUpdate(slug: slug, title: title, description: description, content: content, image: image, video: video, category: category, publishedAt: publishedAt, playerName: playerName, playerImage: playerImage);
 
   factory TeamUpdate.fromJson(Map<String, dynamic> json) {
     final player = asMap(json['player']);
@@ -302,6 +305,7 @@ class TeamUpdate {
       category: asText(json['category']),
       publishedAt: asDate(json['publishedAt']),
       playerName: asText(player['fullName']),
+      playerImage: asText(player['profileImage']),
     );
   }
 
@@ -557,10 +561,11 @@ class PlayerStat {
   static List<PlayerStat> list(dynamic value) => asList(value).map(PlayerStat.fromJson).toList();
 }
 
-/// Public site settings the app shows: the homepage banner and the legal pages.
+/// Public site settings the app shows: the homepage banner, the partnership brochure and the legal pages.
 class SiteContent {
-  const SiteContent({required this.banner, this.privacy, this.terms});
+  const SiteContent({required this.banner, this.brochure, this.privacy, this.terms});
   final HomeBanner banner;
+  final String? brochure;
   final LegalPage? privacy;
   final LegalPage? terms;
 
@@ -803,4 +808,43 @@ class ClubCatalog {
   static const empty = ClubCatalog();
 
   bool get isEmpty => players.isEmpty && matches.isEmpty && news.isEmpty && products.isEmpty;
+
+  /// Drops Tigers Daily posts that still point at stock demo files.
+  /// A captain story keeps its place, using the squad portrait from the backend.
+  ClubCatalog withoutDemoStories() {
+    String? captain;
+    for (final player in players) {
+      final photo = player.profileImage;
+      if (player.isCaptain && photo != null && !_demoAsset(photo)) {
+        captain = photo;
+        break;
+      }
+    }
+    final live = <TeamUpdate>[];
+    for (final update in updates) {
+      if (_demoAsset(update.video)) continue;
+      if (!_demoAsset(update.image)) {
+        live.add(update);
+        continue;
+      }
+      final linked = update.playerImage;
+      final aboutCaptain = update.slug.toLowerCase().contains('captain') || update.title.toLowerCase().contains('captain');
+      final replacement = linked != null && !_demoAsset(linked) ? linked : (aboutCaptain ? captain : null);
+      if (replacement != null) live.add(update.withImage(replacement));
+    }
+    return ClubCatalog(
+      players: players,
+      staff: staff,
+      matches: matches,
+      news: news,
+      updates: live,
+      products: products,
+      polls: polls,
+      contests: contests,
+      gallery: gallery,
+      sponsors: sponsors,
+    );
+  }
 }
+
+bool _demoAsset(String? path) => path != null && path.contains('/images/demo/');

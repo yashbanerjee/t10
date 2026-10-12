@@ -56,6 +56,18 @@ double navClearance(BuildContext context) => MediaQuery.paddingOf(context).botto
 TextStyle displayStyle(double size, {Color? color, double height = 0.95, double spacing = 0.5}) =>
     TextStyle(fontFamily: display, fontSize: size, height: height, letterSpacing: spacing, color: color);
 
+/// Type is drawn for a 390×844 phone. Larger screens grow it from both width and height,
+/// so an iPad does not keep phone-sized text. Phones stay at 1.
+double deviceTextScale(Size size) {
+  const phoneWidth = 390.0;
+  const phoneHeight = 844.0;
+  final scale = math.sqrt((size.width / phoneWidth) * (size.height / phoneHeight));
+  return scale.clamp(1.0, 1.5);
+}
+
+/// The scale already applied to text, so images and fixed strips use the same size.
+double clubScale(BuildContext context) => MediaQuery.textScalerOf(context).scale(1);
+
 class ClubAtmosphere extends StatelessWidget {
   const ClubAtmosphere({super.key, required this.child});
   final Widget child;
@@ -495,20 +507,21 @@ class TeamCrest extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final box = size * clubScale(context);
     final initials = Text(label, style: displayStyle(size * 0.28, color: goldLight));
     final onWhite = !ours && logo != null;
     return Container(
-      width: size,
-      height: size,
-      padding: EdgeInsets.all(size * (ours ? 0.19 : 0.13)),
+      width: box,
+      height: box,
+      padding: EdgeInsets.all(box * (ours ? 0.19 : 0.13)),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: onWhite
             ? const RadialGradient(center: Alignment(-0.36, -0.44), colors: [Colors.white, Color(0xFFEBE6F2)])
             : const RadialGradient(center: Alignment(-0.36, -0.44), colors: [Color(0xFF8830DB), Color(0xFF460B7D), Color(0xFF310858)], stops: [0, 0.58, 1]),
-        border: Border.all(color: gold, width: size > 60 ? 2 : 1.5),
-        boxShadow: [BoxShadow(color: pink.withValues(alpha: 0.45), blurRadius: size * 0.28)],
+        border: Border.all(color: gold, width: box > 60 ? 2 : 1.5),
+        boxShadow: [BoxShadow(color: pink.withValues(alpha: 0.45), blurRadius: box * 0.28)],
       ),
       child: ours
           ? Image.asset('assets/brand/tiger-gold.png', fit: BoxFit.contain)
@@ -552,35 +565,41 @@ class RemoteImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final placeholder = Container(
-      height: height,
-      decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [glow, Color(0xFF5A1170), purple])),
-      alignment: Alignment.center,
-      child: Image.asset('assets/brand/tiger-gold.png', height: height * 0.45, fit: BoxFit.contain, opacity: const AlwaysStoppedAnimation(0.35)),
-    );
-    final ratio = MediaQuery.devicePixelRatioOf(context);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(radius),
-      child: url.isEmpty
-          ? placeholder
-          : Image.network(
-              url,
-              height: height,
-              width: double.infinity,
-              cacheWidth: (MediaQuery.sizeOf(context).width * ratio).round(),
-              fit: BoxFit.cover,
-              alignment: alignment,
-              errorBuilder: (_, _, _) => placeholder,
-              frameBuilder: (context, child, frame, synchronous) => synchronous
-                  ? child
-                  : Stack(
-                      fit: StackFit.passthrough,
-                      children: [
-                        if (frame == null) placeholder,
-                        AnimatedOpacity(opacity: frame == null ? 0 : 1, duration: const Duration(milliseconds: 420), curve: Curves.easeOut, child: child),
-                      ],
-                    ),
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wanted = height.isFinite ? height * clubScale(context) : height;
+        final resolved = constraints.maxHeight.isFinite ? math.min(wanted, constraints.maxHeight) : wanted;
+        final placeholder = Container(
+          height: resolved.isFinite ? resolved : null,
+          decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [glow, Color(0xFF5A1170), purple])),
+          alignment: Alignment.center,
+          child: Image.asset('assets/brand/tiger-gold.png', height: (resolved.isFinite ? resolved : 140) * 0.45, fit: BoxFit.contain, opacity: const AlwaysStoppedAnimation(0.35)),
+        );
+        final ratio = MediaQuery.devicePixelRatioOf(context);
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(radius),
+          child: url.isEmpty
+              ? placeholder
+              : Image.network(
+                  url,
+                  height: resolved.isFinite ? resolved : null,
+                  width: double.infinity,
+                  cacheWidth: (MediaQuery.sizeOf(context).width * ratio).round(),
+                  fit: BoxFit.cover,
+                  alignment: alignment,
+                  errorBuilder: (_, _, _) => placeholder,
+                  frameBuilder: (context, child, frame, synchronous) => synchronous
+                      ? child
+                      : Stack(
+                          fit: StackFit.passthrough,
+                          children: [
+                            if (frame == null) placeholder,
+                            AnimatedOpacity(opacity: frame == null ? 0 : 1, duration: const Duration(milliseconds: 420), curve: Curves.easeOut, child: child),
+                          ],
+                        ),
+                ),
+        );
+      },
     );
   }
 }
@@ -837,7 +856,7 @@ class MessageView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset('assets/brand/tiger-gold.png', height: 48),
+            Image.asset('assets/brand/tiger-gold.png', height: 48 * clubScale(context)),
             const SizedBox(height: 14),
             Text(message, textAlign: TextAlign.center),
             if (onRetry != null) ...[

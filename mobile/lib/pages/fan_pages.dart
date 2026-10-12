@@ -161,7 +161,7 @@ class FanZonePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Image.asset('assets/brand/tiger-gold.png', height: 56),
+                  Image.asset('assets/brand/tiger-gold.png', height: 56 * clubScale(context)),
                   const SizedBox(height: 16),
                   GoldText('STAY TUNED, TIGERS.', style: displayStyle(30)),
                   const SizedBox(height: 10),
