@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:united_tigers/widgets.dart';
 
 const neonGold = [Color(0xFFFED57A), Color(0xFFFB3BA6), Color(0xFF9B5CFF), Color(0xFF3FD8FF), Color(0xFFFED57A)];
@@ -26,15 +28,33 @@ class GlowClock extends StatefulWidget {
 
 class _GlowClockState extends State<GlowClock> with SingleTickerProviderStateMixin {
   late final AnimationController _clock = AnimationController(vsync: this, duration: GlowClock.cycle)..repeat();
+  Timer? _resume;
+
+  /// Every looping effect repaints each frame, so they all hold still while the user scrolls.
+  bool _onScroll(UserScrollNotification notification) {
+    _resume?.cancel();
+    if (notification.direction == ScrollDirection.idle) {
+      _resume = Timer(const Duration(milliseconds: 300), () {
+        if (mounted && !_clock.isAnimating) _clock.repeat();
+      });
+    } else if (_clock.isAnimating) {
+      _clock.stop(canceled: false);
+    }
+    return false;
+  }
 
   @override
   void dispose() {
+    _resume?.cancel();
     _clock.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) => _GlowClockScope(clock: _clock, child: widget.child);
+  Widget build(BuildContext context) => NotificationListener<UserScrollNotification>(
+        onNotification: _onScroll,
+        child: _GlowClockScope(clock: _clock, child: widget.child),
+      );
 }
 
 class _GlowClockScope extends InheritedWidget {
@@ -67,15 +87,17 @@ class GlowBorderPainter extends CustomPainter {
     final turn = (clock.value * speed + offset) % 1;
     final shader = SweepGradient(colors: colors, transform: GradientRotation(turn * 2 * math.pi)).createShader(rect);
     if (bloom > 0) {
-      canvas.drawRRect(
-        rrect,
-        Paint()
-          ..shader = shader
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = width + 3
-          ..color = Colors.white.withValues(alpha: bloom)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
-      );
+      // Blurs are re-rasterised every frame while scrolling, so the bloom is faked with faint wide strokes.
+      for (final (spread, alpha) in [(7.0, bloom * 0.16), (4.0, bloom * 0.3), (2.0, bloom * 0.5)]) {
+        canvas.drawRRect(
+          rrect,
+          Paint()
+            ..shader = shader
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = width + spread
+            ..color = Colors.white.withValues(alpha: alpha),
+        );
+      }
     }
     canvas.drawRRect(
       rrect,
@@ -121,7 +143,7 @@ class GlowFrame extends StatelessWidget {
 /// Fades and lifts (or slides) its child into place once it scrolls into view, after an optional delay.
 /// Items that come into view in the same frame are staggered automatically.
 class Reveal extends StatefulWidget {
-  const Reveal({super.key, required this.child, this.delay = Duration.zero, this.offset = 24, this.dx = 0, this.scale = 1, this.duration = const Duration(milliseconds: 650)});
+  const Reveal({super.key, required this.child, this.delay = Duration.zero, this.offset = 24, this.dx = 0, this.scale = 1, this.fade = true, this.duration = const Duration(milliseconds: 500)});
   final Widget child;
   final Duration delay;
   final double offset;
@@ -130,6 +152,9 @@ class Reveal extends StatefulWidget {
 
   /// Starting scale; values below 1 give a pop-in.
   final double scale;
+
+  /// Fading needs an offscreen layer per item, so list items that reveal while scrolling move without it.
+  final bool fade;
 
   @override
   State<Reveal> createState() => _RevealState();
@@ -143,6 +168,7 @@ class _RevealState extends State<Reveal> with SingleTickerProviderStateMixin {
   static int _wave = 0;
   static bool _waveScheduled = false;
   final List<ScrollPosition> _watching = [];
+  List<ScrollableState> _scrollables = const [];
   bool _started = false;
 
   @override
@@ -151,17 +177,12 @@ class _RevealState extends State<Reveal> with SingleTickerProviderStateMixin {
     WidgetsBinding.instance.addPostFrameCallback((_) => _watch());
   }
 
-  Iterable<ScrollableState> _scrollables() sync* {
-    for (var scrollable = Scrollable.maybeOf(context); scrollable != null; scrollable = Scrollable.maybeOf(scrollable.context)) {
-      yield scrollable;
-    }
-  }
-
   bool _inView() {
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.attached || !box.hasSize) return true;
     final rect = box.localToGlobal(Offset.zero) & box.size;
-    for (final scrollable in _scrollables()) {
+    for (final scrollable in _scrollables) {
+      if (!scrollable.mounted) continue;
       final view = scrollable.context.findRenderObject();
       if (view is! RenderBox || !view.hasSize) continue;
       final port = view.localToGlobal(Offset.zero) & view.size;
@@ -175,12 +196,14 @@ class _RevealState extends State<Reveal> with SingleTickerProviderStateMixin {
 
   void _watch() {
     if (!mounted || _started) return;
-    if (_inView()) return _start();
-    for (final scrollable in _scrollables()) {
+    _scrollables = [
+      for (var scrollable = Scrollable.maybeOf(context); scrollable != null; scrollable = Scrollable.maybeOf(scrollable.context)) scrollable,
+    ];
+    if (_scrollables.isEmpty || _inView()) return _start();
+    for (final scrollable in _scrollables) {
       scrollable.position.addListener(_check);
       _watching.add(scrollable.position);
     }
-    if (_watching.isEmpty) _start();
   }
 
   void _check() {
@@ -234,20 +257,18 @@ class _RevealState extends State<Reveal> with SingleTickerProviderStateMixin {
       builder: (context, child) {
         if (_in.isCompleted) return child!;
         final t = _ease.value;
-        return Opacity(
-          opacity: t,
-          child: Transform.translate(
-            offset: Offset(widget.dx * (1 - t), widget.offset * (1 - t)),
-            child: widget.scale == 1 ? child : Transform.scale(scale: widget.scale + (1 - widget.scale) * _pop.value, alignment: Alignment.bottomCenter, child: child),
-          ),
+        final moved = Transform.translate(
+          offset: Offset(widget.dx * (1 - t), widget.offset * (1 - t)),
+          child: widget.scale == 1 ? child : Transform.scale(scale: widget.scale + (1 - widget.scale) * _pop.value, alignment: Alignment.bottomCenter, child: child),
         );
+        return widget.fade ? Opacity(opacity: t, child: moved) : moved;
       },
     );
   }
 }
 
-/// Endless gentle up-and-down drift.
-class Floating extends StatefulWidget {
+/// Endless gentle up-and-down drift, driven by [GlowClock] so it holds still while scrolling.
+class Floating extends StatelessWidget {
   const Floating({super.key, required this.child, this.distance = 4, this.period = const Duration(milliseconds: 2600), this.phase = 0});
   final Widget child;
   final double distance;
@@ -255,24 +276,16 @@ class Floating extends StatefulWidget {
   final double phase;
 
   @override
-  State<Floating> createState() => _FloatingState();
-}
-
-class _FloatingState extends State<Floating> with SingleTickerProviderStateMixin {
-  late final AnimationController _bob = AnimationController(vsync: this, duration: widget.period, value: widget.phase)..repeat(reverse: true);
-
-  @override
-  void dispose() {
-    _bob.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final clock = GlowClock.of(context);
+    final bobs = math.max(1, (GlowClock.cycle.inMilliseconds / (period.inMilliseconds * 2)).round());
     return AnimatedBuilder(
-      animation: _bob,
-      child: widget.child,
-      builder: (context, child) => Transform.translate(offset: Offset(0, -widget.distance * Curves.easeInOut.transform(_bob.value)), child: child),
+      animation: clock,
+      child: child,
+      builder: (context, child) {
+        final wave = 0.5 - 0.5 * math.cos((clock.value * bobs + phase / 2) * 2 * math.pi);
+        return Transform.translate(offset: Offset(0, -distance * wave), child: child);
+      },
     );
   }
 }

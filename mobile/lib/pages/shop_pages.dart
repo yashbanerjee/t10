@@ -52,6 +52,7 @@ class ShopPage extends StatelessWidget {
             color: pink,
             onRefresh: api.refresh,
             child: CustomScrollView(
+              scrollCacheExtent: pageCacheExtent,
               slivers: [
                 const SliverToBoxAdapter(child: PageHero(eyebrow: 'Official merchandise', title: 'Wear the\nstripes.', intro: 'Book your kit here. The club confirms stock and payment with you.')),
                 if (products.isEmpty)
@@ -165,6 +166,7 @@ class _ProductPageState extends State<ProductPage> {
     return Scaffold(
       appBar: const ClubAppBar('Shop', actions: [_BagButton()]),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
           ClubCard(highlight: true, padding: const EdgeInsets.all(8), child: RemoteImage(photo, height: 320)),
@@ -235,6 +237,7 @@ class CartPage extends StatelessWidget {
         body: cart.lines.isEmpty
             ? const Padding(padding: EdgeInsets.all(16), child: EmptyPanel(title: 'Your bag is empty', message: 'Pick your kit from the shop.'))
             : ListView(
+                scrollCacheExtent: pageCacheExtent,
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                 children: [
                   ...cart.lines.map(
@@ -307,6 +310,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return Scaffold(
       appBar: const ClubAppBar('Your details'),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
           const Text('Name, email, phone and a delivery address. The club holds the stock and confirms payment with you.', style: TextStyle(color: Color(0xFFE6DDF0), height: 1.5)),

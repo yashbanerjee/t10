@@ -125,7 +125,7 @@ class _UnitedTigersAppState extends State<UnitedTigersApp> {
             bodyMedium: TextStyle(color: Color(0xFFF7F4FB), height: 1.35),
           ),
         ),
-        builder: (context, child) => GlowClock(child: ClubAtmosphere(child: child ?? const SizedBox.shrink())),
+        builder: (context, child) => GlowClock(child: child ?? const SizedBox.shrink()),
         home: const ClubShell(),
       ),
     );
@@ -211,10 +211,7 @@ class _ClubNavBar extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(26),
-                      boxShadow: [
-                        BoxShadow(color: const Color(0xFF0F021B).withValues(alpha: 0.65), blurRadius: 24, offset: const Offset(0, 10)),
-                        BoxShadow(color: pink.withValues(alpha: 0.25), blurRadius: 22, spreadRadius: -6),
-                      ],
+                      boxShadow: [BoxShadow(color: const Color(0xFF0F021B).withValues(alpha: 0.65), blurRadius: 20, offset: const Offset(0, 10))],
                     ),
                     child: GlowFrame(
                       radius: 26,
@@ -241,10 +238,7 @@ class _ClubNavBar extends StatelessWidget {
                       shape: BoxShape.circle,
                       gradient: goldSurface,
                       border: Border.all(color: const Color(0xFF2B074D), width: 3),
-                      boxShadow: [
-                        BoxShadow(color: const Color(0xFFEEC873).withValues(alpha: 0.55), blurRadius: 18),
-                        BoxShadow(color: pink.withValues(alpha: 0.45), blurRadius: 26, offset: const Offset(0, 6)),
-                      ],
+                      boxShadow: [BoxShadow(color: const Color(0xFFEEC873).withValues(alpha: 0.55), blurRadius: 18)],
                     ),
                   ),
                 ),
@@ -321,3 +315,4 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
+

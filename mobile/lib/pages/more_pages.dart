@@ -75,6 +75,7 @@ class MorePage extends StatelessWidget {
       builder: (context, _) => Scaffold(
         appBar: const ClubAppBar('United Tigers'),
         body: ListView(
+          scrollCacheExtent: pageCacheExtent,
           padding: EdgeInsets.fromLTRB(16, 18, 16, 28 + navClearance(context)),
           children: [
             Row(children: [for (final item in featured) Expanded(child: Padding(padding: EdgeInsets.only(right: item == featured.first ? 6 : 0, left: item == featured.first ? 0 : 6), child: _FeatureTile(item: item)))]),
@@ -239,6 +240,7 @@ class NewsPage extends StatelessWidget {
             color: pink,
             onRefresh: api.refresh,
             child: ListView(
+              scrollCacheExtent: pageCacheExtent,
               padding: EdgeInsets.zero,
               children: [
                 const PageHero(eyebrow: 'The newsroom', title: 'Club news.', intro: 'Squad announcements, match reports and stories from around the Tigers.'),
@@ -338,6 +340,7 @@ class _StoryPageState extends State<StoryPage> {
     return Scaffold(
       appBar: ClubAppBar(current.category ?? 'News'),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: EdgeInsets.zero,
         children: [
           PageHero(
@@ -383,6 +386,7 @@ class UpdatesPage extends StatelessWidget {
             color: pink,
             onRefresh: api.refresh,
             child: ListView(
+              scrollCacheExtent: pageCacheExtent,
               padding: EdgeInsets.zero,
               children: [
                 const PageHero(eyebrow: 'Tigers daily', title: 'Inside the camp.', intro: 'Training notes, team news and behind-the-scenes moments.'),
@@ -461,6 +465,7 @@ class _UpdatePageState extends State<UpdatePage> {
     return Scaffold(
       appBar: const ClubAppBar('Tigers Daily'),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: EdgeInsets.zero,
         children: [
           PageHero(eyebrow: '${update.category?.replaceAll('_', ' ') ?? 'Update'} · ${when(update.publishedAt).split(' · ').first}', title: update.title, intro: update.description),
@@ -495,6 +500,7 @@ class GalleryPage extends StatelessWidget {
     return Scaffold(
       appBar: const ClubAppBar('Gallery'),
       body: CustomScrollView(
+        scrollCacheExtent: pageCacheExtent,
         slivers: [
           const SliverToBoxAdapter(child: PageHero(eyebrow: 'Gallery', title: 'Moments.', intro: 'Photos and videos from match days, training and the Tigers family.')),
           if (items.isEmpty)
@@ -509,6 +515,7 @@ class GalleryPage extends StatelessWidget {
                     final item = items[index];
                     return Reveal(
                       scale: 0.92,
+                      fade: false,
                       child: Pressable(
                         onTap: () => openGallery(context, items, item, api.media),
                         child: ClipRRect(
@@ -547,6 +554,7 @@ class PartnersPage extends StatelessWidget {
     return Scaffold(
       appBar: const ClubAppBar('Partners'),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: EdgeInsets.zero,
         children: [
           const PageHero(eyebrow: 'Our partners', title: 'Cricket unites people.', intro: 'The brands backing the Tigers in their first season.'),
@@ -621,6 +629,7 @@ class AboutPage extends StatelessWidget {
     return Scaffold(
       appBar: const ClubAppBar('Our story'),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: EdgeInsets.zero,
         children: const [
           PageHero(
@@ -707,6 +716,7 @@ class _ContactPageState extends State<ContactPage> {
     return Scaffold(
       appBar: const ClubAppBar('Contact'),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: EdgeInsets.zero,
         children: [
           const PageHero(eyebrow: 'Contact', title: 'Talk to the Tigers.', intro: 'For partnership, media and supporter enquiries, leave a message for the team. Based in Abu Dhabi, United Arab Emirates.'),
@@ -788,6 +798,7 @@ class LegalScreen extends StatelessWidget {
                   color: pink,
                   onRefresh: api.refresh,
                   child: ListView(
+                    scrollCacheExtent: pageCacheExtent,
                     padding: EdgeInsets.zero,
                     children: [
                       PageHero(eyebrow: 'United Tigers', title: '${page.title}.', intro: page.intro),
@@ -837,6 +848,7 @@ class _ServerPageState extends State<ServerPage> {
     return Scaffold(
       appBar: const ClubAppBar('Server'),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: const EdgeInsets.all(16),
         children: [
           const Text('The app uses the live United Tigers site, https://unitedtigers.ae. For local testing, point it at your computer instead (an Android emulator reaches it at http://10.0.2.2:3001).', style: TextStyle(color: Color(0xFFE6DDF0))),
@@ -958,6 +970,7 @@ class _StatsPageState extends State<StatsPage> {
                   color: pink,
                   onRefresh: _load,
                   child: ListView(
+                    scrollCacheExtent: pageCacheExtent,
                     padding: EdgeInsets.zero,
                     children: [
                       PageHero(
@@ -1120,6 +1133,7 @@ class _RecordsPageState extends State<RecordsPage> {
       body: loading
           ? const LoadingView()
           : ListView(
+              scrollCacheExtent: pageCacheExtent,
               padding: EdgeInsets.zero,
               children: [
                 const PageHero(eyebrow: 'The record book', title: 'Records.', intro: 'The best of the Tigers, season by season.'),
@@ -1192,6 +1206,7 @@ class _PointsPageState extends State<PointsPage> {
       body: loading
           ? const LoadingView()
           : ListView(
+              scrollCacheExtent: pageCacheExtent,
               padding: EdgeInsets.zero,
               children: [
                 const PageHero(eyebrow: 'The league', title: 'Points table.', intro: 'Standings for every franchise, built from completed scorecards and confirmed by the club.'),

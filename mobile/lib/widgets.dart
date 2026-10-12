@@ -1,6 +1,8 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/motion.dart';
@@ -18,6 +20,9 @@ const pink = Color(0xFFC9177E);
 const orange = pink;
 const ink = Color(0xFF29064A);
 const display = 'Fulham';
+
+/// Keeps sections built well beyond the screen edge, so scrolling back doesn't rebuild heavy cards and images.
+const pageCacheExtent = ScrollCacheExtent.pixels(1500);
 
 const goldColors = [Color(0xFFFFE8AC), Color(0xFFEEC873), Color(0xFFD2A95A), Color(0xFFAC884A)];
 
@@ -83,41 +88,31 @@ class _Aurora extends StatelessWidget {
   const _Aurora();
 
   @override
-  Widget build(BuildContext context) {
-    final clock = GlowClock.of(context);
-    return AnimatedBuilder(
-      animation: clock,
-      builder: (context, _) {
-        final a = clock.value * 2 * math.pi;
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            _Glow(center: Alignment(1.1 + 0.12 * math.sin(a), -0.72 + 0.1 * math.cos(a)), radius: 0.95, alpha: 0.34 + 0.08 * math.sin(a * 2)),
-            _Glow(center: Alignment(-1.2 + 0.15 * math.cos(a), 0.25 + 0.14 * math.sin(a)), radius: 0.8, alpha: 0.2),
-            _Glow(center: Alignment(0.5 - 0.18 * math.sin(a), 1.15 - 0.08 * math.cos(a)), radius: 0.9, alpha: 0.2 + 0.06 * math.cos(a * 2)),
-          ],
-        );
-      },
-    );
-  }
+  Widget build(BuildContext context) => IgnorePointer(child: CustomPaint(painter: _AuroraPainter(GlowClock.of(context))));
 }
 
-class _Glow extends StatelessWidget {
-  const _Glow({required this.center, required this.radius, required this.alpha});
-  final Alignment center;
-  final double radius;
-  final double alpha;
+/// Fills only each glow's circle rather than three full-screen gradients.
+class _AuroraPainter extends CustomPainter {
+  _AuroraPainter(this.clock) : super(repaint: clock);
+  final Animation<double> clock;
 
   @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(center: center, radius: radius, colors: [pink.withValues(alpha: alpha), pink.withValues(alpha: 0)]),
-        ),
-      ),
-    );
+  void paint(Canvas canvas, Size size) {
+    final a = clock.value * 2 * math.pi;
+    final glows = [
+      (Alignment(1.1 + 0.12 * math.sin(a), -0.72 + 0.1 * math.cos(a)), 0.95, 0.34 + 0.08 * math.sin(a * 2)),
+      (Alignment(-1.2 + 0.15 * math.cos(a), 0.25 + 0.14 * math.sin(a)), 0.8, 0.2),
+      (Alignment(0.5 - 0.18 * math.sin(a), 1.15 - 0.08 * math.cos(a)), 0.9, 0.2 + 0.06 * math.cos(a * 2)),
+    ];
+    for (final (center, radius, alpha) in glows) {
+      final origin = center.withinRect(Offset.zero & size);
+      final reach = radius * size.shortestSide;
+      canvas.drawCircle(origin, reach, Paint()..shader = ui.Gradient.radial(origin, reach, [pink.withValues(alpha: alpha), pink.withValues(alpha: 0)]));
+    }
   }
+
+  @override
+  bool shouldRepaint(_AuroraPainter oldDelegate) => oldDelegate.clock != clock;
 }
 
 /// Header used on every public screen: glass purple bar, gold display title and the gold-to-pink collar.
@@ -191,7 +186,7 @@ class PageHero extends StatelessWidget {
               child: Floating(
                 distance: 6,
                 period: const Duration(milliseconds: 3800),
-                child: Opacity(opacity: 0.22, child: Image.asset('assets/brand/united-tigers.png', fit: BoxFit.contain)),
+                child: Image.asset('assets/brand/united-tigers.png', fit: BoxFit.contain, opacity: const AlwaysStoppedAnimation(0.22), cacheHeight: 600),
               ),
             ),
           ),
@@ -285,7 +280,9 @@ class _ClubCardState extends State<ClubCard> {
       ),
     );
     return Reveal(
-      offset: 28,
+      offset: 40,
+      scale: 0.96,
+      fade: false,
       child: AnimatedScale(
         scale: _down ? 0.97 : 1,
         duration: const Duration(milliseconds: 160),
@@ -293,10 +290,7 @@ class _ClubCardState extends State<ClubCard> {
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(radius),
-            boxShadow: [
-              BoxShadow(color: const Color(0xFF12021F).withValues(alpha: 0.35), blurRadius: 18, offset: const Offset(0, 8)),
-              if (widget.highlight) BoxShadow(color: pink.withValues(alpha: 0.22), blurRadius: 24, spreadRadius: -6),
-            ],
+            boxShadow: widget.highlight ? [BoxShadow(color: pink.withValues(alpha: 0.22), blurRadius: 24, spreadRadius: -6)] : null,
           ),
           child: RepaintBoundary(
             child: CustomPaint(
@@ -370,10 +364,24 @@ class GoldText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ShaderMask(
-      blendMode: BlendMode.srcIn,
-      shaderCallback: (bounds) => const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: goldColors).createShader(bounds),
-      child: Text(text, textAlign: textAlign, maxLines: maxLines, overflow: maxLines == null ? null : TextOverflow.ellipsis, style: style.copyWith(color: Colors.white)),
+    final size = style.fontSize ?? 14;
+    final line = size * (style.height ?? 1.2);
+    final paint = Paint()..shader = const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: goldColors, tileMode: TileMode.repeated).createShader(Rect.fromLTWH(0, 0, 1, line));
+    return Text(
+      text,
+      textAlign: textAlign,
+      maxLines: maxLines,
+      overflow: maxLines == null ? null : TextOverflow.ellipsis,
+      style: TextStyle(
+        fontFamily: style.fontFamily,
+        fontSize: style.fontSize,
+        fontWeight: style.fontWeight,
+        fontStyle: style.fontStyle,
+        height: style.height,
+        letterSpacing: style.letterSpacing,
+        shadows: style.shadows,
+        foreground: paint,
+      ),
     );
   }
 }
@@ -548,8 +556,9 @@ class RemoteImage extends StatelessWidget {
       height: height,
       decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [glow, Color(0xFF5A1170), purple])),
       alignment: Alignment.center,
-      child: Opacity(opacity: 0.35, child: Image.asset('assets/brand/tiger-gold.png', height: height * 0.45, fit: BoxFit.contain)),
+      child: Image.asset('assets/brand/tiger-gold.png', height: height * 0.45, fit: BoxFit.contain, opacity: const AlwaysStoppedAnimation(0.35)),
     );
+    final ratio = MediaQuery.devicePixelRatioOf(context);
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: url.isEmpty
@@ -558,6 +567,7 @@ class RemoteImage extends StatelessWidget {
               url,
               height: height,
               width: double.infinity,
+              cacheWidth: (MediaQuery.sizeOf(context).width * ratio).round(),
               fit: BoxFit.cover,
               alignment: alignment,
               errorBuilder: (_, _, _) => placeholder,

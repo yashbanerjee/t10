@@ -56,6 +56,7 @@ class HomePage extends StatelessWidget {
           body: RefreshIndicator(
             onRefresh: api.refresh,
             child: ListView(
+              scrollCacheExtent: pageCacheExtent,
               padding: EdgeInsets.fromLTRB(16, 0, 16, 24 + navClearance(context)),
               children: [
                 SizedBox(
@@ -77,6 +78,7 @@ class HomePage extends StatelessWidget {
                 SizedBox(
                   height: 214,
                   child: ListView.separated(
+                    scrollCacheExtent: pageCacheExtent,
                     scrollDirection: Axis.horizontal,
                     clipBehavior: Clip.none,
                     padding: const EdgeInsets.symmetric(vertical: 6),
@@ -103,6 +105,7 @@ class HomePage extends StatelessWidget {
                         SizedBox(
                           height: 54,
                           child: ListView(
+                            scrollCacheExtent: pageCacheExtent,
                             scrollDirection: Axis.horizontal,
                             children: poll.options.take(5).map((option) {
                               final face = _faceFor(option.label, catalog.players);
@@ -137,6 +140,7 @@ class HomePage extends StatelessWidget {
                   SizedBox(
                     height: 168,
                     child: ListView.separated(
+                      scrollCacheExtent: pageCacheExtent,
                       scrollDirection: Axis.horizontal,
                       itemCount: clips.length,
                       separatorBuilder: (_, _) => const SizedBox(width: 10),
@@ -188,6 +192,7 @@ class HomePage extends StatelessWidget {
                   SizedBox(
                     height: 120,
                     child: ListView.separated(
+                      scrollCacheExtent: pageCacheExtent,
                       scrollDirection: Axis.horizontal,
                       itemCount: moments.length,
                       separatorBuilder: (_, _) => const SizedBox(width: 8),
@@ -344,6 +349,7 @@ class HomeHero extends StatelessWidget {
               child: Image.network(
                 art,
                 height: 543,
+                cacheWidth: (MediaQuery.sizeOf(context).width * MediaQuery.devicePixelRatioOf(context)).round(),
                 fit: BoxFit.cover,
                 alignment: Alignment.topCenter,
                 errorBuilder: (_, _, _) => const ColoredBox(color: page),
@@ -507,7 +513,7 @@ class _Arch extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFFFF7DBE), Color(0xFFC9177E), Color(0xFF6E2660)], stops: [0, 0.55, 1]))),
-                Image.network(url, fit: BoxFit.cover, alignment: const Alignment(0, -0.64), errorBuilder: (_, _, _) => const SizedBox.shrink()),
+                Image.network(url, fit: BoxFit.cover, cacheWidth: 360, alignment: const Alignment(0, -0.64), errorBuilder: (_, _, _) => const SizedBox.shrink()),
                 const DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -981,6 +987,7 @@ class _PartnerMarqueeState extends State<_PartnerMarquee> with SingleTickerProvi
         child: NotificationListener<ScrollNotification>(
           onNotification: _onScroll,
           child: ListView.builder(
+            scrollCacheExtent: pageCacheExtent,
             controller: _scroll,
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),

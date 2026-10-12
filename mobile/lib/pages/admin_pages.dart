@@ -45,6 +45,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('ADMIN SIGN IN')),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: const EdgeInsets.all(16),
         children: [
           const Text('Use the same administrator account as the website. The app keeps the session token and sends it with every admin request.'),
@@ -116,6 +117,7 @@ class _AdminDeskPageState extends State<AdminDeskPage> {
         ],
       ),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: const EdgeInsets.all(16),
         children: [
           Text(session?.name ?? '', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
@@ -194,6 +196,7 @@ class _AdminCollectionPageState extends State<AdminCollectionPage> {
               : RefreshIndicator(
                   onRefresh: _load,
                   child: ListView.separated(
+                    scrollCacheExtent: pageCacheExtent,
                     padding: const EdgeInsets.all(16),
                     itemCount: rows.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 8),
@@ -246,6 +249,7 @@ class _AdminRecordPageState extends State<AdminRecordPage> {
     return Scaffold(
       appBar: AppBar(title: Text(current.title)),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: const EdgeInsets.all(16),
         children: [
           ...current.fields.entries.map((field) => Padding(
@@ -326,6 +330,7 @@ class _AdminScorecardPageState extends State<AdminScorecardPage> {
           : current == null
               ? const LoadingView()
               : ListView(
+                  scrollCacheExtent: pageCacheExtent,
                   padding: const EdgeInsets.all(16),
                   children: [
                     Text('vs ${current.opponent}', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
@@ -397,6 +402,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
           : error != null
               ? MessageView(error!)
               : ListView(
+                  scrollCacheExtent: pageCacheExtent,
                   padding: const EdgeInsets.all(16),
                   children: [
                     ...rows.map((user) => Padding(
@@ -451,6 +457,7 @@ class _AdminUserFormPageState extends State<AdminUserFormPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('NEW ACCOUNT')),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: const EdgeInsets.all(16),
         children: [
           ClubField(label: 'Name', controller: name),
@@ -522,6 +529,7 @@ class _AdminRolesPageState extends State<AdminRolesPage> {
       body: error != null
           ? MessageView(error!)
           : ListView(
+              scrollCacheExtent: pageCacheExtent,
               padding: const EdgeInsets.all(16),
               children: rows
                   .map((role) => Padding(

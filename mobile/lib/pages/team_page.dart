@@ -20,6 +20,7 @@ class TeamPage extends StatelessWidget {
             color: pink,
             onRefresh: api.refresh,
             child: CustomScrollView(
+              scrollCacheExtent: pageCacheExtent,
               slivers: [
                 const SliverToBoxAdapter(child: PageHero(eyebrow: 'Abu Dhabi T10 · 2026', title: 'Meet our\nTigers.', intro: 'The names announced for the Tigers’ first season.')),
                 SliverPadding(
@@ -328,6 +329,7 @@ class _PlayerPageState extends State<PlayerPage> {
     return Scaffold(
       appBar: ClubAppBar(name),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: EdgeInsets.zero,
         children: [
           SizedBox(

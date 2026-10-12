@@ -25,6 +25,7 @@ class VotePage extends StatelessWidget {
             color: pink,
             onRefresh: api.refresh,
             child: ListView(
+              scrollCacheExtent: pageCacheExtent,
               padding: EdgeInsets.zero,
               children: [
                 const PageHero(
@@ -148,6 +149,7 @@ class FanZonePage extends StatelessWidget {
     return Scaffold(
       appBar: const ClubAppBar('Fan Zone'),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: EdgeInsets.zero,
         children: [
           const PageHero(eyebrow: 'Fan zone', title: 'Fan zone is\ncoming soon.', intro: 'A home for Tigers supporters is on its way. Until it opens, you can vote in club polls and enter contests on the Vote page.'),
@@ -234,6 +236,7 @@ class _PollPageState extends State<PollPage> {
     return Scaffold(
       appBar: const ClubAppBar('Vote'),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: EdgeInsets.zero,
         children: [
           PageHero(
@@ -387,6 +390,7 @@ class _ContestPageState extends State<ContestPage> {
     return Scaffold(
       appBar: const ClubAppBar('Contest'),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: EdgeInsets.zero,
         children: [
           PageHero(eyebrow: current.prize ?? 'Contest', title: current.title, intro: current.description),

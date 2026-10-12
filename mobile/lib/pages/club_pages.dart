@@ -50,6 +50,7 @@ class FranchisesPage extends StatelessWidget {
     return Scaffold(
       appBar: const ClubAppBar('Our franchises'),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: EdgeInsets.zero,
         children: [
           const PageHero(eyebrow: 'About', title: 'Our\nfranchises.', intro: 'The clubs in the group, the league each one plays in, and where to follow them.'),
@@ -409,6 +410,7 @@ class _BecomePartnerPageState extends State<BecomePartnerPage> {
     return Scaffold(
       appBar: const ClubAppBar('Become a partner'),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: EdgeInsets.zero,
         children: [
           const PageHero(eyebrow: 'Build with the Tigers', title: 'Become a\npartner.', intro: 'United Tigers are building a platform for ambitious partners in cricket’s fastest format. Tell us who you are and take the brochure with you.'),
@@ -501,6 +503,7 @@ class DraftPage extends StatelessWidget {
     return Scaffold(
       appBar: const ClubAppBar('Player draft'),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: EdgeInsets.zero,
         children: [
           const PageHero(eyebrow: 'Recent activity', title: 'Player\ndraft.', intro: 'The night the squad came together. Watch the draft, then look through the room.'),
@@ -533,6 +536,7 @@ class _MediaTile extends StatelessWidget {
     final url = api.media(item.mediaUrl);
     return Reveal(
       scale: 0.92,
+      fade: false,
       child: Pressable(
         onTap: () => openGallery(context, group, item, api.media),
         child: ClipRRect(
@@ -567,6 +571,7 @@ class SeasonPage extends StatelessWidget {
     return Scaffold(
       appBar: ClubAppBar('$year season'),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: EdgeInsets.zero,
         children: [
           PageHero(eyebrow: 'Season overview', title: '$year\nseason.', intro: 'One team. A brand-new chapter. Follow the United Tigers across every match of the $year Abu Dhabi T10 season.'),
@@ -762,6 +767,7 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
     return Scaffold(
       appBar: const ClubAppBar('Track your booking'),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: EdgeInsets.zero,
         children: [
           const PageHero(eyebrow: 'Official kit', title: 'Track your\nbooking.', intro: 'Enter the tracking number from your confirmation email and the email you booked with.'),

@@ -109,6 +109,7 @@ class _MatchList extends StatelessWidget {
       child: matches.isEmpty
           ? ListView(padding: const EdgeInsets.all(16), children: [EmptyPanel(title: 'Nothing here yet', message: empty)])
           : ListView.separated(
+              scrollCacheExtent: pageCacheExtent,
               padding: EdgeInsets.fromLTRB(16, 16, 16, 28 + navClearance(context)),
               itemCount: matches.length,
               separatorBuilder: (_, _) => const SizedBox(height: 12),
@@ -172,6 +173,7 @@ class _MatchPageState extends State<MatchPage> {
     return Scaffold(
       appBar: const ClubAppBar('Match centre'),
       body: ListView(
+        scrollCacheExtent: pageCacheExtent,
         padding: EdgeInsets.zero,
         children: [
           PageHero(
