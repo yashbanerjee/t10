@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { getFranchises } from "@/lib/data";
 import { EmptyState } from "@/components/EmptyState";
 import { FranchiseGrid } from "@/components/FranchiseGrid";
+import { franchisePostFeed, FranchisePosts } from "@/components/FranchisePosts";
 
 export const metadata: Metadata = { title: "About", description: "United Tigers and the sister franchises: names, logos, leagues and social channels." };
 
 export default async function FranchisesPage() {
   const franchises = await getFranchises();
+  const posts = franchisePostFeed(franchises);
   return <div className="inner-page">
     <section className="inner-hero"><div className="wrap">
       <span className="eyebrow"><i className="eyebrow-dot" />ABOUT</span>
@@ -15,6 +17,10 @@ export default async function FranchisesPage() {
     </div></section>
     <section className="section"><div className="wrap">
       {franchises.length ? <FranchiseGrid franchises={franchises} /> : <EmptyState title="Franchises will be listed here" description="Names, logos, leagues and social links are added from the admin Franchises section." />}
+      {posts.length > 0 && <div className="franchise-posts-all" id="posts">
+        <div className="board-head"><h2>FRANCHISE POSTS</h2></div>
+        <FranchisePosts posts={posts} layout="grid" />
+      </div>}
     </div></section>
   </div>;
 }

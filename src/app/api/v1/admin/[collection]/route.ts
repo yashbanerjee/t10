@@ -10,6 +10,7 @@ import { personName, playerTextRules } from "@/lib/admin-validation";
 import { getHomeTeam, getTeams, opponentIdentity, setHomeTeam } from "@/lib/teams";
 import { getPointsTable } from "@/lib/data";
 import { PARTNER_REQUEST_SUBJECT } from "@/lib/partner-brochure";
+import { MAX_FRANCHISE_POSTS, parsePostLines, syncFranchisePosts } from "@/lib/franchise-posts";
 
 const permissions: Record<string, { read: string; write: string }> = {
   players: { read: "TEAM_READ", write: "TEAM_WRITE" }, staff: { read: "TEAM_READ", write: "TEAM_WRITE" }, teams: { read: "TEAM_READ", write: "TEAM_WRITE" }, matches: { read: "MATCH_READ", write: "MATCH_WRITE" },
@@ -31,7 +32,7 @@ const optionalLabel = (max: number) => z.union([z.null(), z.literal(""), z.strin
 const matchInput = z.object({ opponent: z.string().trim().min(2).max(120), date: z.string().datetime(), status: z.enum(["UPCOMING", "LIVE", "COMPLETED", "POSTPONED", "CANCELLED"]).default("UPCOMING"), competition: optionalLabel(120), matchNumber: optionalLabel(30), venueName: optionalLabel(140), result: optionalLabel(250) });
 const sponsorInput = z.object({ name: z.string().trim().min(2).max(120), category: z.string().trim().min(2).max(60), logoUrl: assetUrl, website: z.union([z.string().trim().url().max(300), z.literal(""), z.null()]).optional(), displayOrder: optionalInt(0, 9999), isPublished: z.boolean().optional() });
 const socialUrl = z.union([z.string().trim().url().max(500), z.literal(""), z.null()]).optional();
-const franchiseInput = z.object({ name: z.string().trim().min(2).max(120), league: z.string().trim().min(2).max(120), logoUrl: assetUrl, facebook: socialUrl, instagram: socialUrl, x: socialUrl, youtube: socialUrl, displayOrder: optionalInt(0, 9999), isPublished: z.boolean().optional() });
+const franchiseInput = z.object({ name: z.string().trim().min(2).max(120), league: z.string().trim().min(2).max(120), logoUrl: assetUrl, facebook: socialUrl, instagram: socialUrl, x: socialUrl, youtube: socialUrl, displayOrder: optionalInt(0, 9999), isPublished: z.boolean().optional(), posts: z.string().max(20000).nullable().optional() });
 const blankToNull = (value: string | null | undefined) => (value ? value : null);
 const galleryInput = z.object({ title: z.string().trim().min(2).max(160), category: z.string().trim().min(2).max(60), mediaUrl: z.string().trim().max(1000).regex(/^(https?:\/\/|\/)/), type: z.enum(["IMAGE", "VIDEO"]).default("IMAGE"), altText: z.string().trim().max(300).nullable().optional(), displayOrder: optionalInt(0, 9999), isFeatured: z.boolean().optional(), isPublished: z.boolean().optional() });
 const recordInput = z.object({ title: z.string().trim().min(2).max(160), value: z.string().trim().min(1).max(40), category: z.string().trim().min(2).max(60), scope: z.string().trim().min(2).max(40), playerName: z.string().trim().max(120).nullable().optional(), seasonYear: optionalInt(1990, 2100) });
@@ -140,7 +141,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     } else if (collection === "franchises") {
       const parsed = franchiseInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
       const data = parsed.data;
+      const posts = parsePostLines(data.posts); if (!posts.ok) return failure(`"${posts.line.slice(0, 80)}" is not a link`, 400);
+      if (posts.urls.length > MAX_FRANCHISE_POSTS) return failure(`Add up to ${MAX_FRANCHISE_POSTS} social posts`, 400);
       result = await prisma.franchise.create({ data: { name: data.name, slug: slugify(data.name), league: data.league, logoUrl: data.logoUrl || null, facebook: blankToNull(data.facebook), instagram: blankToNull(data.instagram), x: blankToNull(data.x), youtube: blankToNull(data.youtube), displayOrder: data.displayOrder ?? 0, isPublished: data.isPublished ?? true } });
+      if (posts.urls.length) await syncFranchisePosts((result as { id: string }).id, posts.urls);
     } else if (collection === "gallery") {
       const parsed = galleryInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
       result = await prisma.gallery.create({ data: { ...parsed.data, displayOrder: parsed.data.displayOrder ?? 0 } });

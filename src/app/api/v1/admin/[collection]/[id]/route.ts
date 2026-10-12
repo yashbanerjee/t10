@@ -9,6 +9,7 @@ import { linksFromForm } from "@/lib/player-links";
 import { personName, playerTextRules } from "@/lib/admin-validation";
 import { getHomeTeamId, getTeams, HOME_TEAM_SETTING, opponentIdentity, setHomeTeam } from "@/lib/teams";
 import { getPointsTable } from "@/lib/data";
+import { MAX_FRANCHISE_POSTS, parsePostLines, postsToText, syncFranchisePosts } from "@/lib/franchise-posts";
 import { z } from "zod";
 
 const grants: Record<string, { read: string; write: string }> = { players: { read: "TEAM_READ", write: "TEAM_WRITE" }, staff: { read: "TEAM_READ", write: "TEAM_WRITE" }, teams: { read: "TEAM_READ", write: "TEAM_WRITE" }, matches: { read: "MATCH_READ", write: "MATCH_WRITE" }, news: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, updates: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, contacts: { read: "MESSAGES_READ", write: "MESSAGES_READ" }, gallery: { read: "CONTENT_READ", write: "MEDIA_WRITE" }, sponsors: { read: "CONTENT_READ", write: "SETTINGS_WRITE" }, franchises: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, records: { read: "STATS_READ", write: "STATS_WRITE" }, standings: { read: "STATS_READ", write: "STATS_WRITE" }, settings: { read: "SETTINGS_WRITE", write: "SETTINGS_WRITE" }, products: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, polls: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, contests: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, orders: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, appErrors: { read: "AUDIT_READ", write: "AUDIT_READ" } };
@@ -33,6 +34,10 @@ async function getRecord(collection: string, id: string): Promise<unknown> {
   if (collection === "contests") return prisma.contest.findUnique({ where: { id }, include: { entries: { orderBy: { createdAt: "desc" } } } });
   if (collection === "orders") return prisma.order.findUnique({ where: { id }, include: { items: true } });
   if (collection === "standings") return standingRow(id);
+  if (collection === "franchises") {
+    const franchise = await prisma.franchise.findUnique({ where: { id }, include: { posts: { orderBy: { displayOrder: "asc" } } } });
+    return franchise ? { ...franchise, posts: postsToText(franchise.posts) } : null;
+  }
   if (collection === "teams") return (await getTeams()).find((team) => team.id === id) ?? null;
   const model = collection === "contacts" ? prisma.contactSubmission : collection === "news" ? prisma.newsArticle : collection === "updates" ? prisma.teamUpdate : collection === "gallery" ? prisma.gallery : collection === "sponsors" ? prisma.sponsor : collection === "franchises" ? prisma.franchise : collection === "records" ? prisma.teamRecord : collection === "settings" ? prisma.siteSetting : collection === "staff" ? prisma.staffMember : collection === "players" ? prisma.player : collection === "appErrors" ? prisma.appErrorLog : null;
   if (!model) return null;
@@ -58,6 +63,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   let body: Record<string, unknown> = raw as Record<string, unknown>;
   const original = await getRecord(collection, id);
   if (!original) return failure("Record not found", 404);
+  let postUrls: string[] | null = null;
   try {
     const modelName = collection === "contacts" ? "contactSubmission" : collection === "news" ? "newsArticle" : collection === "updates" ? "teamUpdate" : collection === "gallery" ? "gallery" : collection === "sponsors" ? "sponsor" : collection === "franchises" ? "franchise" : collection === "records" ? "teamRecord" : collection === "standings" ? "pointsEntry" : collection === "settings" ? "siteSetting" : collection === "matches" ? "match" : collection === "staff" ? "staffMember" : collection === "teams" ? "team" : collection === "products" ? "product" : collection === "polls" ? "poll" : collection === "contests" ? "contest" : collection === "orders" ? "order" : "player";
     const model = (prisma as unknown as Record<string, { update(args: unknown): Promise<unknown> }>)[modelName];
@@ -90,7 +96,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       const parsed = z.object({ name: z.string().trim().min(2).max(120).optional(), category: z.string().trim().min(2).max(60).optional(), logoUrl: z.string().trim().max(1000).regex(/^(https?:\/\/|\/)/).nullable().optional(), website: z.union([z.string().trim().url().max(300), z.literal(""), z.null()]).optional(), displayOrder: optionalInt(0, 9999), isPublished: z.boolean().optional() }).safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues); body = parsed.data; if (body.website === "") body.website = null; if (body.displayOrder == null) body.displayOrder = 0;
     } else if (collection === "franchises") {
       const social = z.union([z.string().trim().url().max(500), z.literal(""), z.null()]).optional();
-      const parsed = z.object({ name: z.string().trim().min(2).max(120).optional(), league: z.string().trim().min(2).max(120).optional(), logoUrl: z.string().trim().max(1000).regex(/^(https?:\/\/|\/)/).nullable().optional(), facebook: social, instagram: social, x: social, youtube: social, displayOrder: optionalInt(0, 9999), isPublished: z.boolean().optional() }).safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues); body = parsed.data; for (const key of ["facebook", "instagram", "x", "youtube"] as const) if (body[key] === "") body[key] = null; if (typeof body.name === "string") body.slug = slugify(body.name); if (body.displayOrder == null) delete body.displayOrder;
+      const parsed = z.object({ name: z.string().trim().min(2).max(120).optional(), league: z.string().trim().min(2).max(120).optional(), logoUrl: z.string().trim().max(1000).regex(/^(https?:\/\/|\/)/).nullable().optional(), facebook: social, instagram: social, x: social, youtube: social, displayOrder: optionalInt(0, 9999), isPublished: z.boolean().optional(), posts: z.string().max(20000).nullable().optional() }).safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
+      const { posts, ...franchise } = parsed.data;
+      if (posts !== undefined) {
+        const lines = parsePostLines(posts); if (!lines.ok) return failure(`"${lines.line.slice(0, 80)}" is not a link`, 400);
+        if (lines.urls.length > MAX_FRANCHISE_POSTS) return failure(`Add up to ${MAX_FRANCHISE_POSTS} social posts`, 400);
+        postUrls = lines.urls;
+      }
+      body = franchise; for (const key of ["facebook", "instagram", "x", "youtube"] as const) if (body[key] === "") body[key] = null; if (typeof body.name === "string") body.slug = slugify(body.name); if (body.displayOrder == null) delete body.displayOrder;
     } else if (collection === "products") {
       const parsed = z.object({ name: z.string().trim().min(2).max(120), slug: z.string().trim().max(140).optional(), description: z.string().trim().min(3).max(4000), price: z.coerce.number().positive().max(100000), image: z.string().trim().max(1000).regex(/^(https?:\/\/|\/)/).nullable().optional(), category: z.enum(["JERSEY", "TRAINING", "CAP", "ACCESSORY"]), isFeatured: z.boolean().optional(), isPublished: z.boolean().optional(), variants: z.array(z.object({ color: z.string().trim().max(40).default(""), size: z.string().trim().min(1).max(24), stock: z.coerce.number().int().min(0).max(9999), price: z.union([z.null(), z.coerce.number().min(0).max(100000)]).optional(), image: z.string().trim().max(1000).regex(/^(https?:\/\/|\/)/).nullable().optional() })).min(1).max(40) }).safeParse(body);
       if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
@@ -150,6 +163,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (collection === "players" && body.t20Record === null) body.t20Record = Prisma.DbNull;
     if (collection === "players" && body.allT20Record === null) body.allT20Record = Prisma.DbNull;
     const updated = await model.update({ where: { id }, data: body });
+    if (postUrls) await syncFranchisePosts(id, postUrls);
     await recordAudit(session.sub, "UPDATE", collection, id, original, updated, request.headers.get("x-forwarded-for")?.split(",")[0]);
     return success(updated, "Updated");
   } catch { return failure("The record could not be updated", 503); }

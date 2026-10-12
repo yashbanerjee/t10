@@ -2277,6 +2277,147 @@ img {
   background: #C9177E;
   color: #fff;
 }
+
+.home-franchise-posts,
+.franchise-posts-all {
+  margin-top: 28px;
+}
+
+.franchise-posts-all {
+  scroll-margin-top: 110px;
+}
+
+.franchise-posts.is-strip {
+  display: flex;
+  gap: 12px;
+  padding: 4px 2px 12px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(244, 219, 150, .35) transparent;
+}
+
+.franchise-posts.is-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.franchise-post {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 14px;
+  background: radial-gradient(circle at 50% 35%, #3A0968, #1B0431);
+  box-shadow: 0 0 0 1px rgba(244, 219, 150, .3), 0 10px 22px rgba(0, 0, 0, .35);
+  scroll-snap-align: start;
+  transition: transform .25s, box-shadow .25s;
+}
+
+.franchise-posts.is-strip .franchise-post {
+  flex: 0 0 150px;
+}
+
+.franchise-post:hover,
+.franchise-post:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: 0 0 0 1px #F4DB96, 0 12px 24px rgba(0, 0, 0, .45);
+}
+
+.franchise-post img {
+  object-fit: cover;
+  transition: transform .5s;
+}
+
+.franchise-post:hover img {
+  transform: scale(1.06);
+}
+
+.franchise-post::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 2, 20, .35), transparent 34%, transparent 62%, rgba(10, 2, 20, .55));
+  pointer-events: none;
+}
+
+.franchise-post-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(244, 219, 150, .6);
+}
+
+.franchise-post-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .4);
+}
+
+.franchise-post-badge.is-instagram {
+  background: radial-gradient(circle at 30% 107%, #FDF497 0%, #FD5949 45%, #D6249F 60%, #285AEB 90%);
+}
+
+.franchise-post-badge.is-facebook {
+  background: #1877F2;
+}
+
+.franchise-post-badge.is-youtube {
+  background: #FF0000;
+}
+
+.franchise-post-badge.is-x,
+.franchise-post-badge.is-link {
+  background: #111;
+}
+
+.franchise-post-play {
+  position: absolute;
+  bottom: 7px;
+  left: 7px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: rgba(10, 2, 20, .55);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, .5);
+}
+
+.franchise-post-play svg {
+  margin-left: 2px;
+}
+
+.franchise-post-name {
+  position: absolute;
+  right: 8px;
+  bottom: 10px;
+  left: 40px;
+  z-index: 1;
+  overflow: hidden;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 13px;
+  line-height: 1.1;
+  text-align: right;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, .7);
+  white-space: nowrap;
+}
 .partner-item {
   position: relative;
   display: block;
@@ -10391,6 +10532,15 @@ html[data-mood="royal"] {
 
   .franchise-card.is-home .franchise-socials {
     justify-content: center;
+  }
+
+  .franchise-posts.is-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .franchise-posts.is-strip .franchise-post {
+    flex-basis: 128px;
   }
 
   .stage-copy {

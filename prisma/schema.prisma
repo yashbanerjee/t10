@@ -459,10 +459,28 @@ model Franchise {
   youtube      String?
   displayOrder Int      @default(0)
   isPublished  Boolean  @default(true)
+  posts        FranchisePost[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   @@index([displayOrder])
+}
+
+/// A social media post shown on its franchise's card. The cover and caption are copied from the post when it is saved.
+model FranchisePost {
+  id           String    @id @default(cuid())
+  franchiseId  String
+  franchise    Franchise @relation(fields: [franchiseId], references: [id], onDelete: Cascade)
+  url          String
+  platform     String
+  imageUrl     String?
+  caption      String?
+  displayOrder Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([franchiseId, url])
+  @@index([franchiseId, displayOrder])
 }
 
 model SocialLink {

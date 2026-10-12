@@ -66,8 +66,28 @@ class _LoaderState<T> extends State<_Loader<T>> {
   }
 }
 
-class FranchisesPage extends StatelessWidget {
-  const FranchisesPage({super.key});
+class FranchisesPage extends StatefulWidget {
+  const FranchisesPage({super.key, this.showPosts = false});
+
+  /// Opens scrolled to the posts, for the home page's "View all".
+  final bool showPosts;
+
+  @override
+  State<FranchisesPage> createState() => _FranchisesPageState();
+}
+
+class _FranchisesPageState extends State<FranchisesPage> {
+  final _postsKey = GlobalKey();
+  late bool _scrollToPosts = widget.showPosts;
+
+  void _revealPosts() {
+    if (!_scrollToPosts) return;
+    _scrollToPosts = false;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final target = _postsKey.currentContext;
+      if (target != null) Scrollable.ensureVisible(target, duration: const Duration(milliseconds: 600), curve: Curves.easeOutCubic);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,14 +101,118 @@ class FranchisesPage extends StatelessWidget {
           const PageHero(eyebrow: 'About', title: 'Our\nfranchises.', intro: 'The clubs in the group, the league each one plays in, and where to follow them.'),
           _Loader<List<Franchise>>(
             load: api.fetchFranchises,
-            builder: (context, franchises) => Padding(
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
-              child: franchises.isEmpty
-                  ? const EmptyPanel(title: 'Franchises will be listed here', message: 'Names, logos, leagues and social links are added by the club.')
-                  : Column(children: [for (final franchise in franchises) _FranchiseCard(franchise: franchise)]),
-            ),
+            builder: (context, franchises) {
+              final posts = franchisePostFeed(franchises);
+              if (posts.isNotEmpty) _revealPosts();
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+                child: franchises.isEmpty
+                    ? const EmptyPanel(title: 'Franchises will be listed here', message: 'Names, logos, leagues and social links are added by the club.')
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (final franchise in franchises) _FranchiseCard(franchise: franchise),
+                          if (posts.isNotEmpty) ...[
+                            SectionTitle('Franchise posts', key: _postsKey),
+                            GridView.builder(
+                              shrinkWrap: true,
+                              padding: EdgeInsets.zero,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.8),
+                              itemCount: posts.length,
+                              itemBuilder: (context, index) => _FranchisePostTile(franchise: posts[index].$1, post: posts[index].$2),
+                            ),
+                          ],
+                        ],
+                      ),
+              );
+            },
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A post cover with its platform in the top-right corner; tapping opens the post in its app or the browser.
+class _FranchisePostTile extends StatelessWidget {
+  const _FranchisePostTile({required this.franchise, required this.post});
+  final Franchise franchise;
+  final FranchisePost post;
+
+  static (FaIconData, Gradient) _platform(String platform) => switch (platform) {
+        'INSTAGRAM' => (FontAwesomeIcons.instagram, const LinearGradient(begin: Alignment.bottomLeft, end: Alignment.topRight, colors: [Color(0xFFFDC468), Color(0xFFFD5949), Color(0xFFD6249F), Color(0xFF285AEB)])),
+        'FACEBOOK' => (FontAwesomeIcons.facebookF, const LinearGradient(colors: [Color(0xFF1877F2), Color(0xFF1877F2)])),
+        'YOUTUBE' => (FontAwesomeIcons.youtube, const LinearGradient(colors: [Color(0xFFFF0000), Color(0xFFFF0000)])),
+        'X' => (FontAwesomeIcons.xTwitter, const LinearGradient(colors: [Color(0xFF111111), Color(0xFF111111)])),
+        'TIKTOK' => (FontAwesomeIcons.tiktok, const LinearGradient(colors: [Color(0xFF111111), Color(0xFF111111)])),
+        _ => (FontAwesomeIcons.link, const LinearGradient(colors: [Color(0xFF111111), Color(0xFF111111)])),
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final api = ClubScope.of(context).api;
+    final (icon, badge) = _platform(post.platform);
+    return Reveal(
+      scale: 0.92,
+      fade: false,
+      child: Pressable(
+        onTap: () => openExternal(post.url),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: DecoratedBox(
+            position: DecorationPosition.foreground,
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: gold.withValues(alpha: 0.35))),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (post.imageUrl != null)
+                  RemoteImage(api.media(post.imageUrl), height: double.infinity, radius: 0)
+                else
+                  DecoratedBox(
+                    decoration: const BoxDecoration(gradient: RadialGradient(colors: [Color(0xFF3A0968), Color(0xFF1B0431)])),
+                    child: Center(child: FaIcon(icon, size: 30, color: goldLight.withValues(alpha: 0.6))),
+                  ),
+                const DecoratedBox(
+                  decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x590A0214), Colors.transparent, Colors.transparent, Color(0xC70A0214)], stops: [0, 0.32, 0.6, 1])),
+                ),
+                Positioned(
+                  top: 7,
+                  right: 7,
+                  child: Container(
+                    width: 26,
+                    height: 26,
+                    decoration: BoxDecoration(gradient: badge, borderRadius: BorderRadius.circular(8), boxShadow: const [BoxShadow(color: Color(0x66000000), blurRadius: 6, offset: Offset(0, 2))]),
+                    alignment: Alignment.center,
+                    child: FaIcon(icon, size: 14, color: Colors.white),
+                  ),
+                ),
+                Positioned(
+                  left: 8,
+                  right: 8,
+                  bottom: 9,
+                  child: Row(
+                    children: [
+                      if (post.isVideo) ...[
+                        Container(
+                          width: 26,
+                          height: 26,
+                          decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0x8C0A0214), border: Border.all(color: Colors.white.withValues(alpha: 0.5))),
+                          alignment: Alignment.center,
+                          child: const Padding(padding: EdgeInsets.only(left: 2), child: FaIcon(FontAwesomeIcons.play, size: 10, color: Colors.white)),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                      Expanded(
+                        child: Text(franchise.name.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.right, style: displayStyle(13, color: Colors.white, height: 1.1)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -217,6 +341,7 @@ class _HomeFranchisesState extends State<HomeFranchises> {
         if (franchises.isEmpty) return const SizedBox.shrink();
         final home = franchises.where((item) => item.isHome).toList();
         final others = franchises.where((item) => !item.isHome).toList();
+        final posts = franchisePostFeed(franchises).take(10).toList();
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -227,6 +352,19 @@ class _HomeFranchisesState extends State<HomeFranchises> {
                 padding: EdgeInsets.only(bottom: index + 1 < others.length ? 10 : 0),
                 child: _FranchiseTile(franchise: franchise, index: index),
               ),
+            if (posts.isNotEmpty) ...[
+              SectionTitle('Franchise posts', action: 'View all', onAction: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FranchisesPage(showPosts: true)))),
+              SizedBox(
+                height: 190,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  clipBehavior: Clip.none,
+                  itemCount: posts.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 10),
+                  itemBuilder: (context, index) => SizedBox(width: 152, child: _FranchisePostTile(franchise: posts[index].$1, post: posts[index].$2)),
+                ),
+              ),
+            ],
           ],
         );
       },

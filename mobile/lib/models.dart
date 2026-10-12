@@ -698,8 +698,41 @@ class PlayerReport {
   }
 }
 
+/// A franchise's social media post; the cover is a copy stored by the club.
+class FranchisePost {
+  const FranchisePost({required this.id, required this.url, required this.platform, this.imageUrl, this.caption});
+
+  final String id;
+  final String url;
+  final String platform;
+  final String? imageUrl;
+  final String? caption;
+
+  static final _video = RegExp(r'/(reels?|tv|videos?|watch|shorts)\b|/share/[vr]/|fb\.watch|youtu\.be', caseSensitive: false);
+  bool get isVideo => _video.hasMatch(url);
+
+  factory FranchisePost.fromJson(Map<String, dynamic> json) => FranchisePost(
+        id: json['id']?.toString() ?? '',
+        url: json['url']?.toString() ?? '',
+        platform: json['platform']?.toString() ?? 'LINK',
+        imageUrl: asText(json['imageUrl']),
+        caption: asText(json['caption']),
+      );
+}
+
+/// Every franchise's posts together, one from each franchise in turn so no single club fills the row.
+List<(Franchise, FranchisePost)> franchisePostFeed(List<Franchise> franchises) {
+  final feed = <(Franchise, FranchisePost)>[];
+  for (var round = 0; franchises.any((franchise) => franchise.posts.length > round); round++) {
+    for (final franchise in franchises) {
+      if (franchise.posts.length > round) feed.add((franchise, franchise.posts[round]));
+    }
+  }
+  return feed;
+}
+
 class Franchise {
-  const Franchise({required this.name, required this.slug, required this.league, this.logoUrl, this.facebook, this.instagram, this.x, this.youtube});
+  const Franchise({required this.name, required this.slug, required this.league, this.logoUrl, this.facebook, this.instagram, this.x, this.youtube, this.posts = const []});
 
   final String name;
   final String slug;
@@ -709,6 +742,7 @@ class Franchise {
   final String? instagram;
   final String? x;
   final String? youtube;
+  final List<FranchisePost> posts;
 
   bool get isHome => slug == 'united-tigers';
 
@@ -728,6 +762,7 @@ class Franchise {
         instagram: asText(json['instagram']),
         x: asText(json['x']),
         youtube: asText(json['youtube']),
+        posts: asList(json['posts']).map(FranchisePost.fromJson).where((post) => post.url.isNotEmpty).toList(),
       );
 
   static List<Franchise> list(dynamic value) => asList(value).map(Franchise.fromJson).toList();

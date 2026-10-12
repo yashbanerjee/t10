@@ -115,7 +115,7 @@ export async function getSponsors() {
 }
 
 export async function getFranchises() {
-  try { return await prisma.franchise.findMany({ where: { isPublished: true }, orderBy: [{ displayOrder: "asc" }, { name: "asc" }] }); }
+  try { return await prisma.franchise.findMany({ where: { isPublished: true }, orderBy: [{ displayOrder: "asc" }, { name: "asc" }], include: { posts: { orderBy: { displayOrder: "asc" }, select: { id: true, url: true, platform: true, imageUrl: true, caption: true } } } }); }
   catch { return []; }
 }
 

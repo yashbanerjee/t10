@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { ArrowUpRight, Calendar, ChevronRight, Download, Facebook, Globe, Instagram, MapPin, Shield, Trophy, Users } from "lucide-react";
 import { getFranchises, getGallery, getMatches, getPlayers, getPolls, getProducts, getPublicSettings, getSponsors, getUpdates } from "@/lib/data";
 import { FranchiseGrid } from "@/components/FranchiseGrid";
+import { franchisePostFeed, FranchisePosts } from "@/components/FranchisePosts";
 import { PartnerRequestForm } from "@/components/PartnerBrochure";
 import { getPartnerBrochureUrl } from "@/lib/partner-brochure";
 import { LiveScore } from "@/components/LiveScore";
@@ -39,6 +40,7 @@ function playerForLabel(label: string, roster: { fullName: string; profileImage:
 export default async function HomePage() {
   const [players, matches, sponsors, settings, polls, pollIntervalMs, updates, gallery, products, franchises] = await Promise.all([getPlayers(), getMatches(), getSponsors(), getPublicSettings(), getPolls(), getLivePollIntervalMs(), getUpdates(), getGallery(), getProducts(), getFranchises()]);
   const brochureUrl = await getPartnerBrochureUrl();
+  const franchisePosts = franchisePostFeed(franchises);
   const banner = readHomepageBanner(settings.homepage ?? homepageDefaults);
   const daily = updates.filter((update) => !update.isDemo).slice(0, 3);
   const pastMatches = gallery.filter((item) => /past match/i.test(item.category));
@@ -236,6 +238,10 @@ export default async function HomePage() {
         {franchises.length > 0 && <div className="home-franchises-main">
           <div className="board-head"><h2>OUR FRANCHISES</h2><Link href="/franchises">About <ArrowUpRight size={14} /></Link></div>
           <FranchiseGrid franchises={franchises} />
+          {franchisePosts.length > 0 && <div className="home-franchise-posts">
+            <div className="board-head"><h2>FRANCHISE POSTS</h2><Link href="/franchises#posts">View all <ArrowUpRight size={14} /></Link></div>
+            <FranchisePosts posts={franchisePosts.slice(0, 10)} layout="strip" />
+          </div>}
         </div>}
         <aside className="home-partner">
           <div className="board-head"><h2>PARTNER WITH US</h2></div>
