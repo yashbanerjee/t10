@@ -83,10 +83,20 @@ class _UnitedTigersAppState extends State<UnitedTigersApp> {
           brightness: Brightness.dark,
           scaffoldBackgroundColor: Colors.transparent,
           canvasColor: night,
-          colorScheme: const ColorScheme.dark(primary: orange, secondary: gold, surface: purple),
+          colorScheme: const ColorScheme.dark(
+            primary: orange,
+            secondary: gold,
+            surface: purple,
+          ),
           iconTheme: const IconThemeData(color: gold),
           pageTransitionsTheme: const PageTransitionsTheme(
-            builders: {TargetPlatform.android: ClubPageTransitions(), TargetPlatform.iOS: ClubPageTransitions(), TargetPlatform.windows: ClubPageTransitions(), TargetPlatform.macOS: ClubPageTransitions(), TargetPlatform.linux: ClubPageTransitions()},
+            builders: {
+              TargetPlatform.android: ClubPageTransitions(),
+              TargetPlatform.iOS: ClubPageTransitions(),
+              TargetPlatform.windows: ClubPageTransitions(),
+              TargetPlatform.macOS: ClubPageTransitions(),
+              TargetPlatform.linux: ClubPageTransitions(),
+            },
           ),
           appBarTheme: AppBarTheme(
             backgroundColor: const Color(0xF22B074D),
@@ -97,7 +107,9 @@ class _UnitedTigersAppState extends State<UnitedTigersApp> {
             scrolledUnderElevation: 0,
             centerTitle: false,
             titleTextStyle: displayStyle(22, color: goldLight, spacing: 1),
-            shape: Border(bottom: BorderSide(color: gold.withValues(alpha: 0.45))),
+            shape: Border(
+              bottom: BorderSide(color: gold.withValues(alpha: 0.45)),
+            ),
           ),
           navigationBarTheme: NavigationBarThemeData(
             backgroundColor: Colors.transparent,
@@ -105,21 +117,44 @@ class _UnitedTigersAppState extends State<UnitedTigersApp> {
             elevation: 0,
             height: 68,
             indicatorColor: pink.withValues(alpha: 0.32),
-            indicatorShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: goldLight.withValues(alpha: 0.35))),
-            iconTheme: WidgetStateProperty.resolveWith((states) => IconThemeData(color: states.contains(WidgetState.selected) ? goldLight : const Color(0xFFBDAED0), size: 24)),
+            indicatorShape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: BorderSide(color: goldLight.withValues(alpha: 0.35)),
+            ),
+            iconTheme: WidgetStateProperty.resolveWith(
+              (states) => IconThemeData(
+                color: states.contains(WidgetState.selected)
+                    ? goldLight
+                    : const Color(0xFFBDAED0),
+                size: 24,
+              ),
+            ),
             labelTextStyle: WidgetStateProperty.resolveWith((states) {
               final selected = states.contains(WidgetState.selected);
-              return TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, letterSpacing: 0.4, color: selected ? goldLight : const Color(0xFFBDAED0));
+              return TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.4,
+                color: selected ? goldLight : const Color(0xFFBDAED0),
+              );
             }),
           ),
-          progressIndicatorTheme: const ProgressIndicatorThemeData(color: goldLight),
+          progressIndicatorTheme: const ProgressIndicatorThemeData(
+            color: goldLight,
+          ),
           dividerColor: gold.withValues(alpha: 0.2),
           listTileTheme: const ListTileThemeData(iconColor: goldLight),
-          snackBarTheme: const SnackBarThemeData(backgroundColor: purple, contentTextStyle: TextStyle(color: Colors.white)),
+          snackBarTheme: const SnackBarThemeData(
+            backgroundColor: purple,
+            contentTextStyle: TextStyle(color: Colors.white),
+          ),
           chipTheme: ChipThemeData(
             backgroundColor: Colors.white10,
             selectedColor: glow,
-            labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+            labelStyle: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
             side: BorderSide(color: gold.withValues(alpha: 0.45)),
           ),
           dialogTheme: const DialogThemeData(backgroundColor: purple),
@@ -130,19 +165,34 @@ class _UnitedTigersAppState extends State<UnitedTigersApp> {
               minimumSize: const Size.fromHeight(48),
               side: BorderSide(color: gold.withValues(alpha: 0.6)),
               backgroundColor: purple.withValues(alpha: 0.35),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              textStyle: const TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.8,
+              ),
             ),
           ),
-          textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(foregroundColor: goldLight, textStyle: const TextStyle(fontWeight: FontWeight.w800))),
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(
+              foregroundColor: goldLight,
+              textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
           textTheme: const TextTheme(
-            headlineMedium: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.5),
+            headlineMedium: TextStyle(
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
+            ),
             bodyMedium: TextStyle(color: Color(0xFFF7F4FB), height: 1.35),
           ),
         ),
         builder: (context, child) {
           final media = MediaQuery.of(context);
-          final factor = media.textScaler.scale(deviceTextScale(media.size)).clamp(1.0, 2.0);
+          final factor = media.textScaler
+              .scale(deviceTextScale(media.size))
+              .clamp(1.0, 2.0);
           return MediaQuery(
             data: media.copyWith(textScaler: TextScaler.linear(factor)),
             child: GlowClock(child: child ?? const SizedBox.shrink()),
@@ -167,7 +217,13 @@ class _ClubShellState extends State<ClubShell> {
   @override
   Widget build(BuildContext context) {
     final cart = ClubScope.of(context).cart;
-    final pages = const [HomePage(), TeamPage(), FixturesPage(), ShopPage(), MorePage()];
+    final pages = const [
+      HomePage(),
+      TeamPage(),
+      FixturesPage(),
+      ShopPage(),
+      MorePage(),
+    ];
     return AnimatedBuilder(
       animation: cart,
       builder: (context, _) => Scaffold(
@@ -179,7 +235,13 @@ class _ClubShellState extends State<ClubShell> {
           layoutBuilder: (current, _) => current ?? const SizedBox.shrink(),
           transitionBuilder: (child, animation) => FadeTransition(
             opacity: animation,
-            child: SlideTransition(position: Tween(begin: const Offset(0, 0.03), end: Offset.zero).animate(animation), child: child),
+            child: SlideTransition(
+              position: Tween(
+                begin: const Offset(0, 0.03),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
           ),
           child: KeyedSubtree(key: ValueKey(index), child: pages[index]),
         ),
@@ -189,7 +251,9 @@ class _ClubShellState extends State<ClubShell> {
           onChanged: (value) {
             if (value == index) return;
             HapticFeedback.selectionClick();
-            ClubAnalytics.screen(const ['home', 'team', 'fixtures', 'shop', 'more'][value]);
+            ClubAnalytics.screen(
+              const ['home', 'team', 'fixtures', 'shop', 'more'][value],
+            );
             setState(() => index = value);
           },
         ),
@@ -200,7 +264,11 @@ class _ClubShellState extends State<ClubShell> {
 
 /// Floating capsule navigation: a gold lens slides to the chosen tab and lifts its icon above the bar.
 class _ClubNavBar extends StatelessWidget {
-  const _ClubNavBar({required this.index, required this.cartCount, required this.onChanged});
+  const _ClubNavBar({
+    required this.index,
+    required this.cartCount,
+    required this.onChanged,
+  });
   final int index;
   final int cartCount;
   final ValueChanged<int> onChanged;
@@ -233,7 +301,14 @@ class _ClubNavBar extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(26),
-                      boxShadow: [BoxShadow(color: const Color(0xFF0F021B).withValues(alpha: 0.65), blurRadius: 20, offset: const Offset(0, 10))],
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0F021B)
+                              .withValues(alpha: 0.65),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
                     ),
                     child: GlowFrame(
                       radius: 26,
@@ -241,7 +316,11 @@ class _ClubNavBar extends StatelessWidget {
                       bloom: 0.6,
                       child: const DecoratedBox(
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF3A0A66), Color(0xFF1C0432)]),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Color(0xFF3A0A66), Color(0xFF1C0432)],
+                          ),
                         ),
                         child: SizedBox.expand(),
                       ),
@@ -259,8 +338,17 @@ class _ClubNavBar extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: goldSurface,
-                      border: Border.all(color: const Color(0xFF2B074D), width: 3),
-                      boxShadow: [BoxShadow(color: const Color(0xFFEEC873).withValues(alpha: 0.55), blurRadius: 18)],
+                      border: Border.all(
+                        color: const Color(0xFF2B074D),
+                        width: 3,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFEEC873)
+                              .withValues(alpha: 0.55),
+                          blurRadius: 18,
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -275,7 +363,12 @@ class _ClubNavBar extends StatelessWidget {
                           child: GestureDetector(
                             behavior: HitTestBehavior.opaque,
                             onTap: () => onChanged(i),
-                            child: _NavItem(icon: _items[i].$1, label: _items[i].$2, selected: i == index, badge: i == 3 ? cartCount : 0),
+                            child: _NavItem(
+                              icon: _items[i].$1,
+                              label: _items[i].$2,
+                              selected: i == index,
+                              badge: i == 3 ? cartCount : 0,
+                            ),
                           ),
                         ),
                       ),
@@ -291,7 +384,12 @@ class _ClubNavBar extends StatelessWidget {
 }
 
 class _NavItem extends StatelessWidget {
-  const _NavItem({required this.icon, required this.label, required this.selected, required this.badge});
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.badge,
+  });
   final FaIconData icon;
   final String label;
   final bool selected;
@@ -303,7 +401,11 @@ class _NavItem extends StatelessWidget {
       scale: selected ? 1.12 : 1,
       duration: _ClubNavBar._motion,
       curve: Curves.easeOutBack,
-      child: FaIcon(icon, size: 19, color: selected ? ink : const Color(0xFFBDAED0)),
+      child: FaIcon(
+        icon,
+        size: 19,
+        color: selected ? ink : const Color(0xFFBDAED0),
+      ),
     );
     return Stack(
       clipBehavior: Clip.none,
@@ -315,7 +417,14 @@ class _NavItem extends StatelessWidget {
           right: 0,
           top: selected ? 16 : 32,
           child: Center(
-            child: badge > 0 ? Badge(backgroundColor: pink, label: Text('$badge'), offset: const Offset(10, -8), child: glyph) : glyph,
+            child: badge > 0
+                ? Badge(
+                    backgroundColor: pink,
+                    label: Text('$badge'),
+                    offset: const Offset(10, -8),
+                    child: glyph,
+                  )
+                : glyph,
           ),
         ),
         Positioned(
@@ -330,11 +439,14 @@ class _NavItem extends StatelessWidget {
               letterSpacing: selected ? 1 : 0.3,
               color: selected ? goldLight : const Color(0xFF9F8FB5),
             ),
-            child: Text(label.toUpperCase(), textAlign: TextAlign.center, maxLines: 1),
+            child: Text(
+              label.toUpperCase(),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+            ),
           ),
         ),
       ],
     );
   }
 }
-

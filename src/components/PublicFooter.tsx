@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Facebook, Handshake, Instagram } from "lucide-react";
+import { ArrowUpRight, Bell, Facebook, Handshake, Instagram } from "lucide-react";
 import { TeamMark } from "@/components/TeamMark";
 import { LeagueMark } from "@/components/LeagueMark";
 import { LightTrail } from "@/components/LightTrail";
@@ -24,6 +24,7 @@ export function PublicFooter() {
         <p>Follow every moment as the Tigers prepare for their first season.</p>
         <a href={instagram} target="_blank" rel="noreferrer">FOLLOW THE TIGERS <ArrowUpRight size={15} /></a>
         <Link className="footer-partner-btn" href="/become-a-partner"><Handshake size={15} /> BECOME A PARTNER</Link>
+        <Link className="footer-partner-btn is-outline" href="/notifications"><Bell size={15} /> NOTIFICATIONS</Link>
         <div className="footer-socials">
           <a className="is-facebook" href={facebook} target="_blank" rel="noreferrer" aria-label="Facebook"><Facebook size={15} /></a>
           <a className="is-instagram" href={instagram} target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram size={15} /></a>
