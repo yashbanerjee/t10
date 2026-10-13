@@ -56,7 +56,9 @@ export function SafeMarkdown({ content }: { content: string }) {
     }
     const paragraph = [line]; index++;
     while (index < lines.length && lines[index].trim() && !isBlockStart(lines[index].trim())) { paragraph.push(lines[index].trim()); index++; }
-    blocks.push(<p key={key++}>{inline(paragraph.join(" "), `p-${key}`)}</p>);
+    // A single line break in the editor is kept as a line break; a blank line starts a new paragraph.
+    const seed = key;
+    blocks.push(<p key={key++}>{paragraph.flatMap((text, row) => row ? [<br key={`p-${seed}-br-${row}`} />, ...inline(text, `p-${seed}-${row}`)] : inline(text, `p-${seed}-${row}`))}</p>);
   }
   return <>{blocks}</>;
 }

@@ -10,6 +10,7 @@ import 'package:united_tigers/cart_store.dart';
 import 'package:united_tigers/firebase_options.dart';
 import 'package:united_tigers/services/analytics.dart';
 import 'package:united_tigers/services/error_reporter.dart';
+import 'package:united_tigers/services/notice_inbox.dart';
 import 'package:united_tigers/services/push.dart';
 import 'package:united_tigers/pages/fixtures_page.dart';
 import 'package:united_tigers/pages/home_page.dart';
@@ -57,6 +58,7 @@ class _UnitedTigersAppState extends State<UnitedTigersApp> {
   void initState() {
     super.initState();
     ErrorReporter.init(() => api.client.base);
+    NoticeInbox.instance.load();
     WidgetsBinding.instance.addPostFrameCallback((_) => ClubPush.start());
   }
 

@@ -6850,6 +6850,25 @@ html[data-mood="royal"] {
   font-size: 28px;
 }
 
+.fan-card .fan-card-image {
+  display: block;
+  width: calc(100% + 36px);
+  max-width: none;
+  aspect-ratio: 16 / 9;
+  margin: -18px -18px 6px;
+  object-fit: cover;
+  background: #390966;
+}
+
+.fan-detail .fan-detail-image {
+  display: block;
+  width: 100%;
+  max-height: 420px;
+  margin: 18px 0;
+  border: 1px solid var(--border);
+  object-fit: cover;
+}
+
 .product-layout {
   display: grid;
   grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
@@ -10081,6 +10100,28 @@ html[data-mood="royal"] {
 
 .partner-rail .wrap>span:first-child {
   color: #D2A95A;
+}
+
+.partner-rail .partner-rail-head {
+  display: grid;
+  gap: 4px;
+}
+
+.partner-rail .partner-rail-head a {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #F4DB96;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.partner-rail .partner-rail-head a:hover,
+.partner-rail .partner-rail-head a:focus-visible {
+  color: #fff;
+  text-decoration: underline;
 }
 
 .partner-rail em {

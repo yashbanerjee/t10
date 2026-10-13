@@ -149,7 +149,7 @@ export function AdminRecordForm({ section, recordId }: { section: string; record
       const result = await response.json();
       if (!response.ok) {
         const detail = describeIssues(result.errors, Object.fromEntries((definition.fields ?? []).map((field) => [field.key, field.label])));
-        throw new Error(detail ? `${result.message || "Validation failed"}. ${detail}` : result.message || "Could not save this record.");
+        throw new Error(detail ? `Please fix the following and save again: ${detail}` : result.message || "Could not save this record.");
       }
       router.push(`/admin/${section}`);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not save this record."); setSaving(false); }

@@ -373,13 +373,14 @@ class PollOption {
 }
 
 class Poll {
-  const Poll({required this.slug, required this.question, this.title, this.description, this.closesAt, this.options = const []});
+  const Poll({required this.slug, required this.question, this.title, this.description, this.closesAt, this.createdAt, this.options = const []});
 
   final String slug;
   final String question;
   final String? title;
   final String? description;
   final DateTime? closesAt;
+  final DateTime? createdAt;
   final List<PollOption> options;
 
   int get totalVotes => options.fold(0, (sum, option) => sum + option.votes);
@@ -390,6 +391,7 @@ class Poll {
         title: asText(json['title']),
         description: readable(json['description']).isEmpty ? null : readable(json['description']),
         closesAt: asDate(json['closesAt']),
+        createdAt: asDate(json['createdAt']),
         options: asList(json['options']).map(PollOption.fromJson).toList(),
       );
 
@@ -397,7 +399,7 @@ class Poll {
 }
 
 class Contest {
-  const Contest({required this.slug, required this.title, required this.description, required this.prompt, this.prize, this.image, this.closesAt, this.entries = 0});
+  const Contest({required this.slug, required this.title, required this.description, required this.prompt, this.prize, this.image, this.closesAt, this.createdAt, this.entries = 0});
 
   final String slug;
   final String title;
@@ -406,6 +408,7 @@ class Contest {
   final String? prize;
   final String? image;
   final DateTime? closesAt;
+  final DateTime? createdAt;
   final int entries;
 
   factory Contest.fromJson(Map<String, dynamic> json) => Contest(
@@ -416,6 +419,7 @@ class Contest {
         prize: asText(json['prize']),
         image: asText(json['image']),
         closesAt: asDate(json['closesAt']),
+        createdAt: asDate(json['createdAt']),
         entries: asInt(json['entries']),
       );
 

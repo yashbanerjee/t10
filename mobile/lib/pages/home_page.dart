@@ -10,9 +10,11 @@ import 'package:united_tigers/pages/club_pages.dart';
 import 'package:united_tigers/pages/fan_pages.dart';
 import 'package:united_tigers/pages/fixtures_page.dart';
 import 'package:united_tigers/pages/more_pages.dart';
+import 'package:united_tigers/pages/notifications_page.dart';
 import 'package:united_tigers/pages/shop_pages.dart';
 import 'package:united_tigers/pages/team_page.dart';
 import 'package:united_tigers/scope.dart';
+import 'package:united_tigers/services/notice_inbox.dart';
 import 'package:united_tigers/video.dart';
 import 'package:united_tigers/widgets.dart';
 
@@ -447,6 +449,7 @@ class HomeHero extends StatelessWidget {
                 ],
               ),
             ),
+            Positioned(top: inset + 6, right: 6, child: const _NotificationBell()),
             if (banner.showPlayers)
               Positioned(
                 left: 0,
@@ -473,6 +476,33 @@ class HomeHero extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _NotificationBell extends StatelessWidget {
+  const _NotificationBell();
+
+  @override
+  Widget build(BuildContext context) {
+    final api = ClubScope.of(context).api;
+    final inbox = NoticeInbox.instance;
+    return AnimatedBuilder(
+      animation: Listenable.merge([api, inbox]),
+      builder: (context, _) {
+        final unread = inbox.unreadCount(api.catalog);
+        return IconButton(
+          tooltip: unread > 0 ? 'Notifications, $unread new' : 'Notifications',
+          style: IconButton.styleFrom(backgroundColor: const Color(0x991C0432), side: const BorderSide(color: Color(0x66EEC873))),
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsPage())),
+          icon: Badge(
+            isLabelVisible: unread > 0,
+            backgroundColor: pink,
+            label: Text(unread > 9 ? '9+' : '$unread'),
+            child: const Icon(Icons.notifications_rounded, color: goldLight),
+          ),
+        );
+      },
     );
   }
 }

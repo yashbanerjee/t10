@@ -207,7 +207,7 @@ export async function getProductBySlug(slug: string) {
 export async function getPolls() {
   try {
     const rows = await prisma.poll.findMany({ where: { isPublished: true }, include: { options: { orderBy: { displayOrder: "asc" }, include: { _count: { select: { votes: true } } } } }, orderBy: { createdAt: "desc" } });
-    return rows.map((poll) => ({ id: poll.id, title: poll.title, slug: poll.slug, question: poll.question, description: poll.description, closesAt: poll.closesAt, options: poll.options.map((option) => ({ id: option.id, label: option.label, votes: option._count.votes })) }));
+    return rows.map((poll) => ({ id: poll.id, title: poll.title, slug: poll.slug, question: poll.question, description: poll.description, closesAt: poll.closesAt, createdAt: poll.createdAt, options: poll.options.map((option) => ({ id: option.id, label: option.label, votes: option._count.votes })) }));
   } catch { return []; }
 }
 

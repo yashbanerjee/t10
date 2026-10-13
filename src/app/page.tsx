@@ -260,7 +260,7 @@ export default async function HomePage() {
     <section className="partner-rail is-floating">
       <LightTrail edge="top" />
       <div className="wrap">
-        <span>OUR PARTNERS</span>
+        <span className="partner-rail-head">OUR PARTNERS{sponsors.length > 0 && <Link href="/partners">View all <ArrowUpRight size={12} /></Link>}</span>
         {sponsors.length ? <div className="partner-marquee">
           <div className="partner-track" style={{ "--partner-count": sponsors.length } as React.CSSProperties}>
             {[0, 1].map((copy) => <div className="partner-set" key={copy} aria-hidden={copy === 1 || undefined}>

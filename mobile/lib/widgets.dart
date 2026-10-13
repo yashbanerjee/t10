@@ -1127,7 +1127,7 @@ class ClubMarkdown extends StatelessWidget {
         paragraph.add(lines[index].trim());
         index++;
       }
-      blocks.add(Padding(padding: const EdgeInsets.only(bottom: 12), child: _inline(paragraph.join(' '), body)));
+      blocks.add(Padding(padding: const EdgeInsets.only(bottom: 12), child: _inline(paragraph.join('\n'), body)));
     }
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: blocks);
   }
