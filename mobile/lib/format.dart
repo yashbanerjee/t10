@@ -23,6 +23,22 @@ String matchWhen(DateTime date) {
   return '${days[gst.weekday - 1]} ${gst.day.toString().padLeft(2, '0')} ${months[gst.month - 1]} · $hour:$minute ${gst.hour >= 12 ? 'PM' : 'AM'}';
 }
 
+const _sizeOrder = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '3XL', '4XL'];
+
+/// Garment order (S, M, L, XL…), matching the website; unknown sizes go last, alphabetically.
+int bySize(String left, String right) {
+  int rank(String size) {
+    final index = _sizeOrder.indexOf(size.trim().toUpperCase());
+    return index == -1 ? _sizeOrder.length : index;
+  }
+
+  final order = rank(left) - rank(right);
+  return order != 0 ? order : left.compareTo(right);
+}
+
+/// "Purple · L", or just "L" when the admin set no colour.
+String variantLabel(String color, String size) => [color, size].where((part) => part.trim().isNotEmpty).join(' · ');
+
 String roleLabel(String? role) {
   final value = (role ?? '').trim();
   if (value.isEmpty) return 'Player';

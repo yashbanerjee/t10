@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:851590629201:android:2cc6447360f806c4b53570",
+        "android_client_info": {
+          "package_name": "com.united.tigers"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMx_t_2Fd79LRTEC4Hc0eNmZXOj_2-p_E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:851590629201:android:812b73a975fc810ab53570",
         "android_client_info": {
           "package_name": "com.vedha.united.tigers"

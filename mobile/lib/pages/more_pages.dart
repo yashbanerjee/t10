@@ -580,8 +580,13 @@ class PartnersPage extends StatelessWidget {
                                     width: 84 * clubScale(context),
                                     height: 56 * clubScale(context),
                                     padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-                                    child: sponsor.logoUrl == null ? const FaIcon(FontAwesomeIcons.handshake, color: ink) : Image.network(api.media(sponsor.logoUrl), fit: BoxFit.contain, errorBuilder: (_, _, _) => const FaIcon(FontAwesomeIcons.handshake, color: ink)),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF6A1FB0), Color(0xFF3A0A68), Color(0xFF250545)]),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: gold.withValues(alpha: 0.7)),
+                                      boxShadow: [BoxShadow(color: pink.withValues(alpha: 0.3), blurRadius: 12)],
+                                    ),
+                                    child: sponsor.logoUrl == null ? const FaIcon(FontAwesomeIcons.handshake, color: goldLight) : Image.network(api.media(sponsor.logoUrl), fit: BoxFit.contain, errorBuilder: (_, _, _) => const FaIcon(FontAwesomeIcons.handshake, color: goldLight)),
                                   ),
                                   const SizedBox(width: 14),
                                   Expanded(

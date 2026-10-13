@@ -1050,7 +1050,7 @@ class _TrackedCard extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(item.productName, style: const TextStyle(fontWeight: FontWeight.w800)), Text('${item.color} · ${item.size} · ×${item.quantity}', style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12.5))])),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(item.productName, style: const TextStyle(fontWeight: FontWeight.w800)), Text('${variantLabel(item.color, item.size)} · ×${item.quantity}', style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12.5))])),
                   Text(money(item.unitPrice * item.quantity), style: const TextStyle(fontWeight: FontWeight.w800)),
                 ],
               ),

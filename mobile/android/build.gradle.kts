@@ -15,6 +15,13 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
+// stripe_android pins Java to 17 but leaves Kotlin on the JDK default, which Gradle rejects.
+subprojects {
+    if (name != "stripe_android") return@subprojects
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile::class.java).configureEach {
+        compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
 subprojects {
     project.evaluationDependsOn(":app")
 }

@@ -368,18 +368,21 @@ class SectionTitle extends StatelessWidget {
 }
 
 class GoldText extends StatelessWidget {
-  const GoldText(this.text, {super.key, required this.style, this.textAlign, this.maxLines});
+  const GoldText(this.text, {super.key, required this.style, this.textAlign, this.maxLines, this.outlined = false});
   final String text;
   final TextStyle style;
   final TextAlign? textAlign;
   final int? maxLines;
+
+  /// Dark stroke and soft glow so the gold stays readable over busy artwork.
+  final bool outlined;
 
   @override
   Widget build(BuildContext context) {
     final size = style.fontSize ?? 14;
     final line = size * (style.height ?? 1.2);
     final paint = Paint()..shader = const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: goldColors, tileMode: TileMode.repeated).createShader(Rect.fromLTWH(0, 0, 1, line));
-    return Text(
+    final fill = Text(
       text,
       textAlign: textAlign,
       maxLines: maxLines,
@@ -394,6 +397,51 @@ class GoldText extends StatelessWidget {
         shadows: style.shadows,
         foreground: paint,
       ),
+    );
+    return outlined ? OutlinedGlow(text: text, style: style, textAlign: textAlign, maxLines: maxLines, child: fill) : fill;
+  }
+}
+
+/// Paints a dark outer stroke with a pink glow behind [child], which must render the same [text] in the same [style].
+class OutlinedGlow extends StatelessWidget {
+  const OutlinedGlow({super.key, required this.text, required this.style, required this.child, this.textAlign, this.maxLines});
+  final String text;
+  final TextStyle style;
+  final Widget child;
+  final TextAlign? textAlign;
+  final int? maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = style.fontSize ?? 14;
+    final stroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = (size * 0.12).clamp(2.0, 4.0)
+      ..strokeJoin = StrokeJoin.round
+      ..color = night;
+    return Stack(
+      children: [
+        Text(
+          text,
+          textAlign: textAlign,
+          maxLines: maxLines,
+          overflow: maxLines == null ? null : TextOverflow.ellipsis,
+          style: TextStyle(
+            fontFamily: style.fontFamily,
+            fontSize: style.fontSize,
+            fontWeight: style.fontWeight,
+            fontStyle: style.fontStyle,
+            height: style.height,
+            letterSpacing: style.letterSpacing,
+            foreground: stroke,
+            shadows: [
+              Shadow(color: pink.withValues(alpha: 0.75), blurRadius: size * 0.45),
+              Shadow(color: Colors.black.withValues(alpha: 0.55), blurRadius: size * 0.2, offset: const Offset(0, 1)),
+            ],
+          ),
+        ),
+        child,
+      ],
     );
   }
 }
@@ -509,7 +557,6 @@ class TeamCrest extends StatelessWidget {
   Widget build(BuildContext context) {
     final box = size * clubScale(context);
     final initials = Text(label, style: displayStyle(size * 0.28, color: goldLight));
-    final onWhite = !ours && logo != null;
     return Container(
       width: box,
       height: box,
@@ -517,9 +564,7 @@ class TeamCrest extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: onWhite
-            ? const RadialGradient(center: Alignment(-0.36, -0.44), colors: [Colors.white, Color(0xFFEBE6F2)])
-            : const RadialGradient(center: Alignment(-0.36, -0.44), colors: [Color(0xFF8830DB), Color(0xFF460B7D), Color(0xFF310858)], stops: [0, 0.58, 1]),
+        gradient: const RadialGradient(center: Alignment(-0.36, -0.44), colors: [Color(0xFF8830DB), Color(0xFF460B7D), Color(0xFF310858)], stops: [0, 0.58, 1]),
         border: Border.all(color: gold, width: box > 60 ? 2 : 1.5),
         boxShadow: [BoxShadow(color: pink.withValues(alpha: 0.45), blurRadius: box * 0.28)],
       ),
@@ -527,7 +572,7 @@ class TeamCrest extends StatelessWidget {
           ? Image.asset('assets/brand/tiger-gold.png', fit: BoxFit.contain)
           : logo == null
               ? initials
-              : Image.network(logo!, fit: BoxFit.contain, errorBuilder: (_, _, _) => initials),
+              : ClipOval(child: Image.network(logo!, fit: BoxFit.contain, errorBuilder: (_, _, _) => initials)),
     );
   }
 }

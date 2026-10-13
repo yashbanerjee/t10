@@ -332,6 +332,7 @@ class HomeHero extends StatelessWidget {
     final api = ClubScope.of(context).api;
     final art = banner.isImage ? api.media(banner.image) : api.media('/images/hero-art.webp');
     final title = displayStyle(42, height: 0.9);
+    const tagline = TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.6);
     final inset = MediaQuery.paddingOf(context).top;
     final scale = clubScale(context);
     double u(double value) => value * scale;
@@ -373,14 +374,18 @@ class HomeHero extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const GoldText('ABU DHABI T10', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.4)),
+                  const GoldText('ABU DHABI T10', outlined: true, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.4)),
                   const SizedBox(height: 8),
-                  GoldText(banner.title, style: title),
-                  GoldText(banner.accent, style: title),
+                  GoldText(banner.title, style: title, outlined: true),
+                  GoldText(banner.accent, style: title, outlined: true),
                   const SizedBox(height: 8),
-                  Text(banner.tagline, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.6)),
+                  OutlinedGlow(
+                    text: banner.tagline,
+                    style: tagline,
+                    child: Text(banner.tagline, style: tagline.copyWith(color: Colors.white)),
+                  ),
                   const SizedBox(height: 10),
-                  const GoldText('United', style: TextStyle(fontSize: 28, fontStyle: FontStyle.italic, fontWeight: FontWeight.w800, height: 0.95)),
+                  const GoldText('United', outlined: true, style: TextStyle(fontSize: 28, fontStyle: FontStyle.italic, fontWeight: FontWeight.w800, height: 0.95)),
                   Padding(
                     padding: const EdgeInsets.only(left: 28),
                     child: Stack(
@@ -404,7 +409,7 @@ class HomeHero extends StatelessWidget {
                         ),
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 4),
-                          child: GoldText('AS ONE', style: TextStyle(fontSize: 15, fontStyle: FontStyle.italic, fontWeight: FontWeight.w800)),
+                          child: GoldText('AS ONE', outlined: true, style: TextStyle(fontSize: 15, fontStyle: FontStyle.italic, fontWeight: FontWeight.w800)),
                         ),
                       ],
                     ),
@@ -419,7 +424,7 @@ class HomeHero extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   for (final word in banner.roar.split(RegExp(r'\s+')))
-                    if (word.isNotEmpty) GoldText(word, style: const TextStyle(fontSize: 22, fontStyle: FontStyle.italic, fontWeight: FontWeight.w800, height: 0.9)),
+                    if (word.isNotEmpty) GoldText(word, outlined: true, style: const TextStyle(fontSize: 22, fontStyle: FontStyle.italic, fontWeight: FontWeight.w800, height: 0.9)),
                 ],
               ),
             ),

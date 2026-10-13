@@ -126,7 +126,7 @@ class _ProductPageState extends State<ProductPage> {
     product = value;
     if (color.isEmpty && value.variants.isNotEmpty) {
       color = value.variants.first.color;
-      size = value.variants.firstWhere((item) => item.color == color, orElse: () => value.variants.first).size;
+      size = (value.variants.where((item) => item.color == color).toList()..sort((a, b) => bySize(a.size, b.size))).first.size;
     }
   }
 
@@ -160,7 +160,7 @@ class _ProductPageState extends State<ProductPage> {
     if (current == null) return const Scaffold(appBar: ClubAppBar('Shop'), body: LoadingView());
     final api = ClubScope.of(context).api;
     final colors = current.variants.map((item) => item.color).toSet().toList();
-    final sizes = current.variants.where((item) => item.color == color).toList();
+    final sizes = current.variants.where((item) => item.color == color).toList()..sort((a, b) => bySize(a.size, b.size));
     final selected = sizes.where((item) => item.size == size).firstOrNull ?? (sizes.isEmpty ? null : sizes.first);
     final price = selected?.price ?? current.price;
     final photo = api.media(selected?.image ?? current.image);
@@ -179,7 +179,7 @@ class _ProductPageState extends State<ProductPage> {
           Text(money(price), style: displayStyle(26, color: Colors.white)),
           const SizedBox(height: 10),
           Text(current.description, style: const TextStyle(color: Color(0xFFE6DDF0), height: 1.5)),
-          if (colors.isNotEmpty) ...[
+          if (colors.any((item) => item.trim().isNotEmpty)) ...[
             const SectionTitle('Colour'),
             Wrap(
               spacing: 8,
@@ -188,7 +188,7 @@ class _ProductPageState extends State<ProductPage> {
                 for (final item in colors)
                   _choice(item, item == color, () => setState(() {
                         color = item;
-                        size = current.variants.firstWhere((variant) => variant.color == item).size;
+                        size = (current.variants.where((variant) => variant.color == item).toList()..sort((a, b) => bySize(a.size, b.size))).first.size;
                       })),
               ],
             ),
@@ -254,7 +254,7 @@ class CartPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(line.name.toUpperCase(), style: displayStyle(16, color: Colors.white)),
-                                  Text('${line.color} · ${line.size}', style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12.5)),
+                                  Text(variantLabel(line.color, line.size), style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12.5)),
                                   GoldText(money(line.price), style: displayStyle(17)),
                                 ],
                               ),
