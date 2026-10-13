@@ -90,6 +90,8 @@ class ClubApi extends ChangeNotifier {
 
   Future<String?> cancelCheckout(String orderId) => repository.cancelCheckout(orderId);
 
+  Future<String?> confirmCheckout(String orderId) => repository.confirmCheckout(orderId);
+
   Future<void> refresh() async {
     loading = true;
     error = null;

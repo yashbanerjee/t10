@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { failure, success } from "@/lib/api";
-import { activeStripe, createCheckoutSession, releaseUnpaidOrder } from "@/lib/stripe";
+import { activeStripe, createCheckoutSession, createPaymentIntent, releaseUnpaidOrder } from "@/lib/stripe";
 
 const checkoutInput = z.object({
   name: z.string().trim().min(2).max(120),
@@ -13,6 +13,8 @@ const checkoutInput = z.object({
   country: z.string().trim().min(2).max(80),
   notes: z.string().trim().max(500).optional(),
   items: z.array(z.object({ variantId: z.string().min(1), quantity: z.number().int().min(1).max(10) })).min(1).max(20),
+  /** "sheet" is the mobile app paying in Stripe's native PaymentSheet; the website uses hosted Checkout. */
+  payment: z.enum(["checkout", "sheet"]).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -54,6 +56,10 @@ export async function POST(request: NextRequest) {
       });
     });
     try {
+      if (data.payment === "sheet") {
+        const intent = await createPaymentIntent(order.id);
+        return success({ number: order.number, orderId: order.id, total: Number(order.total), ...intent }, "Order created. Continue to payment.", { status: 201 });
+      }
       const checkoutUrl = await createCheckoutSession(order.id);
       return success({ number: order.number, orderId: order.id, checkoutUrl }, "Order created. Continue to payment.", { status: 201 });
     } catch (error) {

@@ -5,7 +5,7 @@ import 'package:united_tigers/cart_store.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
 import 'package:united_tigers/pages/club_pages.dart';
-import 'package:united_tigers/pages/stripe_checkout_page.dart';
+import 'package:united_tigers/services/stripe_payment.dart';
 import 'package:united_tigers/scope.dart';
 import 'package:united_tigers/widgets.dart';
 
@@ -282,10 +282,11 @@ class CartPage extends StatelessWidget {
 }
 
 class OrderPaidPage extends StatefulWidget {
-  const OrderPaidPage({super.key, required this.number, required this.email});
+  const OrderPaidPage({super.key, required this.number, required this.email, required this.orderId});
 
   final String number;
   final String email;
+  final String orderId;
 
   @override
   State<OrderPaidPage> createState() => _OrderPaidPageState();
@@ -296,9 +297,10 @@ class _OrderPaidPageState extends State<OrderPaidPage> {
 
   Future<TrackedOrder?> _load() async {
     final api = ClubScope.of(context).api;
-    // Stripe's webhook can land a moment after the fan is sent back.
+    // Stripe can take a moment to settle the payment after the sheet closes.
     for (var attempt = 0; attempt < 3; attempt++) {
       try {
+        await api.confirmCheckout(widget.orderId).catchError((_) => null);
         final found = await api.trackOrder(widget.number, widget.email);
         if (found.paymentStatus == 'PAID' || attempt == 2) return found;
       } catch (_) {
@@ -439,23 +441,29 @@ class _CheckoutPageState extends State<CheckoutPage> {
         'notes': notes.text.trim(),
         'items': cart.lines.map((line) => {'variantId': line.variantId, 'quantity': line.quantity}).toList(),
       });
-      if (!mounted) return;
-      final outcome = await Navigator.push<PaymentOutcome>(context, MaterialPageRoute(builder: (_) => StripeCheckoutPage(url: start.checkoutUrl)));
+      PaymentOutcome outcome;
+      String? failure;
+      try {
+        outcome = await payWithStripe(start, name: name.text.trim(), email: buyer, phone: phone.text.trim());
+      } catch (reason) {
+        outcome = PaymentOutcome.cancelled;
+        failure = '$reason'.replaceFirst('Exception: ', '');
+      }
       var paid = outcome == PaymentOutcome.paid;
-      if (!paid && start.orderId != null) {
-        // Frees the held stock; Stripe may still have taken the payment just before the fan left.
-        final status = await api.cancelCheckout(start.orderId!).catchError((_) => null);
+      if (!paid) {
+        // Frees the held stock; Stripe may still have taken the payment just before the sheet closed.
+        final status = await api.cancelCheckout(start.orderId).catchError((_) => null);
         paid = status == 'PAID';
       }
       if (!mounted) return;
       if (!paid) {
-        await showClubMessage(context, 'Payment was not completed, so nothing was charged. Your bag is still here.');
+        await showClubMessage(context, failure == null ? 'Payment was not completed, so nothing was charged. Your bag is still here.' : '$failure Nothing was charged and your bag is still here.');
         return;
       }
       await cart.clear();
       ClubAnalytics.event('purchase_completed');
       if (!mounted) return;
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => OrderPaidPage(number: start.number, email: buyer)), (route) => route.isFirst);
+      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => OrderPaidPage(number: start.number, email: buyer, orderId: start.orderId)), (route) => route.isFirst);
     } catch (reason) {
       if (mounted) await showClubMessage(context, '$reason'.replaceFirst('Exception: ', ''));
     } finally {

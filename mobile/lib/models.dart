@@ -787,18 +787,21 @@ class TrackedItem {
 }
 
 /// What the public tracking endpoint reveals about a booking: no address or contact details.
-/// The server's reply to checkout: the booking number and the Stripe page where the fan pays.
+/// The server's reply to checkout: the held order and the Stripe PaymentIntent the fan pays in the PaymentSheet.
 class CheckoutStart {
-  const CheckoutStart({required this.number, required this.checkoutUrl, this.orderId});
+  const CheckoutStart({required this.number, required this.orderId, required this.clientSecret, required this.publishableKey});
 
   final String number;
-  final String checkoutUrl;
-  final String? orderId;
+  final String orderId;
+  final String clientSecret;
+  final String publishableKey;
 
   factory CheckoutStart.fromJson(Map<String, dynamic> json) {
-    final url = asText(json['checkoutUrl']);
-    if (url == null) throw Exception('Online payment is not available right now. Please try again shortly.');
-    return CheckoutStart(number: json['number']?.toString() ?? '', checkoutUrl: url, orderId: asText(json['orderId']));
+    final orderId = asText(json['orderId']);
+    final secret = asText(json['clientSecret']);
+    final key = asText(json['publishableKey']);
+    if (orderId == null || secret == null || key == null) throw Exception('Online payment is not available right now. Please try again shortly.');
+    return CheckoutStart(number: json['number']?.toString() ?? '', orderId: orderId, clientSecret: secret, publishableKey: key);
   }
 }
 

@@ -70,6 +70,33 @@ export async function createCheckoutSession(orderId: string) {
   return session.url;
 }
 
+/**
+ * The mobile app pays with Stripe's native PaymentSheet, so it needs a PaymentIntent instead of a hosted session.
+ * Its id is kept in `stripeSessionId`; the `pi_` prefix tells the two apart.
+ */
+export async function createPaymentIntent(orderId: string) {
+  const active = await activeStripe();
+  if (!active) throw new Error("STRIPE_OFF");
+  if (!active.config.publishableKey) throw new Error("Stripe publishable key is missing");
+  const order = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
+  const intent = await active.stripe.paymentIntents.create({
+    amount: toMinor(Number(order.total)),
+    currency: active.config.currency,
+    payment_method_types: ["card"],
+    receipt_email: order.email,
+    description: `United Tigers order ${order.number}`,
+    metadata: { orderId: order.id, orderNumber: order.number, source: "app" },
+  });
+  await prisma.order.update({ where: { id: order.id }, data: { stripeSessionId: intent.id, paymentMethod: "stripe" } });
+  if (!intent.client_secret) throw new Error("Stripe did not return a payment secret");
+  return { clientSecret: intent.client_secret, publishableKey: active.config.publishableKey, currency: active.config.currency };
+}
+
+async function markOrderPaid(orderId: string, stripeReference: string) {
+  const updated = await prisma.order.updateMany({ where: { id: orderId, paymentStatus: { not: "PAID" } }, data: { paymentStatus: "PAID", paidAt: new Date(), status: "CONFIRMED", stripeSessionId: stripeReference } });
+  if (updated.count === 1) await sendBookingEmails(orderId).catch((error) => console.error("Order mail failed", error instanceof Error ? error.message : "unknown error"));
+}
+
 /** Marks the order paid when Stripe says the session is paid. Safe to call more than once. */
 export async function confirmCheckoutSession(sessionId: string) {
   const active = await activeStripe();
@@ -77,11 +104,26 @@ export async function confirmCheckoutSession(sessionId: string) {
   const session = await active.stripe.checkout.sessions.retrieve(sessionId);
   const orderId = session.metadata?.orderId || session.client_reference_id;
   if (!orderId) return null;
-  if (session.payment_status === "paid" || session.payment_status === "no_payment_required") {
-    const updated = await prisma.order.updateMany({ where: { id: orderId, paymentStatus: { not: "PAID" } }, data: { paymentStatus: "PAID", paidAt: new Date(), status: "CONFIRMED", stripeSessionId: session.id } });
-    if (updated.count === 1) await sendBookingEmails(orderId).catch((error) => console.error("Order mail failed", error instanceof Error ? error.message : "unknown error"));
-  }
+  if (session.payment_status === "paid" || session.payment_status === "no_payment_required") await markOrderPaid(orderId, session.id);
   return prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
+}
+
+/** Marks the order paid when Stripe says the app's PaymentIntent succeeded. Safe to call more than once. */
+export async function confirmPaymentIntent(intentId: string) {
+  const active = await activeStripe();
+  if (!active) return null;
+  const intent = await active.stripe.paymentIntents.retrieve(intentId);
+  const orderId = intent.metadata?.orderId;
+  if (!orderId) return null;
+  if (intent.status === "succeeded") await markOrderPaid(orderId, intent.id);
+  return prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
+}
+
+/** Re-checks an order's payment with Stripe, whichever way it was paid. */
+export async function confirmOrderPayment(orderId: string) {
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order?.stripeSessionId || order.paymentStatus === "PAID") return order;
+  return order.stripeSessionId.startsWith("pi_") ? confirmPaymentIntent(order.stripeSessionId) : confirmCheckoutSession(order.stripeSessionId);
 }
 
 /** Releases reserved stock for an order that was never paid and cancels it. Safe to call more than once. */
@@ -101,7 +143,13 @@ export async function cancelCheckout(orderId: string) {
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order || order.paymentStatus !== "UNPAID" || order.status !== "PENDING") return order;
   const active = await activeStripe();
-  if (active && order.stripeSessionId) {
+  if (active && order.stripeSessionId?.startsWith("pi_")) {
+    const intent = await active.stripe.paymentIntents.retrieve(order.stripeSessionId).catch(() => null);
+    if (intent?.status === "succeeded") return confirmPaymentIntent(intent.id);
+    // A payment still settling must not lose its stock; the webhook finishes it either way.
+    if (intent?.status === "processing") return order;
+    if (intent && intent.status !== "canceled") await active.stripe.paymentIntents.cancel(intent.id).catch(() => null);
+  } else if (active && order.stripeSessionId) {
     const session = await active.stripe.checkout.sessions.retrieve(order.stripeSessionId).catch(() => null);
     if (session?.payment_status === "paid") return confirmCheckoutSession(session.id);
     if (session?.status === "open") await active.stripe.checkout.sessions.expire(session.id).catch(() => null);

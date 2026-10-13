@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import type Stripe from "stripe";
 import { failure, success } from "@/lib/api";
-import { confirmCheckoutSession, readStripeConfig, releaseUnpaidOrder, stripeClient } from "@/lib/stripe";
+import { confirmCheckoutSession, confirmPaymentIntent, readStripeConfig, releaseUnpaidOrder, stripeClient } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 
@@ -22,6 +22,12 @@ export async function POST(request: NextRequest) {
       await confirmCheckoutSession(event.data.object.id);
     } else if (event.type === "checkout.session.expired" || event.type === "checkout.session.async_payment_failed") {
       const orderId = event.data.object.metadata?.orderId || event.data.object.client_reference_id;
+      if (orderId) await releaseUnpaidOrder(orderId);
+    } else if (event.type === "payment_intent.succeeded") {
+      // Only the app's PaymentIntents carry an order id; hosted sessions are handled above.
+      if (event.data.object.metadata?.orderId) await confirmPaymentIntent(event.data.object.id);
+    } else if (event.type === "payment_intent.canceled") {
+      const orderId = event.data.object.metadata?.orderId;
       if (orderId) await releaseUnpaidOrder(orderId);
     }
   } catch (error) {
