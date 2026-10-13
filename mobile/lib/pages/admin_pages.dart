@@ -185,10 +185,22 @@ class _AdminCollectionPageState extends State<AdminCollectionPage> {
     }
   }
 
+  Future<void> _addCountry() async {
+    final payload = await showCountryForm(context, null);
+    if (payload == null || !mounted) return;
+    try {
+      await ClubScope.of(context).api.admin.createRecord('countries', payload);
+      await _load();
+    } catch (reason) {
+      if (mounted) await showClubMessage(context, '$reason'.replaceFirst('Exception: ', ''));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.collection.toUpperCase())),
+      floatingActionButton: widget.collection == 'countries' ? FloatingActionButton(tooltip: 'Add country', onPressed: _addCountry, child: const Icon(Icons.add)) : null,
       body: loading
           ? const LoadingView()
           : error != null
@@ -266,6 +278,8 @@ class _AdminRecordPageState extends State<AdminRecordPage> {
             ),
           if (widget.collection == 'franchises' && widget.id.isNotEmpty)
             FilledButton(onPressed: () => _editPosts(current.fields['posts'] ?? ''), child: const Text('SOCIAL POSTS')),
+          if (widget.collection == 'countries' && widget.id.isNotEmpty)
+            FilledButton(onPressed: () => _editCountry(current.fields), child: const Text('EDIT')),
           if (widget.collection != 'audit' && widget.id.isNotEmpty) ...[
             const SizedBox(height: 8),
             OutlinedButton(onPressed: _delete, child: const Text('DELETE')),
@@ -313,6 +327,17 @@ class _AdminRecordPageState extends State<AdminRecordPage> {
       await showClubMessage(context, 'Social posts saved. Covers are fetched automatically.');
     } catch (reason) {
       messenger.hideCurrentSnackBar();
+      if (mounted) await showClubMessage(context, '$reason'.replaceFirst('Exception: ', ''));
+    }
+  }
+
+  Future<void> _editCountry(Map<String, String> fields) async {
+    final payload = await showCountryForm(context, fields);
+    if (payload == null || !mounted) return;
+    try {
+      final saved = await ClubScope.of(context).api.admin.updateRecord(widget.collection, widget.id, payload);
+      if (mounted) setState(() => record = saved);
+    } catch (reason) {
       if (mounted) await showClubMessage(context, '$reason'.replaceFirst('Exception: ', ''));
     }
   }
@@ -588,6 +613,74 @@ class _AdminRolesPageState extends State<AdminRolesPage> {
                       ))
                   .toList(),
             ),
+    );
+  }
+}
+
+/// Add or edit a checkout country. Returns the payload to save, or null when cancelled.
+Future<Map<String, dynamic>?> showCountryForm(BuildContext context, Map<String, String>? current) {
+  return showDialog<Map<String, dynamic>>(context: context, builder: (_) => _CountryForm(current: current));
+}
+
+class _CountryForm extends StatefulWidget {
+  const _CountryForm({this.current});
+  final Map<String, String>? current;
+
+  @override
+  State<_CountryForm> createState() => _CountryFormState();
+}
+
+class _CountryFormState extends State<_CountryForm> {
+  late final name = TextEditingController(text: widget.current?['name']);
+  late final dial = TextEditingController(text: widget.current?['dialCode'] ?? '+');
+  late final iso = TextEditingController(text: widget.current?['isoCode']);
+  late final order = TextEditingController(text: widget.current?['displayOrder'] ?? '0');
+  late bool active = widget.current?['isActive'] != 'false';
+  String? error;
+
+  @override
+  void dispose() {
+    for (final field in [name, dial, iso, order]) {
+      field.dispose();
+    }
+    super.dispose();
+  }
+
+  void _save() {
+    final code = dial.text.trim();
+    if (name.text.trim().length < 2) return setState(() => error = 'Enter the country name.');
+    if (!RegExp(r'^\+\d{1,4}$').hasMatch(code)) return setState(() => error = 'Use a phone code such as +971.');
+    if (iso.text.trim().isNotEmpty && !RegExp(r'^[A-Za-z]{2}$').hasMatch(iso.text.trim())) return setState(() => error = 'The country code is 2 letters, such as AE.');
+    Navigator.pop(context, {
+      'name': name.text.trim(),
+      'dialCode': code,
+      'isoCode': iso.text.trim().isEmpty ? null : iso.text.trim().toUpperCase(),
+      'displayOrder': int.tryParse(order.text.trim()) ?? 0,
+      'isActive': active,
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.current == null ? 'Add country' : 'Edit country'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: name, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'Country name')),
+            TextField(controller: dial, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Phone code', hintText: '+971')),
+            TextField(controller: iso, textCapitalization: TextCapitalization.characters, maxLength: 2, decoration: const InputDecoration(labelText: 'Country code (optional)', hintText: 'AE')),
+            TextField(controller: order, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Display order', helperText: 'Lower numbers appear first.')),
+            SwitchListTile(contentPadding: EdgeInsets.zero, value: active, onChanged: (value) => setState(() => active = value), title: const Text('Show in checkout')),
+            if (error != null) Text(error!, style: const TextStyle(color: pink)),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+        TextButton(onPressed: _save, child: const Text('SAVE')),
+      ],
     );
   }
 }

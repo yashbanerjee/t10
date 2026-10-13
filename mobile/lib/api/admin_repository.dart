@@ -22,6 +22,7 @@ class AdminRepository {
     'polls',
     'contests',
     'orders',
+    'countries',
     'settings',
     'audit',
   ];

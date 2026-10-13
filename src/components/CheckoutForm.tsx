@@ -4,17 +4,16 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
 import { formatMoney } from "@/lib/money";
+import type { CheckoutCountry } from "@/lib/countries";
 
 const fields = [
   ["name", "Full name", "text"],
   ["email", "Email", "email"],
-  ["phone", "Phone", "tel"],
   ["address", "Delivery address", "text"],
   ["city", "City", "text"],
-  ["country", "Country", "text"],
 ] as const;
 
-export function CheckoutForm({ onlinePayment = false, cancelledOrderId = "" }: { onlinePayment?: boolean; cancelledOrderId?: string }) {
+export function CheckoutForm({ onlinePayment = false, cancelledOrderId = "", countries = [] }: { onlinePayment?: boolean; cancelledOrderId?: string; countries?: CheckoutCountry[] }) {
   const cart = useCart();
   const [notice, setNotice] = useState("");
   const cancelHandled = useRef(false);
@@ -31,7 +30,16 @@ export function CheckoutForm({ onlinePayment = false, cancelledOrderId = "" }: {
       })
       .catch(() => setNotice("Payment was not completed. Your bag is still here when you are ready."));
   }, [cancelledOrderId]);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", address: "", city: "", country: "United Arab Emirates", notes: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", address: "", city: "", country: countries[0]?.name ?? "United Arab Emirates", notes: "" });
+  // The phone code follows the chosen country until the fan picks a different one.
+  const [dialId, setDialId] = useState(countries[0]?.id ?? "");
+  const [dialTouched, setDialTouched] = useState(false);
+  const dial = countries.find((item) => item.id === dialId);
+  function chooseCountry(name: string) {
+    setForm((current) => ({ ...current, country: name }));
+    const match = countries.find((item) => item.name === name);
+    if (match && !dialTouched) setDialId(match.id);
+  }
   const [error, setError] = useState("");
   const [number, setNumber] = useState("");
   const [bookedEmail, setBookedEmail] = useState("");
@@ -42,7 +50,7 @@ export function CheckoutForm({ onlinePayment = false, cancelledOrderId = "" }: {
     event.preventDefault();
     setSaving(true); setError("");
     try {
-      const response = await fetch("/api/v1/shop/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...form, items: cart.lines.map((line) => ({ variantId: line.variantId, quantity: line.quantity })) }) });
+      const response = await fetch("/api/v1/shop/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...form, phone: dial ? `${dial.dialCode} ${form.phone.trim()}` : form.phone, items: cart.lines.map((line) => ({ variantId: line.variantId, quantity: line.quantity })) }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "The order could not be booked.");
       if (typeof result.data.checkoutUrl === "string") {
@@ -71,7 +79,20 @@ export function CheckoutForm({ onlinePayment = false, cancelledOrderId = "" }: {
 
   return <form className="checkout-layout" onSubmit={submit}>
     <div className="checkout-fields">
-      {fields.map(([key, label, type]) => <label key={key}><span>{label}</span><input required type={type} value={form[key]} onChange={(event) => setForm({ ...form, [key]: event.target.value })} /></label>)}
+      {fields.slice(0, 2).map(([key, label, type]) => <label key={key}><span>{label}</span><input required type={type} value={form[key]} onChange={(event) => setForm({ ...form, [key]: event.target.value })} /></label>)}
+      <label><span>Phone</span>
+        <span className="phone-field">
+          {countries.length > 0 && <span className="phone-code">
+            <select aria-label="Country code" value={dialId} onChange={(event) => { setDialId(event.target.value); setDialTouched(true); }}>{countries.map((item) => <option key={item.id} value={item.id}>{item.dialCode} {item.name}</option>)}</select>
+            <span aria-hidden="true">{dial?.dialCode}</span>
+          </span>}
+          <input required type="tel" inputMode="tel" autoComplete="tel-national" placeholder={dial ? "Mobile number" : "+971 50 123 4567"} value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} />
+        </span>
+      </label>
+      {fields.slice(2).map(([key, label, type]) => <label key={key}><span>{label}</span><input required type={type} value={form[key]} onChange={(event) => setForm({ ...form, [key]: event.target.value })} /></label>)}
+      <label><span>Country</span>{countries.length > 0
+        ? <select required value={form.country} onChange={(event) => chooseCountry(event.target.value)}>{countries.map((item) => <option key={item.id} value={item.name}>{item.name}</option>)}</select>
+        : <input required type="text" value={form.country} onChange={(event) => setForm({ ...form, country: event.target.value })} />}</label>
       <label className="field-wide"><span>Notes</span><textarea value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} placeholder="Size help, delivery notes, or a gift message" /></label>
     </div>
     <aside className="checkout-summary">

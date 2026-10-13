@@ -7043,6 +7043,75 @@ html[data-mood="royal"] {
   grid-column: 1 / -1;
 }
 
+.checkout-fields select {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, .2);
+  background: rgba(255, 255, 255, .04);
+  color: white;
+  font: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.checkout-fields select option {
+  background: #29064a;
+  color: white;
+}
+
+.checkout-fields .phone-field {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.checkout-fields .phone-field:has(> input:only-child) {
+  grid-template-columns: 1fr;
+}
+
+/* The closed select shows only the dialling code; the open list names each country. */
+.checkout-fields .phone-code {
+  position: relative;
+  display: block;
+}
+
+.checkout-fields .phone-code select {
+  color: transparent;
+}
+
+.checkout-fields .phone-code select option {
+  color: white;
+}
+
+.checkout-fields .phone-code > span {
+  position: absolute;
+  inset: 0 28px 0 12px;
+  display: flex;
+  align-items: center;
+  color: white;
+  font-size: 14px;
+  letter-spacing: normal;
+  pointer-events: none;
+}
+
+.checkout-fields .phone-code::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--gold-light, #f4db96);
+  border-bottom: 2px solid var(--gold-light, #f4db96);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+.checkout-fields .phone-code select {
+  appearance: none;
+}
+
 .fan-success {
   color: var(--success);
 }

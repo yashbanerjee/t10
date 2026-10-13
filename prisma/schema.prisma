@@ -594,6 +594,20 @@ model ProductVariant {
   @@index([productId])
 }
 
+/// Countries offered in the checkout country and phone-code dropdowns, managed in admin.
+model Country {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  isoCode      String?
+  dialCode     String
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isActive, displayOrder])
+}
+
 model Order {
   id        String      @id @default(cuid())
   number    String      @unique

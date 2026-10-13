@@ -781,17 +781,48 @@ class ClubField extends StatelessWidget {
         minLines: lines,
         maxLines: lines,
         cursorColor: goldLight,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(color: Color(0xFFCDBFDD)),
-          floatingLabelStyle: const TextStyle(color: goldLight, fontWeight: FontWeight.w700),
-          filled: true,
-          fillColor: const Color(0x8C2B074D),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: gold.withValues(alpha: 0.3))),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: goldLight, width: 1.6)),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-        ),
+        decoration: clubInputDecoration(label),
       ),
+    );
+  }
+}
+
+InputDecoration clubInputDecoration(String label) => InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Color(0xFFCDBFDD)),
+      floatingLabelStyle: const TextStyle(color: goldLight, fontWeight: FontWeight.w700),
+      filled: true,
+      fillColor: const Color(0x8C2B074D),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: gold.withValues(alpha: 0.3))),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: goldLight, width: 1.6)),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+    );
+
+/// Dropdown styled like [ClubField].
+class ClubDropdown<T> extends StatelessWidget {
+  const ClubDropdown({super.key, required this.label, required this.value, required this.items, required this.onChanged, this.selectedLabel});
+  final String label;
+  final T? value;
+  final List<(T, String)> items;
+  final ValueChanged<T?> onChanged;
+
+  /// Shorter text for the closed field, e.g. just the phone code.
+  final String Function(T value)? selectedLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<T>(
+      key: ValueKey(value),
+      initialValue: value,
+      isExpanded: true,
+      dropdownColor: purple,
+      iconEnabledColor: goldLight,
+      menuMaxHeight: 420,
+      decoration: clubInputDecoration(label),
+      style: const TextStyle(color: Colors.white, fontSize: 16),
+      selectedItemBuilder: selectedLabel == null ? null : (_) => [for (final item in items) Align(alignment: Alignment.centerLeft, child: Text(selectedLabel!(item.$1), maxLines: 1, overflow: TextOverflow.ellipsis))],
+      items: [for (final item in items) DropdownMenuItem(value: item.$1, child: Text(item.$2, maxLines: 1, overflow: TextOverflow.ellipsis))],
+      onChanged: onChanged,
     );
   }
 }

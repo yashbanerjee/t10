@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { failure, success } from "@/lib/api";
+import { getCountries } from "@/lib/countries";
 import { activeStripe, createCheckoutSession, createPaymentIntent, releaseUnpaidOrder } from "@/lib/stripe";
 
 const checkoutInput = z.object({
@@ -23,6 +24,8 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return failure("Check your name, email, phone and delivery details", 400, parsed.error.issues);
   const data = parsed.data;
   if (!(await activeStripe())) return failure("Online payment is not available right now, so orders cannot be placed. Please try again later.", 503);
+  const countries = await getCountries();
+  if (countries.length && !countries.some((country) => country.name.toLowerCase() === data.country.toLowerCase())) return failure("Choose a delivery country from the list", 400);
   const merged = new Map<string, number>();
   for (const item of data.items) merged.set(item.variantId, (merged.get(item.variantId) ?? 0) + item.quantity);
   try {

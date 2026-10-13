@@ -77,6 +77,8 @@ class ClubRepository {
 
   Future<String> enterContest(String slug, Map<String, dynamic> payload) => client.post('/api/v1/contests/$slug/enter', payload);
 
+  Future<List<CheckoutCountry>> countries() async => CheckoutCountry.list(await client.get('/api/v1/countries'));
+
   /// Reserves the stock and creates a Stripe PaymentIntent; the order only counts once Stripe reports it paid.
   Future<CheckoutStart> checkout(Map<String, dynamic> payload) async => CheckoutStart.fromJson(_map(await client.postData('/api/v1/shop/checkout', {...payload, 'payment': 'sheet'})));
 

@@ -107,7 +107,7 @@ class AdminRecord {
 
   factory AdminRecord.fromJson(Map<String, dynamic> json) {
     final title = _firstText(json, const ['fullName', 'title', 'name', 'opponent', 'question', 'key', 'email']) ?? 'Record';
-    final subtitle = _firstText(json, const ['role', 'category', 'status', 'email', 'slug']) ?? '';
+    final subtitle = _firstText(json, const ['role', 'category', 'status', 'email', 'slug', 'dialCode']) ?? '';
     final fields = <String, String>{};
     json.forEach((key, value) {
       if (value == null || value is Map || value is List) return;

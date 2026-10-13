@@ -787,6 +787,21 @@ class TrackedItem {
 }
 
 /// What the public tracking endpoint reveals about a booking: no address or contact details.
+/// A country offered in checkout, with its phone dialling code. Managed in admin.
+class CheckoutCountry {
+  const CheckoutCountry({required this.id, required this.name, required this.dialCode, this.isoCode});
+
+  final String id;
+  final String name;
+  final String dialCode;
+  final String? isoCode;
+
+  static List<CheckoutCountry> list(dynamic value) => asList(value)
+      .where((json) => asText(json['name']) != null && asText(json['dialCode']) != null)
+      .map((json) => CheckoutCountry(id: json['id']?.toString() ?? json['name'].toString(), name: asText(json['name'])!, dialCode: asText(json['dialCode'])!, isoCode: asText(json['isoCode'])))
+      .toList();
+}
+
 /// The server's reply to checkout: the held order and the Stripe PaymentIntent the fan pays in the PaymentSheet.
 class CheckoutStart {
   const CheckoutStart({required this.number, required this.orderId, required this.clientSecret, required this.publishableKey});

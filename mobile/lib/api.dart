@@ -92,6 +92,8 @@ class ClubApi extends ChangeNotifier {
 
   Future<String?> confirmCheckout(String orderId) => repository.confirmCheckout(orderId);
 
+  Future<List<CheckoutCountry>> countries() => repository.countries();
+
   Future<void> refresh() async {
     loading = true;
     error = null;

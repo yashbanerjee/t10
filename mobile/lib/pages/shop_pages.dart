@@ -385,6 +385,40 @@ class _CheckoutPageState extends State<CheckoutPage> {
   final country = TextEditingController(text: 'United Arab Emirates');
   final notes = TextEditingController();
   bool busy = false;
+  List<CheckoutCountry> countries = [];
+  CheckoutCountry? selectedCountry;
+  CheckoutCountry? dial;
+
+  /// The phone code follows the chosen country until the fan picks a different one.
+  bool dialTouched = false;
+  bool started = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (started) return;
+    started = true;
+    ClubScope.of(context).api.countries().then((list) {
+      if (!mounted || list.isEmpty) return;
+      setState(() {
+        countries = list;
+        selectedCountry = list.first;
+        dial = list.first;
+      });
+    }).catchError((_) {});
+  }
+
+  void _chooseCountry(CheckoutCountry? value) {
+    if (value == null) return;
+    setState(() {
+      selectedCountry = value;
+      if (!dialTouched) dial = value;
+    });
+  }
+
+  String get _countryName => selectedCountry?.name ?? country.text.trim();
+
+  String get _phone => dial == null ? phone.text.trim() : '${dial!.dialCode} ${phone.text.trim()}';
 
   @override
   void dispose() {
@@ -406,10 +440,43 @@ class _CheckoutPageState extends State<CheckoutPage> {
           const SizedBox(height: 14),
           ClubField(label: 'Name', controller: name),
           ClubField(label: 'Email', controller: email, email: true),
-          ClubField(label: 'Phone', controller: phone, phone: true),
+          if (countries.isEmpty)
+            ClubField(label: 'Phone', controller: phone, phone: true)
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 112 * clubScale(context),
+                  child: ClubDropdown<CheckoutCountry>(
+                    label: 'Code',
+                    value: dial,
+                    items: [for (final item in countries) (item, '${item.dialCode}  ${item.name}')],
+                    selectedLabel: (item) => item.dialCode,
+                    onChanged: (value) => setState(() {
+                      dial = value;
+                      dialTouched = true;
+                    }),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: ClubField(label: 'Mobile number', controller: phone, phone: true)),
+              ],
+            ),
           ClubField(label: 'Address', controller: address),
           ClubField(label: 'City', controller: city),
-          ClubField(label: 'Country', controller: country),
+          if (countries.isEmpty)
+            ClubField(label: 'Country', controller: country)
+          else
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: ClubDropdown<CheckoutCountry>(
+                label: 'Country',
+                value: selectedCountry,
+                items: [for (final item in countries) (item, item.name)],
+                onChanged: _chooseCountry,
+              ),
+            ),
           ClubField(label: 'Notes', controller: notes, lines: 3),
           AnimatedBuilder(
             animation: ClubScope.of(context).cart,
@@ -434,17 +501,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final start = await api.startCheckout({
         'name': name.text.trim(),
         'email': email.text.trim(),
-        'phone': phone.text.trim(),
+        'phone': _phone,
         'address': address.text.trim(),
         'city': city.text.trim(),
-        'country': country.text.trim(),
+        'country': _countryName,
         'notes': notes.text.trim(),
         'items': cart.lines.map((line) => {'variantId': line.variantId, 'quantity': line.quantity}).toList(),
       });
       PaymentOutcome outcome;
       String? failure;
       try {
-        outcome = await payWithStripe(start, name: name.text.trim(), email: buyer, phone: phone.text.trim());
+        outcome = await payWithStripe(start, name: name.text.trim(), email: buyer, phone: _phone);
       } catch (reason) {
         outcome = PaymentOutcome.cancelled;
         failure = '$reason'.replaceFirst('Exception: ', '');
