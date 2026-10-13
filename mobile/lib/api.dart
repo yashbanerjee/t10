@@ -82,11 +82,13 @@ class ClubApi extends ChangeNotifier {
     return reply;
   }
 
-  Future<String> sendOrder(Map<String, dynamic> payload) async {
-    final reply = await repository.checkout(payload);
-    ClubAnalytics.event('booking_submitted');
-    return reply;
+  Future<CheckoutStart> startCheckout(Map<String, dynamic> payload) async {
+    final start = await repository.checkout(payload);
+    ClubAnalytics.event('begin_checkout');
+    return start;
   }
+
+  Future<String?> cancelCheckout(String orderId) => repository.cancelCheckout(orderId);
 
   Future<void> refresh() async {
     loading = true;

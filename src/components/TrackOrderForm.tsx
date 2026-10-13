@@ -19,8 +19,8 @@ type TrackedOrder = {
 };
 
 const statusCopy: Record<TrackedOrder["status"], { label: string; text: string }> = {
-  PENDING: { label: "BOOKED", text: "Your items are reserved. The club will contact you by phone or email to confirm payment and delivery." },
-  CONFIRMED: { label: "CONFIRMED", text: "Payment and delivery are agreed. The club will hand over or deliver your kit as arranged." },
+  PENDING: { label: "BOOKED", text: "Your items are held while the payment is completed. If you have paid, this updates shortly." },
+  CONFIRMED: { label: "CONFIRMED", text: "Payment received. The club will be in touch to hand over or deliver your kit." },
   CANCELLED: { label: "CANCELLED", text: "This booking was cancelled. Get in touch with the club if you think this is a mistake." },
 };
 

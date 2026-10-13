@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     });
     try {
       const checkoutUrl = await createCheckoutSession(order.id);
-      return success({ number: order.number, checkoutUrl }, "Order created. Continue to payment.", { status: 201 });
+      return success({ number: order.number, orderId: order.id, checkoutUrl }, "Order created. Continue to payment.", { status: 201 });
     } catch (error) {
       console.error("Stripe checkout failed", error instanceof Error ? error.message : "unknown error");
       await releaseUnpaidOrder(order.id);

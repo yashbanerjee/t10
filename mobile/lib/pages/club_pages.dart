@@ -935,10 +935,20 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
   bool busy = false;
 
   static const _copy = {
-    'PENDING': ('Booked', 'Your items are reserved. The club will contact you by phone or email to confirm payment and delivery.'),
-    'CONFIRMED': ('Confirmed', 'Payment and delivery are agreed. The club will hand over or deliver your kit as arranged.'),
+    'PENDING': ('Booked', 'Your items are held while the payment is completed. If you have paid, this updates shortly.'),
+    'CONFIRMED': ('Confirmed', 'Payment received. The club will be in touch to hand over or deliver your kit.'),
     'CANCELLED': ('Cancelled', 'This booking was cancelled. Get in touch with the club if you think this is a mistake.'),
   };
+
+  @override
+  void initState() {
+    super.initState();
+    if ((widget.number ?? '').isNotEmpty && (widget.email ?? '').contains('@')) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _track();
+      });
+    }
+  }
 
   @override
   void dispose() {

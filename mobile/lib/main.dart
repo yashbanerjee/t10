@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -7,6 +9,7 @@ import 'package:united_tigers/api.dart';
 import 'package:united_tigers/cart_store.dart';
 import 'package:united_tigers/firebase_options.dart';
 import 'package:united_tigers/services/analytics.dart';
+import 'package:united_tigers/services/error_reporter.dart';
 import 'package:united_tigers/services/push.dart';
 import 'package:united_tigers/pages/fixtures_page.dart';
 import 'package:united_tigers/pages/home_page.dart';
@@ -27,6 +30,15 @@ Future<void> main() async {
       debugPrint('Firebase unavailable: $reason');
     }
   }
+  final flutterError = FlutterError.onError;
+  FlutterError.onError = (details) {
+    flutterError?.call(details);
+    ErrorReporter.report(details.exceptionAsString(), details: details.stack);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    ErrorReporter.report('$error', details: stack);
+    return true;
+  };
   runApp(const UnitedTigersApp());
 }
 
@@ -44,6 +56,7 @@ class _UnitedTigersAppState extends State<UnitedTigersApp> {
   @override
   void initState() {
     super.initState();
+    ErrorReporter.init(() => api.client.base);
     WidgetsBinding.instance.addPostFrameCallback((_) => ClubPush.start());
   }
 

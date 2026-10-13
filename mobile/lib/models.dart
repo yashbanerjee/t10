@@ -787,6 +787,21 @@ class TrackedItem {
 }
 
 /// What the public tracking endpoint reveals about a booking: no address or contact details.
+/// The server's reply to checkout: the booking number and the Stripe page where the fan pays.
+class CheckoutStart {
+  const CheckoutStart({required this.number, required this.checkoutUrl, this.orderId});
+
+  final String number;
+  final String checkoutUrl;
+  final String? orderId;
+
+  factory CheckoutStart.fromJson(Map<String, dynamic> json) {
+    final url = asText(json['checkoutUrl']);
+    if (url == null) throw Exception('Online payment is not available right now. Please try again shortly.');
+    return CheckoutStart(number: json['number']?.toString() ?? '', checkoutUrl: url, orderId: asText(json['orderId']));
+  }
+}
+
 class TrackedOrder {
   const TrackedOrder({required this.number, required this.status, required this.paymentStatus, required this.name, required this.total, this.createdAt, this.paidAt, this.city, this.country, this.items = const []});
 

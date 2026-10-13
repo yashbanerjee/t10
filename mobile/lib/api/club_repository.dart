@@ -77,7 +77,11 @@ class ClubRepository {
 
   Future<String> enterContest(String slug, Map<String, dynamic> payload) => client.post('/api/v1/contests/$slug/enter', payload);
 
-  Future<String> checkout(Map<String, dynamic> payload) => client.post('/api/v1/shop/checkout', payload);
+  /// Reserves the stock and opens a Stripe session; the order only counts once Stripe reports it paid.
+  Future<CheckoutStart> checkout(Map<String, dynamic> payload) async => CheckoutStart.fromJson(_map(await client.postData('/api/v1/shop/checkout', payload)));
+
+  /// Closes an unpaid Stripe session and frees the stock. Returns the order's payment status ('PAID' if it was paid after all).
+  Future<String?> cancelCheckout(String orderId) async => asText(_map(await client.postData('/api/v1/shop/checkout/cancel', {'orderId': orderId}))['paymentStatus']);
 
   Map<String, dynamic> _map(dynamic value) => Map<String, dynamic>.from(value as Map);
 }

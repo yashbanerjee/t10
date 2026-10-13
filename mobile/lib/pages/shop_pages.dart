@@ -5,6 +5,7 @@ import 'package:united_tigers/cart_store.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
 import 'package:united_tigers/pages/club_pages.dart';
+import 'package:united_tigers/pages/stripe_checkout_page.dart';
 import 'package:united_tigers/scope.dart';
 import 'package:united_tigers/widgets.dart';
 
@@ -54,7 +55,7 @@ class ShopPage extends StatelessWidget {
             child: CustomScrollView(
               scrollCacheExtent: pageCacheExtent,
               slivers: [
-                const SliverToBoxAdapter(child: PageHero(eyebrow: 'Official merchandise', title: 'Wear the\nstripes.', intro: 'Book your kit here. The club confirms stock and payment with you.')),
+                const SliverToBoxAdapter(child: PageHero(eyebrow: 'Official merchandise', title: 'Wear the\nstripes.', intro: 'Pick your kit and pay securely by card. Your order is booked as soon as the payment goes through.')),
                 if (products.isEmpty)
                   const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.all(16), child: EmptyPanel(title: 'Kit coming soon', message: 'Kit will appear here.')))
                 else
@@ -280,6 +281,92 @@ class CartPage extends StatelessWidget {
   }
 }
 
+class OrderPaidPage extends StatefulWidget {
+  const OrderPaidPage({super.key, required this.number, required this.email});
+
+  final String number;
+  final String email;
+
+  @override
+  State<OrderPaidPage> createState() => _OrderPaidPageState();
+}
+
+class _OrderPaidPageState extends State<OrderPaidPage> {
+  late Future<TrackedOrder?> order = _load();
+
+  Future<TrackedOrder?> _load() async {
+    final api = ClubScope.of(context).api;
+    // Stripe's webhook can land a moment after the fan is sent back.
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        final found = await api.trackOrder(widget.number, widget.email);
+        if (found.paymentStatus == 'PAID' || attempt == 2) return found;
+      } catch (_) {
+        if (attempt == 2) return null;
+      }
+      await Future<void>.delayed(const Duration(seconds: 2));
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: const ClubAppBar('Checkout'),
+      body: FutureBuilder<TrackedOrder?>(
+        future: order,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) return const Center(child: CircularProgressIndicator(color: goldLight));
+          final found = snapshot.data;
+          final paid = found?.paymentStatus == 'PAID';
+          return ListView(
+            scrollCacheExtent: pageCacheExtent,
+            padding: const EdgeInsets.only(bottom: 32),
+            children: [
+              PageHero(
+                eyebrow: 'Checkout',
+                title: paid ? 'Payment\nreceived.' : 'Checking your\npayment.',
+                intro: paid ? 'Thanks for backing the Tigers. A confirmation is on its way to your email.' : 'We could not confirm this payment yet. If you were charged, your order will update shortly.',
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: ClubCard(
+                  highlight: true,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Eyebrow(paid ? 'Paid' : 'Payment pending'),
+                      const SizedBox(height: 8),
+                      SelectableText(widget.number, style: displayStyle(30, color: Colors.white)),
+                      const SizedBox(height: 8),
+                      Text(
+                        paid ? '${money(found!.total)} paid. Keep this number to track your order. The club will be in touch about delivery.' : 'Keep this number. You can check the payment status on the tracking page.',
+                        style: const TextStyle(color: Color(0xFFE6DDF0), height: 1.5),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: FilledButton(
+                  style: goldButtonStyle(),
+                  onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => TrackOrderPage(number: widget.number, email: widget.email))),
+                  child: const Text('TRACK THIS ORDER'),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                child: OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('BACK TO THE SHOP')),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
 
@@ -313,7 +400,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         scrollCacheExtent: pageCacheExtent,
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
-          const Text('Name, email, phone and a delivery address. The club holds the stock and confirms payment with you.', style: TextStyle(color: Color(0xFFE6DDF0), height: 1.5)),
+          const Text('Name, email, phone and a delivery address, then pay securely by card with Stripe. Your items are held while you pay.', style: TextStyle(color: Color(0xFFE6DDF0), height: 1.5)),
           const SizedBox(height: 14),
           ClubField(label: 'Name', controller: name),
           ClubField(label: 'Email', controller: email, email: true),
@@ -322,17 +409,27 @@ class _CheckoutPageState extends State<CheckoutPage> {
           ClubField(label: 'City', controller: city),
           ClubField(label: 'Country', controller: country),
           ClubField(label: 'Notes', controller: notes, lines: 3),
-          FilledButton(style: goldButtonStyle(), onPressed: busy ? null : _submit, child: Text(busy ? 'BOOKING…' : 'BOOK ORDER')),
+          AnimatedBuilder(
+            animation: ClubScope.of(context).cart,
+            builder: (context, _) => FilledButton(
+              style: goldButtonStyle(),
+              onPressed: busy || ClubScope.of(context).cart.lines.isEmpty ? null : _submit,
+              child: Text(busy ? 'OPENING PAYMENT…' : 'PAY ${money(ClubScope.of(context).cart.total)} SECURELY'),
+            ),
+          ),
         ],
       ),
     );
   }
 
   Future<void> _submit() async {
-    final cart = ClubScope.of(context).cart;
+    final scope = ClubScope.of(context);
+    final cart = scope.cart;
+    final api = scope.api;
+    final buyer = email.text.trim();
     setState(() => busy = true);
     try {
-      final message = await ClubScope.of(context).api.sendOrder({
+      final start = await api.startCheckout({
         'name': name.text.trim(),
         'email': email.text.trim(),
         'phone': phone.text.trim(),
@@ -342,11 +439,23 @@ class _CheckoutPageState extends State<CheckoutPage> {
         'notes': notes.text.trim(),
         'items': cart.lines.map((line) => {'variantId': line.variantId, 'quantity': line.quantity}).toList(),
       });
-      await cart.clear();
-      if (mounted) {
-        await showClubMessage(context, message);
-        if (mounted) Navigator.popUntil(context, (route) => route.isFirst);
+      if (!mounted) return;
+      final outcome = await Navigator.push<PaymentOutcome>(context, MaterialPageRoute(builder: (_) => StripeCheckoutPage(url: start.checkoutUrl)));
+      var paid = outcome == PaymentOutcome.paid;
+      if (!paid && start.orderId != null) {
+        // Frees the held stock; Stripe may still have taken the payment just before the fan left.
+        final status = await api.cancelCheckout(start.orderId!).catchError((_) => null);
+        paid = status == 'PAID';
       }
+      if (!mounted) return;
+      if (!paid) {
+        await showClubMessage(context, 'Payment was not completed, so nothing was charged. Your bag is still here.');
+        return;
+      }
+      await cart.clear();
+      ClubAnalytics.event('purchase_completed');
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => OrderPaidPage(number: start.number, email: buyer)), (route) => route.isFirst);
     } catch (reason) {
       if (mounted) await showClubMessage(context, '$reason'.replaceFirst('Exception: ', ''));
     } finally {
