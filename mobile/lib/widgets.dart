@@ -1072,7 +1072,25 @@ class ClubMarkdown extends StatelessWidget {
       if (image != null) {
         final src = image.group(2)!;
         final url = src.startsWith('/') && mediaUrl != null ? mediaUrl!(src) : src;
-        blocks.add(Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: RemoteImage(url, height: 200)));
+        final caption = image.group(1)!.trim();
+        blocks.add(Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Column(
+            children: [
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 460),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Image.network(url, fit: BoxFit.contain, errorBuilder: (_, _, _) => const SizedBox.shrink()),
+                ),
+              ),
+              if (caption.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(caption, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFFB9AAC6), fontSize: 12.5)),
+              ],
+            ],
+          ),
+        ));
         index++;
         continue;
       }

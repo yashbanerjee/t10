@@ -2961,8 +2961,18 @@ a.partner-item:hover {
 
 .content-image img {
   display: block;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   height: auto;
+  max-height: min(80vh, 720px);
+  margin: 0 auto;
+}
+
+.content-image figcaption {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
 }
 
 .content-video video {
