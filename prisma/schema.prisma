@@ -234,6 +234,8 @@ model StaffMember {
   category     String
   bio          String?
   profileImage String?
+  facebook     String?
+  instagram    String?
   displayOrder Int      @default(0)
   isActive     Boolean  @default(true)
   teamId       String

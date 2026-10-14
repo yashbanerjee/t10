@@ -1948,6 +1948,42 @@ img {
   text-transform: none;
 }
 
+.staff-fallback img {
+  width: 58%;
+  height: auto;
+  opacity: .5;
+  filter: drop-shadow(0 8px 18px rgba(13, 2, 23, .55));
+}
+
+.staff-socials {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.staff-socials a {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: #fff;
+  transition: transform .2s ease, filter .2s ease;
+}
+
+.staff-socials a:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.staff-socials .is-facebook {
+  background: #1877f2;
+}
+
+.staff-socials .is-instagram {
+  background: linear-gradient(45deg, #fdc468, #fd5949 35%, #d6249f 65%, #285aeb);
+}
+
 .player-profile-meta span+span::before {
   content: "/";
   padding-right: 15px;

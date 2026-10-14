@@ -87,13 +87,15 @@ class Player {
 }
 
 class StaffMember {
-  const StaffMember({required this.fullName, required this.title, required this.category, this.bio, this.profileImage});
+  const StaffMember({required this.fullName, required this.title, required this.category, this.bio, this.profileImage, this.facebook, this.instagram});
 
   final String fullName;
   final String title;
   final String category;
   final String? bio;
   final String? profileImage;
+  final String? facebook;
+  final String? instagram;
 
   factory StaffMember.fromJson(Map<String, dynamic> json) => StaffMember(
         fullName: json['fullName']?.toString() ?? 'Staff',
@@ -101,6 +103,8 @@ class StaffMember {
         category: json['category']?.toString() ?? '',
         bio: readable(json['bio']).isEmpty ? null : readable(json['bio']),
         profileImage: asText(json['profileImage']),
+        facebook: asText(json['facebook']),
+        instagram: asText(json['instagram']),
       );
 
   static List<StaffMember> list(dynamic value) => asList(value).map(StaffMember.fromJson).toList();

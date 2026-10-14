@@ -43,6 +43,7 @@ void openSiteLink(BuildContext context, String href) {
     return _push(context, const TrackOrderPage());
   }
   if (path.startsWith('/owners')) return _push(context, const OwnersPage());
+  if (path.startsWith('/management')) return _push(context, const ManagementPage());
   if (path.startsWith('/franchises') || path.startsWith('/about')) {
     return _push(context, const FranchisesPage());
   }
@@ -135,6 +136,12 @@ class MorePage extends StatelessWidget {
         'Meet the owners',
         'The people behind the club',
         OwnersPage(),
+      ),
+      _MenuItem(
+        FontAwesomeIcons.userTie,
+        'Team management',
+        'Leadership, coaches & staff',
+        ManagementPage(),
       ),
       _MenuItem(
         FontAwesomeIcons.calendarDays,

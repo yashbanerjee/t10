@@ -253,6 +253,128 @@ class _OwnerCard extends StatelessWidget {
   }
 }
 
+const _staffAreas = [
+  ('LEADERSHIP', 'Club leadership'),
+  ('MANAGEMENT', 'Operations & team management'),
+  ('COACHING', 'Coaching staff'),
+  ('SUPPORT', 'Medical & support'),
+  ('MEDIA', 'Media & content'),
+];
+
+class ManagementPage extends StatelessWidget {
+  const ManagementPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final api = ClubScope.of(context).api;
+    return Scaffold(
+      appBar: const ClubAppBar('Team management'),
+      body: AnimatedBuilder(
+        animation: api,
+        builder: (context, _) {
+          final staff = api.catalog.staff;
+          final known = _staffAreas.map((area) => area.$1).toSet();
+          final sections = [
+            for (final (key, title) in _staffAreas) (title, staff.where((member) => member.category.toUpperCase() == key).toList()),
+            ('Club staff', staff.where((member) => !known.contains(member.category.toUpperCase())).toList()),
+          ].where((section) => section.$2.isNotEmpty).toList();
+          return RefreshIndicator(
+            color: pink,
+            onRefresh: api.refresh,
+            child: ListView(
+              scrollCacheExtent: pageCacheExtent,
+              padding: EdgeInsets.only(bottom: 28 + navClearance(context)),
+              children: [
+                const PageHero(eyebrow: 'United Tigers · 2026', title: 'Team\nmanagement.', intro: 'The leadership, coaches, support and media staff working behind the Tigers.'),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                  child: sections.isEmpty
+                      ? const Padding(padding: EdgeInsets.only(top: 14), child: EmptyPanel(title: 'Team management is coming', message: 'The club’s management team will be shared here soon.'))
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            for (final (title, members) in sections) ...[
+                              SectionTitle(title),
+                              for (final member in members) Padding(padding: const EdgeInsets.only(bottom: 10), child: _StaffCard(member: member)),
+                            ],
+                          ],
+                        ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _StaffCard extends StatelessWidget {
+  const _StaffCard({required this.member});
+  final StaffMember member;
+
+  @override
+  Widget build(BuildContext context) {
+    final api = ClubScope.of(context).api;
+    final size = 84 * clubScale(context);
+    return ClubCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: SizedBox(
+              width: size,
+              height: size,
+              child: member.profileImage == null
+                  ? DecoratedBox(
+                      decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF460B7D), Color(0xFF2B074D)])),
+                      child: Padding(padding: const EdgeInsets.all(16), child: Opacity(opacity: 0.7, child: Image.asset('assets/brand/tiger-gold.png', fit: BoxFit.contain))),
+                    )
+                  : Image.network(api.media(member.profileImage), fit: BoxFit.cover, alignment: Alignment.topCenter, errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFF2B074D))),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(member.title.toUpperCase(), style: const TextStyle(color: goldLight, fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                const SizedBox(height: 2),
+                Text(member.fullName.toUpperCase(), style: displayStyle(20, color: Colors.white, height: 1.05)),
+                if (member.bio != null) ...[const SizedBox(height: 6), Text(member.bio!, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12.5))],
+                if (member.facebook != null || member.instagram != null) ...[
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      if (member.facebook != null)
+                        _OwnerSocial(
+                          icon: FontAwesomeIcons.facebookF,
+                          label: 'Facebook',
+                          gradient: const LinearGradient(colors: [Color(0xFF1877F2), Color(0xFF1877F2)]),
+                          onTap: () => openExternal(member.facebook!),
+                        ),
+                      if (member.instagram != null)
+                        _OwnerSocial(
+                          icon: FontAwesomeIcons.instagram,
+                          label: 'Instagram',
+                          gradient: const LinearGradient(begin: Alignment.bottomLeft, end: Alignment.topRight, colors: [Color(0xFFFDC468), Color(0xFFFD5949), Color(0xFFD6249F), Color(0xFF285AEB)]),
+                          onTap: () => openExternal(member.instagram!),
+                        ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _OwnerSocial extends StatelessWidget {
   const _OwnerSocial({required this.icon, required this.label, required this.gradient, required this.onTap});
   final FaIconData icon;

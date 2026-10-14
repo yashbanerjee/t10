@@ -33,42 +33,7 @@ class TeamPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (api.catalog.staff.isNotEmpty)
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
-                    sliver: SliverList.list(
-                      children: [
-                        const SectionTitle('Coaching & staff'),
-                        ...api.catalog.staff.map(
-                          (member) => Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: ClubCard(
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(width: 68 * clubScale(context), height: 68 * clubScale(context), child: RemoteImage(api.media(member.profileImage), height: 68, radius: 34)),
-                                  const SizedBox(width: 14),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(member.category.toUpperCase(), style: const TextStyle(color: goldLight, fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 1)),
-                                        Text(member.fullName.toUpperCase(), style: displayStyle(20, color: Colors.white)),
-                                        Text(member.title, style: const TextStyle(color: Color(0xFFD9CCE6), fontWeight: FontWeight.w700)),
-                                        if (member.bio != null) ...[const SizedBox(height: 6), Text(member.bio!, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12.5))],
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                const SliverToBoxAdapter(child: SizedBox(height: 28)),
                 SliverToBoxAdapter(child: SizedBox(height: navClearance(context))),
               ],
             ),

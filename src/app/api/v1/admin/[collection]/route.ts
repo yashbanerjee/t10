@@ -11,6 +11,7 @@ import { getHomeTeam, getTeams, opponentIdentity, setHomeTeam } from "@/lib/team
 import { getPointsTable } from "@/lib/data";
 import { PARTNER_REQUEST_SUBJECT } from "@/lib/partner-brochure";
 import { MAX_FRANCHISE_POSTS, parsePostLines, syncFranchisePosts } from "@/lib/franchise-posts";
+import { STAFF_AREA_KEYS } from "@/lib/staff";
 
 const permissions: Record<string, { read: string; write: string }> = {
   players: { read: "TEAM_READ", write: "TEAM_WRITE" }, staff: { read: "TEAM_READ", write: "TEAM_WRITE" }, teams: { read: "TEAM_READ", write: "TEAM_WRITE" }, matches: { read: "MATCH_READ", write: "MATCH_WRITE" },
@@ -117,10 +118,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const team = await getHomeTeam(); if (!team) return failure("Create our team in the Teams section before adding players", 409);
       const { dateOfBirth, slug, displayOrder, careerRecord, t20Record, allT20Record, ...playerFields } = parsed.data; result = await prisma.player.create({ data: { ...playerFields, careerRecord: careerRecord ?? undefined, t20Record: t20Record ?? undefined, allT20Record: allT20Record ?? undefined, socialLinks: links.value ?? undefined, dateOfBirth: dateOfBirth ? new Date(`${dateOfBirth}T00:00:00.000Z`) : null, displayOrder: displayOrder ?? 0, slug: slug ? slugify(slug) : slugify(parsed.data.fullName), teamId: team.id } });
     } else if (collection === "staff") {
-      const parsed = z.object({ fullName: z.string().trim().min(2).max(100), title: z.string().trim().min(2).max(100), category: z.enum(["COACHING", "SUPPORT", "MANAGEMENT"]), bio: z.string().trim().max(2500).nullable().optional(), profileImage: assetUrl, displayOrder: optionalInt(0, 9999), isActive: z.boolean().optional() }).safeParse(body);
+      const parsed = z.object({ fullName: z.string().trim().min(2).max(100), title: z.string().trim().min(2).max(100), category: z.enum(STAFF_AREA_KEYS), bio: z.string().trim().max(2500).nullable().optional(), profileImage: assetUrl, facebook: socialUrl, instagram: socialUrl, displayOrder: optionalInt(0, 9999), isActive: z.boolean().optional() }).safeParse(body);
       if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
       const team = await getHomeTeam(); if (!team) return failure("Create our team in the Teams section before adding staff", 409);
-      result = await prisma.staffMember.create({ data: { ...parsed.data, displayOrder: parsed.data.displayOrder ?? 0, teamId: team.id } });
+      result = await prisma.staffMember.create({ data: { ...parsed.data, facebook: blankToNull(parsed.data.facebook), instagram: blankToNull(parsed.data.instagram), displayOrder: parsed.data.displayOrder ?? 0, teamId: team.id } });
     } else if (collection === "news") {
       const parsed = articleInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
       const data = parsed.data; result = await prisma.newsArticle.create({ data: { ...data, slug: data.slug ? slugify(data.slug) : slugify(data.title), publishedAt: data.publishedAt ? new Date(data.publishedAt) : data.status === "PUBLISHED" ? new Date() : null, isDemo: false } });

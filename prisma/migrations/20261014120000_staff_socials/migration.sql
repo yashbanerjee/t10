@@ -1,0 +1,2 @@
+ALTER TABLE "StaffMember" ADD COLUMN IF NOT EXISTS "facebook" TEXT;
+ALTER TABLE "StaffMember" ADD COLUMN IF NOT EXISTS "instagram" TEXT;

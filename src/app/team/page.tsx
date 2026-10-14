@@ -1,31 +1,20 @@
 import type { Metadata } from "next";
-import { getPlayers, getStaff } from "@/lib/data";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+import { getPlayers } from "@/lib/data";
 import { PlayerCard } from "@/components/PlayerCard";
-import { StaffCard } from "@/components/StaffCard";
 import { EmptyState } from "@/components/EmptyState";
 
 export const metadata: Metadata = { title: "The Team", description: "Meet the United Tigers squad for the 2026 Abu Dhabi T10 season." };
 
-const staffGroups = [
-  ["COACHING", "COACHING STAFF"],
-  ["SUPPORT", "SUPPORT STAFF"],
-  ["MANAGEMENT", "MANAGEMENT"],
-] as const;
-
 export default async function TeamPage() {
-  const [players, staff] = await Promise.all([getPlayers(), getStaff()]);
+  const players = await getPlayers();
   return <div className="inner-page">
     <section className="inner-hero"><div className="wrap"><span className="eyebrow"><i className="eyebrow-dot" />UNITED TIGERS · 2026</span><h1>THE SQUAD</h1><p>Meet the names announced for the Tigers’ first season. Player roles, numbers and biographies will be added as confirmed by the club.</p></div></section>
     <section className="section"><div className="wrap">
       <div className="team-roster-note"><span className="eyebrow"><i className="eyebrow-dot" />ANNOUNCED NAMES</span><p>Player profile details are being completed. Each profile is ready for official photography, roles and statistics from the CMS.</p></div>
       {players.length ? <div className="player-grid">{players.map((player) => <PlayerCard key={player.id} player={player} />)}</div> : <EmptyState title="Squad updates are coming" description="The official squad will be shared here as it is confirmed." />}
-      {staffGroups.map(([category, title]) => {
-        const members = staff.filter((member) => member.category.toUpperCase() === category);
-        return <section className="staff-section" key={category}>
-          <div className="section-heading"><div><span className="eyebrow"><i className="eyebrow-dot" />UNITED TIGERS</span><h2>{title}</h2></div></div>
-          {members.length ? <div className="player-grid">{members.map((member) => <StaffCard key={member.id} member={member} />)}</div> : <p className="muted-copy">Details will be shared by the club.</p>}
-        </section>;
-      })}
+      <div className="staff-section"><Link className="button button-outline" href="/management">MEET THE TEAM MANAGEMENT <ArrowUpRight size={15} /></Link></div>
     </div></section>
   </div>;
 }
