@@ -1,9 +1,5 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:united_tigers/format.dart';
 import 'package:united_tigers/models.dart';
 import 'package:united_tigers/pages/fixtures_page.dart';
@@ -12,25 +8,12 @@ import 'package:united_tigers/scope.dart';
 import 'package:united_tigers/video.dart';
 import 'package:united_tigers/widgets.dart';
 
-const _pdfChannel = MethodChannel('united_tigers/files');
-const _brochureAsset = 'assets/brand/United-Tigers-Partnership-Brochure.pdf';
-
-/// Copies the bundled brochure out of the app assets and opens it in the device PDF viewer.
-Future<void> openBundledBrochure() async {
-  final file = File('${(await getTemporaryDirectory()).path}/United-Tigers-Partnership-Brochure.pdf');
-  if (!await file.exists() || await file.length() < 5) {
-    final data = await rootBundle.load(_brochureAsset);
-    await file.writeAsBytes(data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes), flush: true);
-  }
-  if (!Platform.isIOS && !Platform.isAndroid) {
-    await openExternal(file.uri.toString());
-    return;
-  }
-  try {
-    await _pdfChannel.invokeMethod<void>('openPdf', {'path': file.path});
-  } on PlatformException {
-    throw Exception('No PDF viewer is available on this device.');
-  }
+/// Opens the brochure the club uploaded in Admin. It is not bundled: the PDF alone would add about 75 MB to the app.
+Future<void> openBrochure(BuildContext context, {String? link}) async {
+  final api = ClubScope.of(context).api;
+  final url = link ?? api.site.brochure;
+  if (url == null || url.isEmpty) throw Exception('The brochure is not available right now. Please try again shortly.');
+  await openExternal(api.media(url));
 }
 
 String _clean(Object reason) => '$reason'.replaceFirst('Exception: ', '');
@@ -770,7 +753,7 @@ class HomePartnerCta extends StatelessWidget {
   }
 }
 
-/// Bottom-left control on the brochure cover. Opens the PDF bundled with the app.
+/// Bottom-left control on the brochure cover. Opens the club's brochure PDF.
 class _GetBrochureButton extends StatefulWidget {
   const _GetBrochureButton();
 
@@ -785,7 +768,7 @@ class _GetBrochureButtonState extends State<_GetBrochureButton> {
     if (busy) return;
     setState(() => busy = true);
     try {
-      await openBundledBrochure();
+      await openBrochure(context);
     } catch (reason) {
       if (mounted) await showClubMessage(context, _clean(reason));
     } finally {
@@ -863,11 +846,11 @@ class _BecomePartnerPageState extends State<BecomePartnerPage> {
     }
     setState(() => busy = true);
     try {
-      await ClubScope.of(context).api.requestPartnerBrochure({'name': name.text.trim(), 'email': email.text.trim(), 'phone': '$dial $digits'});
+      final link = await ClubScope.of(context).api.requestPartnerBrochure({'name': name.text.trim(), 'email': email.text.trim(), 'phone': '$dial $digits'});
       if (!mounted) return;
       setState(() => sent = true);
       try {
-        await openBundledBrochure();
+        await openBrochure(context, link: link);
       } catch (reason) {
         if (mounted) await showClubMessage(context, _clean(reason));
       }
@@ -915,7 +898,7 @@ class _BecomePartnerPageState extends State<BecomePartnerPage> {
                           style: goldButtonStyle(),
                           onPressed: () async {
                             try {
-                              await openBundledBrochure();
+                              await openBrochure(context);
                             } catch (reason) {
                               if (context.mounted) await showClubMessage(context, _clean(reason));
                             }
