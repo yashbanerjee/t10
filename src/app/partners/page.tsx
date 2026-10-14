@@ -7,7 +7,8 @@ import { getSponsors } from "@/lib/data";
 export const metadata: Metadata = { title: "Partners", description: "Meet the United Tigers partners and learn about partnership opportunities." };
 export default async function PartnersPage() {
   const sponsors = await getSponsors();
-  const categories = ["TITLE PARTNER", "PRINCIPAL PARTNER", "OFFICIAL PARTNER", "MEDIA PARTNER"];
+  const tiers = ["TITLE PARTNER", "PRINCIPAL PARTNER", "OFFICIAL PARTNER", "FASHION PARTNER", "MEDIA PARTNER"];
+  const categories = [...tiers, ...new Set(sponsors.map((sponsor) => sponsor.category.toUpperCase()).filter((category) => !tiers.includes(category)))];
   return <div className="inner-page"><section className="inner-hero"><div className="wrap"><span className="eyebrow"><i className="eyebrow-dot" />TOGETHER, WE MOVE FORWARD</span><h1>OUR<br />PARTNERS.</h1><p>United Tigers are building a platform for ambitious partners to connect with cricket’s fastest format.</p></div></section><section className="section"><div className="wrap"><div className="partner-stack">{categories.map((category) => <section className="partner-category" key={category}><h2>{category}</h2>{sponsors.filter((sponsor) => sponsor.category.toUpperCase() === category).length ? <div className="partner-grid">{sponsors.filter((sponsor) => sponsor.category.toUpperCase() === category).map((sponsor) => {
   const mark = sponsor.logoUrl ? <><i className="partner-logo"><Image src={sponsor.logoUrl} alt="" fill sizes="(max-width: 760px) 50vw, 25vw" /></i><strong className="partner-name">{sponsor.name}</strong></> : <span>{sponsor.name}</span>;
   return sponsor.website
