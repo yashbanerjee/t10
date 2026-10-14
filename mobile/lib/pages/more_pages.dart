@@ -645,6 +645,7 @@ class _StoryPageState extends State<StoryPage> {
                 when(current.publishedAt).split(' · ').first,
             ].join(' · '),
             title: current.title,
+            titleSize: 27,
             intro: current.excerpt,
           ),
           Padding(

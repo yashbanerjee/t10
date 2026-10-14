@@ -48,7 +48,17 @@ export function SafeMarkdown({ content }: { content: string }) {
     if (image) { blocks.push(safeUrl(image[2]) ? <figure className="content-image" key={key++}><img src={image[2]} alt={image[1]} /><figcaption>{image[1]}</figcaption></figure> : null); index++; continue; }
     const head = heading(line);
     if (head) { blocks.push(head.level === 3 ? <h3 key={key++}>{inline(head.text, `h3-${index}`)}</h3> : <h2 key={key++}>{inline(head.text, `h2-${index}`)}</h2>); index++; continue; }
-    if (/^>\s?/.test(line)) { blocks.push(<blockquote key={key++}>{inline(line.replace(/^>\s?/, ""), `q-${index}`)}</blockquote>); index++; continue; }
+    if (/^>/.test(line)) {
+      const parts: string[][] = [[]];
+      while (index < lines.length && /^>/.test(lines[index].trim())) {
+        const text = lines[index].trim().replace(/^>\s?/, "").trim();
+        if (text) parts[parts.length - 1].push(text); else if (parts[parts.length - 1].length) parts.push([]);
+        index++;
+      }
+      const seed = key;
+      blocks.push(<blockquote key={key++}>{parts.filter((part) => part.length).map((part, row) => <p key={`q-${seed}-${row}`}>{part.flatMap((text, at) => at ? [<br key={`q-${seed}-${row}-br-${at}`} />, ...inline(text, `q-${seed}-${row}-${at}`)] : inline(text, `q-${seed}-${row}-${at}`))}</p>)}</blockquote>);
+      continue;
+    }
     if (/^[-*]\s/.test(line) || /^\d+\.\s/.test(line)) {
       const ordered = /^\d+\.\s/.test(line); const entries: ReactNode[] = [];
       while (index < lines.length && (ordered ? /^\d+\.\s/.test(lines[index].trim()) : /^[-*]\s/.test(lines[index].trim()))) { const current = lines[index].trim(); entries.push(<li key={index}>{inline(current.replace(ordered ? /^\d+\.\s/ : /^[-*]\s/, ""), `li-${index}`)}</li>); index++; }

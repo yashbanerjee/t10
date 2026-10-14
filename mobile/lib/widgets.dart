@@ -171,9 +171,10 @@ class ClubAppBar extends StatelessWidget implements PreferredSizeWidget {
 
 /// Inner-page hero, as on the website: eyebrow, gold display headline, short intro and the crest watermark.
 class PageHero extends StatelessWidget {
-  const PageHero({super.key, required this.eyebrow, required this.title, this.intro, this.child});
+  const PageHero({super.key, required this.eyebrow, required this.title, this.intro, this.child, this.titleSize = 40});
   final String eyebrow;
   final String title;
+  final double titleSize;
   final String? intro;
   final Widget? child;
 
@@ -209,7 +210,7 @@ class PageHero extends StatelessWidget {
               children: [
                 Reveal(offset: 0, dx: -20, child: Eyebrow(eyebrow)),
                 const SizedBox(height: 12),
-                Reveal(delay: const Duration(milliseconds: 90), offset: 30, child: SheenText(title.toUpperCase(), style: displayStyle(40, height: 0.92))),
+                Reveal(delay: const Duration(milliseconds: 90), offset: 30, child: SheenText(title.toUpperCase(), style: displayStyle(titleSize, height: titleSize < 40 ? 1.08 : 0.92))),
                 if (intro != null && intro!.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Reveal(delay: const Duration(milliseconds: 200), child: Text(intro!, style: const TextStyle(color: Color(0xFFE6DDF0), fontSize: 14.5, height: 1.45))),
@@ -1086,13 +1087,32 @@ class ClubMarkdown extends StatelessWidget {
         continue;
       }
       if (line.startsWith('>')) {
+        final parts = <List<String>>[[]];
+        while (index < lines.length && lines[index].trim().startsWith('>')) {
+          final text = lines[index].trim().replaceFirst(RegExp(r'^>\s?'), '').trim();
+          if (text.isNotEmpty) {
+            parts.last.add(text);
+          } else if (parts.last.isNotEmpty) {
+            parts.add([]);
+          }
+          index++;
+        }
+        final paragraphs = parts.where((part) => part.isNotEmpty).toList();
         blocks.add(Container(
           margin: const EdgeInsets.symmetric(vertical: 10),
           padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
           decoration: BoxDecoration(border: const Border(left: BorderSide(color: pink, width: 3)), color: purple.withValues(alpha: 0.5), borderRadius: const BorderRadius.horizontal(right: Radius.circular(10))),
-          child: _inline(line.replaceFirst(RegExp(r'^>\s?'), ''), body.copyWith(fontStyle: FontStyle.italic)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var row = 0; row < paragraphs.length; row++)
+                Padding(
+                  padding: EdgeInsets.only(top: row == 0 ? 0 : 10),
+                  child: _inline(paragraphs[row].join('\n'), paragraphs[row].first.startsWith('**') ? body.copyWith(fontSize: 13.5, color: const Color(0xFFB9AAC6)) : body.copyWith(fontStyle: FontStyle.italic)),
+                ),
+            ],
+          ),
         ));
-        index++;
         continue;
       }
       final ordered = _ordered.hasMatch(line);
@@ -1127,7 +1147,7 @@ class ClubMarkdown extends StatelessWidget {
         paragraph.add(lines[index].trim());
         index++;
       }
-      blocks.add(Padding(padding: const EdgeInsets.only(bottom: 12), child: _inline(paragraph.join('\n'), body)));
+      blocks.add(Padding(padding: const EdgeInsets.only(bottom: 16), child: _inline(paragraph.join('\n'), body)));
     }
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: blocks);
   }
