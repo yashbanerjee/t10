@@ -32,8 +32,9 @@ class HomePage extends StatelessWidget {
           return Scaffold(body: MessageView(api.error!, onRetry: api.refresh));
         }
         final catalog = api.catalog;
+        // The card pictures the Tigers against a crest, so knockouts with undecided teams stay in the list below.
         final upcoming = catalog.matches
-            .where((match) => match.status == 'UPCOMING' || match.isLive)
+            .where((match) => (match.status == 'UPCOMING' || match.isLive) && match.knockoutSides == null)
             .firstOrNull;
         final completed = catalog.matches
             .where((match) => match.isCompleted)
@@ -1764,7 +1765,7 @@ class _FixtureRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'vs ${match.opponent}',
+                match.knockoutSides == null ? 'vs ${match.opponent}' : match.title,
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
               Text(when(match.date), style: const TextStyle(fontSize: 12)),

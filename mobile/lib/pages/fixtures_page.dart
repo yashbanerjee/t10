@@ -39,6 +39,9 @@ String _short(ClubMatch match) {
   return source.toUpperCase();
 }
 
+/// Badge for an undecided knockout side: the ordinal of a league position, otherwise TBC.
+String _knockoutMark(String side) => RegExp(r'^\d+(st|nd|rd|th)\b', caseSensitive: false).firstMatch(side)?.group(0)?.toUpperCase() ?? 'TBC';
+
 class _FixtureRow extends StatelessWidget {
   const _FixtureRow({required this.match, required this.lead});
   final ClubMatch match;
@@ -48,6 +51,7 @@ class _FixtureRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final api = ClubScope.of(context).api;
     final score = match.innings.map((entry) => '${entry.runs}/${entry.wickets}').join('  ·  ');
+    final knockout = match.knockoutSides;
     const name = TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w800, height: 1.15);
     return ClubCard(
       highlight: lead,
@@ -66,7 +70,15 @@ class _FixtureRow extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Expanded(child: Column(children: [TeamCrest(size: 62, ours: true), SizedBox(height: 8), Text('United Tigers', textAlign: TextAlign.center, style: name)])),
+              Expanded(
+                child: Column(
+                  children: [
+                    if (knockout == null) const TeamCrest(size: 62, ours: true) else TeamCrest(size: 62, label: _knockoutMark(knockout.first)),
+                    const SizedBox(height: 8),
+                    Text(knockout?.first ?? 'United Tigers', textAlign: TextAlign.center, maxLines: 2, style: name),
+                  ],
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.only(top: 20),
                 child: Text('VS', style: displayStyle(18, color: pink).copyWith(fontWeight: FontWeight.w800)),
@@ -74,9 +86,12 @@ class _FixtureRow extends StatelessWidget {
               Expanded(
                 child: Column(
                   children: [
-                    TeamCrest(size: 62, logo: match.opponentLogoUrl == null ? null : api.media(match.opponentLogoUrl), label: _short(match)),
+                    if (knockout == null)
+                      TeamCrest(size: 62, logo: match.opponentLogoUrl == null ? null : api.media(match.opponentLogoUrl), label: _short(match))
+                    else
+                      TeamCrest(size: 62, label: _knockoutMark(knockout.last)),
                     const SizedBox(height: 8),
-                    Text(match.opponent, textAlign: TextAlign.center, maxLines: 2, style: name),
+                    Text(knockout?.last ?? match.opponent, textAlign: TextAlign.center, maxLines: 2, style: name),
                   ],
                 ),
               ),
@@ -178,7 +193,7 @@ class _MatchPageState extends State<MatchPage> {
         children: [
           PageHero(
             eyebrow: current.competition ?? 'Abu Dhabi T10',
-            title: 'Tigers v\n${current.opponent}',
+            title: current.knockoutSides == null ? 'Tigers v\n${current.opponent}' : current.knockoutSides!.join(' v\n'),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

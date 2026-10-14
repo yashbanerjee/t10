@@ -991,7 +991,7 @@ class SeasonPage extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('vs ${match.opponent}'.toUpperCase(), style: displayStyle(17, color: Colors.white)),
+                                  Text((match.knockoutSides == null ? 'vs ${match.opponent}' : match.title).toUpperCase(), style: displayStyle(17, color: Colors.white)),
                                   Text(when(match.date), style: const TextStyle(color: Color(0xFFBDAED0), fontSize: 12)),
                                   if (match.result != null) Text(match.result!, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                                 ],

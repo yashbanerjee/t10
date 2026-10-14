@@ -49,6 +49,22 @@ export function teamLogo(name: string | null | undefined, stored?: string | null
   return stored || findLeagueTeam(name)?.logo || null;
 }
 
+/**
+ * Knockout fixtures whose teams are not decided yet: the competition names the round and the opponent
+ * holds both sides, for example "2nd Position vs 3rd Position". Returns null for a normal Tigers fixture.
+ */
+export function knockoutSides(match: { opponent: string; competition?: string | null }): [string, string] | null {
+  if (!/qualifier|semi|eliminator|final/i.test(match.competition ?? "")) return null;
+  const sides = match.opponent.split(/\s+vs\.?\s+/i).map((side) => side.trim()).filter(Boolean);
+  return sides.length === 2 ? [sides[0]!, sides[1]!] : null;
+}
+
+/** Badge text for an undecided knockout side: the ordinal of a league position, otherwise TBC. */
+export const knockoutMark = (side: string) => /^\d+(st|nd|rd|th)\b/i.exec(side)?.[0].toUpperCase() ?? "TBC";
+
+/** Kick-off time in Abu Dhabi, 12-hour clock, for example "8:00 PM". */
+export const kickoffTime = (date: Date | string) => new Date(date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Dubai" });
+
 /** Short code for a team name: the stored CMS code first, then the league sheet, then the initials. */
 export function teamShortName(name: string, stored?: string | null): string {
   return stored || findLeagueTeam(name)?.shortName || name.split(/\s+/).map((word) => word[0] ?? "").join("").slice(0, 3).toUpperCase();

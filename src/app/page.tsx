@@ -13,7 +13,7 @@ import { LightTrail } from "@/components/LightTrail";
 import { PhotoFrame } from "@/components/PhotoFrame";
 import { ProductCard } from "@/components/ProductCard";
 import { VideoPoster } from "@/components/VideoPoster";
-import { teamLogo, teamShortName } from "@/lib/league";
+import { kickoffTime, knockoutSides, teamLogo, teamShortName } from "@/lib/league";
 import { getLivePollIntervalMs, homepageDefaults, readHomepageBanner } from "@/lib/site-settings";
 
 export const metadata: Metadata = { title: "United Tigers | The Next Game Starts Here", description: "The official home of United Tigers. Fixtures, the squad, the vote and the Abu Dhabi T10." };
@@ -27,7 +27,7 @@ function when(value: Date | string) {
   const date = new Date(value);
   return {
     day: date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Dubai" }).toUpperCase(),
-    time: `${date.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Dubai" })} GST`,
+    time: `${kickoffTime(date)} GST`,
   };
 }
 
@@ -65,7 +65,8 @@ export default async function HomePage() {
   const cast = banner.showPlayers ? <span className="banner-cast" aria-hidden="true">
     {heroCast.map((src, index) => <i key={src} className={`rank-${Math.floor(Math.abs(index - (heroCast.length - 1) / 2))}`} style={{ "--cast-i": index } as React.CSSProperties}><Image src={src} alt="" fill sizes="(max-width: 760px) 120px, 200px" quality={85} /></i>)}
   </span> : null;
-  const upcoming = matches.find((match) => match.status === "UPCOMING" || match.status === "LIVE");
+  // The card pictures the Tigers against a crest, so knockouts with undecided teams are left to the board below.
+  const upcoming = matches.find((match) => (match.status === "UPCOMING" || match.status === "LIVE") && !knockoutSides(match));
   const kickoff = upcoming ? when(upcoming.date) : null;
   const opponentLogo = upcoming ? teamLogo(upcoming.opponent, upcoming.opponentLogoUrl) : null;
   const poll = [...polls].sort((left, right) => right.options.filter((option) => playerForLabel(option.label, players)).length - left.options.filter((option) => playerForLabel(option.label, players)).length)[0] ?? polls[0];
@@ -182,7 +183,7 @@ export default async function HomePage() {
               const score = match.innings.length ? match.innings.map((innings) => `${innings.runs}/${innings.wickets} (${innings.overs})`).join(" – ") : "";
               const logo = teamLogo(match.opponent, match.opponentLogoUrl);
               return <Link href={`/matches/${match.slug}`} key={match.id}>
-                <span>{logo ? <i style={{ backgroundImage: `url('${logo}')` }} aria-hidden="true" /> : null}vs {match.opponent}</span>
+                <span>{knockoutSides(match) ? `${match.competition}: ${match.opponent}` : <>{logo ? <i style={{ backgroundImage: `url('${logo}')` }} aria-hidden="true" /> : null}vs {match.opponent}</>}</span>
                 <small>{when(match.date).day}</small>
                 <em>{score || (match.status === "UPCOMING" || match.status === "LIVE" ? when(match.date).time : match.result || match.competition || "Abu Dhabi T10")}</em>
                 <b className={label === "WIN" ? "is-win" : label === "UP NEXT" || label === "LIVE" ? "is-next" : ""}>{label}</b>

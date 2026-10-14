@@ -7,6 +7,6 @@ import { getHomeTeam } from "@/lib/teams";
 export const metadata: Metadata = { title: "Fixtures & Results", description: "Follow United Tigers fixtures, results and match scorecards." };
 export default async function FixturesPage() {
   const [matches, home] = await Promise.all([getMatches(), getHomeTeam().catch(() => null)]);
-  return <div className="inner-page"><section className="inner-hero"><div className="wrap"><span className="eyebrow eyebrow-league"><i className="eyebrow-dot" /><LeagueMark height={12} /> · 2026</span><h1>FIXTURES<br />& RESULTS</h1><p>Every Tigers match, result and scorecard. Official fixtures will be added as soon as they are confirmed.</p></div></section><section className="section"><div className="wrap"><FixtureExplorer matches={matches} homeLogo={home?.logoUrl ?? undefined} /></div></section></div>;
+  return <div className="inner-page"><section className="inner-hero"><div className="wrap"><span className="eyebrow eyebrow-league"><i className="eyebrow-dot" /><LeagueMark height={12} /> · 2026</span><h1>FIXTURES<br />& RESULTS</h1><p>Every Tigers match of the 2026 season, 7–20 November at Zayed Cricket Stadium, Abu Dhabi, plus the qualifier and the final. Times are Abu Dhabi time (GST).</p></div></section><section className="section"><div className="wrap"><FixtureExplorer matches={matches} homeLogo={home?.logoUrl ?? undefined} /></div></section></div>;
 }
 

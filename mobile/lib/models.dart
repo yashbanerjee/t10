@@ -217,6 +217,17 @@ class ClubMatch {
   bool get isLive => status == 'LIVE';
   bool get won => RegExp(r'united tigers won', caseSensitive: false).hasMatch(result ?? '');
 
+  /// Both sides of a knockout whose teams are not decided yet, for example "2nd Position vs 3rd Position".
+  /// Null for a normal Tigers fixture.
+  List<String>? get knockoutSides {
+    if (!RegExp(r'qualifier|semi|eliminator|final', caseSensitive: false).hasMatch(competition ?? '')) return null;
+    final sides = opponent.split(RegExp(r'\s+vs\.?\s+', caseSensitive: false)).map((side) => side.trim()).where((side) => side.isNotEmpty).toList();
+    return sides.length == 2 ? sides : null;
+  }
+
+  /// One-line title: "United Tigers vs Yas Lions", or "Final: 1st Position vs Qualifier Winner".
+  String get title => knockoutSides == null ? 'United Tigers vs $opponent' : '${competition ?? 'Knockout'}: $opponent';
+
   String get scoreLine {
     if (innings.isEmpty) return result ?? competition ?? 'Abu Dhabi T10';
     return innings.map((item) => item.summary).join(' – ');
