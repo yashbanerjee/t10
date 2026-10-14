@@ -166,6 +166,8 @@ class ClubApi extends ChangeNotifier {
 
   Future<List<Franchise>> fetchFranchises() => repository.franchises();
 
+  Future<List<ClubOwner>> fetchOwners() => repository.owners();
+
   Future<TrackedOrder> trackOrder(String number, String email) async {
     final order = await repository.trackOrder(number, email);
     ClubAnalytics.event('booking_tracked', {'status': order.status});

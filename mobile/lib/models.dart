@@ -358,6 +358,36 @@ class Product {
   static List<Product> list(dynamic value) => asList(value).map(Product.fromJson).toList();
 }
 
+class ClubOwner {
+  const ClubOwner({required this.slug, required this.name, required this.title, this.headline, this.summary, this.bio, this.quote, this.image, this.facebook, this.instagram});
+
+  final String slug;
+  final String name;
+  final String title;
+  final String? headline;
+  final String? summary;
+  final String? bio;
+  final String? quote;
+  final String? image;
+  final String? facebook;
+  final String? instagram;
+
+  factory ClubOwner.fromJson(Map<String, dynamic> json) => ClubOwner(
+        slug: json['slug']?.toString() ?? '',
+        name: json['name']?.toString() ?? '',
+        title: json['title']?.toString() ?? 'Owner',
+        headline: asText(json['headline']),
+        summary: asText(json['summary']),
+        bio: asText(json['bio']),
+        quote: asText(json['quote']),
+        image: asText(json['image']),
+        facebook: asText(json['facebook']),
+        instagram: asText(json['instagram']),
+      );
+
+  static List<ClubOwner> list(dynamic value) => asList(value).map(ClubOwner.fromJson).toList();
+}
+
 class PollOption {
   const PollOption({required this.id, required this.label, required this.votes});
 

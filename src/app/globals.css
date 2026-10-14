@@ -4061,6 +4061,138 @@ body:has(.login-page) .site-footer {
   color: var(--primary);
 }
 
+.owner-profile {
+  display: grid;
+  grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+}
+
+.owner-photo {
+  position: sticky;
+  top: 110px;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: radial-gradient(circle at 30% 20%, rgba(201, 23, 126, .35), transparent 50%), linear-gradient(160deg, #460B7D, #2B074D);
+  box-shadow: 0 24px 60px rgba(15, 2, 27, .45);
+}
+
+.owner-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.owner-photo span {
+  display: grid;
+  height: 100%;
+  place-items: center;
+}
+
+.owner-photo span img {
+  width: 46%;
+  height: auto;
+  object-fit: contain;
+  opacity: .85;
+}
+
+.owner-text h2 {
+  margin: 10px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(36px, 5vw, 60px);
+  line-height: .95;
+  text-transform: uppercase;
+}
+
+.owner-socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.owner-socials a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-decoration: none;
+  transition: transform .2s ease, filter .2s ease;
+}
+
+.owner-socials a:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.owner-socials .is-facebook {
+  background: #1877f2;
+}
+
+.owner-socials .is-instagram {
+  background: linear-gradient(45deg, #fdc468, #fd5949 35%, #d6249f 65%, #285aeb);
+}
+
+.owner-headline {
+  margin: 16px 0 0;
+  color: var(--primary);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.owner-summary {
+  margin: 14px 0 0;
+  color: #ddd4e6;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.article-content.owner-bio {
+  width: auto;
+  margin: 8px 0 0;
+}
+
+.owner-bio p {
+  margin: 14px 0 0;
+}
+
+.owner-bio h2 {
+  margin: 34px 0 0;
+  font-size: 24px;
+}
+
+.owner-quote {
+  margin: 32px 0 0;
+  padding: 6px 0 6px 20px;
+  border-left: 3px solid var(--primary);
+  color: #f3ecd9;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 2.6vw, 30px);
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+@media (max-width: 860px) {
+  .owner-profile {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .owner-photo {
+    position: static;
+    width: min(100%, 420px);
+  }
+}
+
 .notice-list {
   display: grid;
   gap: 14px;

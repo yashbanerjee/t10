@@ -66,6 +66,8 @@ class ClubRepository {
 
   Future<List<Franchise>> franchises() async => Franchise.list(await client.get('/api/v1/franchises'));
 
+  Future<List<ClubOwner>> owners() async => ClubOwner.list(await client.get('/api/v1/owners'));
+
   Future<TrackedOrder> trackOrder(String number, String email) async => TrackedOrder.fromJson(_map(await client.postData('/api/v1/shop/track', {'number': number, 'email': email})));
 
   /// Returns the brochure link when the club has uploaded one.

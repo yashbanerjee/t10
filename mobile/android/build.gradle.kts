@@ -21,6 +21,8 @@ subprojects {
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile::class.java).configureEach {
         compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
+    // Its release lint classpath needs play-services-tapandpay, which Google does not publish to Maven.
+    tasks.matching { it.name.startsWith("lintVital") }.configureEach { enabled = false }
 }
 subprojects {
     project.evaluationDependsOn(":app")

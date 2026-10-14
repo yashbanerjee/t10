@@ -22,6 +22,7 @@ const permissions: Record<string, { read: string; write: string }> = {
   pollVotes: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, contestEntries: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
   settings: { read: "SETTINGS_WRITE", write: "SETTINGS_WRITE" }, audit: { read: "AUDIT_READ", write: "AUDIT_READ" }, appErrors: { read: "AUDIT_READ", write: "AUDIT_READ" },
   franchises: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, countries: { read: "CONTENT_READ", write: "SETTINGS_WRITE" },
+  owners: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
 };
 const assetUrl = z.string().trim().max(1000).regex(/^(https?:\/\/|\/)/).nullable().optional();
 const optionalInt = (min: number, max: number) => z.union([z.null(), z.coerce.number().int().min(min).max(max)]).optional();
@@ -35,6 +36,7 @@ const socialUrl = z.union([z.string().trim().url().max(500), z.literal(""), z.nu
 const franchiseInput = z.object({ name: z.string().trim().min(2).max(120), league: z.string().trim().min(2).max(120), logoUrl: assetUrl, facebook: socialUrl, instagram: socialUrl, x: socialUrl, youtube: socialUrl, displayOrder: optionalInt(0, 9999), isPublished: z.boolean().optional(), posts: z.string().max(20000).nullable().optional() });
 const dialCode = z.string().trim().regex(/^\+\d{1,4}$/, "Use a dialling code such as +971");
 const countryInput = z.object({ name: z.string().trim().min(2).max(80), isoCode: z.union([z.null(), z.literal(""), z.string().trim().regex(/^[A-Za-z]{2}$/, "Use a 2-letter country code such as AE")]).optional(), dialCode, displayOrder: optionalInt(0, 9999), isActive: z.boolean().optional() });
+const ownerInput = z.object({ name: z.string().trim().min(2).max(100), title: z.string().trim().min(2).max(60), headline: optionalLabel(200), summary: optionalLabel(600), bio: optionalLabel(20000), quote: optionalLabel(300), image: assetUrl, facebook: socialUrl, instagram: socialUrl, displayOrder: optionalInt(0, 9999), isActive: z.boolean().optional() });
 const blankToNull = (value: string | null | undefined) => (value ? value : null);
 const galleryInput = z.object({ title: z.string().trim().min(2).max(160), category: z.string().trim().min(2).max(60), mediaUrl: z.string().trim().max(1000).regex(/^(https?:\/\/|\/)/), type: z.enum(["IMAGE", "VIDEO"]).default("IMAGE"), altText: z.string().trim().max(300).nullable().optional(), displayOrder: optionalInt(0, 9999), isFeatured: z.boolean().optional(), isPublished: z.boolean().optional() });
 const recordInput = z.object({ title: z.string().trim().min(2).max(160), value: z.string().trim().min(1).max(40), category: z.string().trim().min(2).max(60), scope: z.string().trim().min(2).max(40), playerName: z.string().trim().max(120).nullable().optional(), seasonYear: optionalInt(1990, 2100) });
@@ -74,9 +76,10 @@ async function list(collection: string) {
     orders: { include: { items: true }, orderBy: { createdAt: "desc" } },
     settings: { orderBy: { key: "asc" } }, audit: { include: { user: { select: { email: true, name: true } } }, orderBy: { createdAt: "desc" }, take: 100 },
     appErrors: { orderBy: { createdAt: "desc" }, take: 500 }, countries: { orderBy: [{ displayOrder: "asc" }, { name: "asc" }] },
+    owners: { orderBy: [{ displayOrder: "asc" }, { name: "asc" }] },
   };
   if (!(collection in args)) throw new Error("NOT_FOUND");
-  const model = collection === "contacts" || collection === "partnerRequests" ? "contactSubmission" : collection === "updates" ? "teamUpdate" : collection === "news" ? "newsArticle" : collection === "gallery" ? "gallery" : collection === "sponsors" ? "sponsor" : collection === "franchises" ? "franchise" : collection === "records" ? "teamRecord" : collection === "settings" ? "siteSetting" : collection === "audit" ? "auditLog" : collection === "appErrors" ? "appErrorLog" : collection === "countries" ? "country" : collection === "matches" ? "match" : collection === "staff" ? "staffMember" : collection === "products" ? "product" : collection === "polls" ? "poll" : collection === "contests" ? "contest" : collection === "orders" ? "order" : "player";
+  const model = collection === "contacts" || collection === "partnerRequests" ? "contactSubmission" : collection === "updates" ? "teamUpdate" : collection === "news" ? "newsArticle" : collection === "gallery" ? "gallery" : collection === "sponsors" ? "sponsor" : collection === "franchises" ? "franchise" : collection === "records" ? "teamRecord" : collection === "settings" ? "siteSetting" : collection === "audit" ? "auditLog" : collection === "appErrors" ? "appErrorLog" : collection === "countries" ? "country" : collection === "owners" ? "owner" : collection === "matches" ? "match" : collection === "staff" ? "staffMember" : collection === "products" ? "product" : collection === "polls" ? "poll" : collection === "contests" ? "contest" : collection === "orders" ? "order" : "player";
   const rows = await db[model].findMany(args[collection]) as Array<Record<string, unknown>>;
   return rows.map((row) => {
     const count = row._count as { variants?: number; votes?: number; options?: number; entries?: number } | undefined;
@@ -150,6 +153,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     } else if (collection === "countries") {
       const parsed = countryInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
       const data = parsed.data; result = await prisma.country.create({ data: { name: data.name, isoCode: data.isoCode ? data.isoCode.toUpperCase() : null, dialCode: data.dialCode, displayOrder: data.displayOrder ?? 0, isActive: data.isActive ?? true } });
+    } else if (collection === "owners") {
+      const parsed = ownerInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
+      const data = parsed.data;
+      result = await prisma.owner.create({ data: { name: data.name, slug: slugify(data.name), title: data.title, headline: blankToNull(data.headline), summary: blankToNull(data.summary), bio: blankToNull(data.bio), quote: blankToNull(data.quote), image: data.image || null, facebook: blankToNull(data.facebook), instagram: blankToNull(data.instagram), displayOrder: data.displayOrder ?? 0, isActive: data.isActive ?? true } });
     } else if (collection === "gallery") {
       const parsed = galleryInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
       result = await prisma.gallery.create({ data: { ...parsed.data, displayOrder: parsed.data.displayOrder ?? 0 } });

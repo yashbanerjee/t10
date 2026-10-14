@@ -134,6 +134,156 @@ class _FranchisesPageState extends State<FranchisesPage> {
   }
 }
 
+/// The club's owners, as on the website's Meet the owners page; profiles are edited in the admin panel.
+class OwnersPage extends StatelessWidget {
+  const OwnersPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final api = ClubScope.of(context).api;
+    return Scaffold(
+      appBar: const ClubAppBar('Meet the owners'),
+      body: ListView(
+        scrollCacheExtent: pageCacheExtent,
+        padding: EdgeInsets.zero,
+        children: [
+          const PageHero(eyebrow: 'The club', title: 'Meet the\nowners.', intro: 'The people behind United Tigers.'),
+          _Loader<List<ClubOwner>>(
+            load: api.fetchOwners,
+            builder: (context, owners) => Padding(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+              child: owners.isEmpty
+                  ? const EmptyPanel(title: 'Owner profiles will appear here soon.')
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final owner in owners) Padding(padding: const EdgeInsets.only(bottom: 18), child: _OwnerCard(owner: owner)),
+                      ],
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OwnerCard extends StatelessWidget {
+  const _OwnerCard({required this.owner});
+  final ClubOwner owner;
+
+  @override
+  Widget build(BuildContext context) {
+    final api = ClubScope.of(context).api;
+    return ClubCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: owner.image == null
+                  ? DecoratedBox(
+                      decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF460B7D), Color(0xFF2B074D)])),
+                      child: FractionallySizedBox(widthFactor: 0.42, child: Image.asset('assets/brand/tiger-gold.png', fit: BoxFit.contain)),
+                    )
+                  : Image.network(api.media(owner.image), fit: BoxFit.cover, alignment: Alignment.topCenter, errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFF2B074D))),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(owner.title.toUpperCase(), style: const TextStyle(color: goldLight, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.4)),
+                const SizedBox(height: 6),
+                Text(owner.name.toUpperCase(), style: displayStyle(30, color: Colors.white, height: 1)),
+                if (owner.facebook != null || owner.instagram != null) ...[
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 8,
+                    children: [
+                      if (owner.facebook != null)
+                        _OwnerSocial(
+                          icon: FontAwesomeIcons.facebookF,
+                          label: 'Facebook',
+                          gradient: const LinearGradient(colors: [Color(0xFF1877F2), Color(0xFF1877F2)]),
+                          onTap: () => openExternal(owner.facebook!),
+                        ),
+                      if (owner.instagram != null)
+                        _OwnerSocial(
+                          icon: FontAwesomeIcons.instagram,
+                          label: 'Instagram',
+                          gradient: const LinearGradient(begin: Alignment.bottomLeft, end: Alignment.topRight, colors: [Color(0xFFFDC468), Color(0xFFFD5949), Color(0xFFD6249F), Color(0xFF285AEB)]),
+                          onTap: () => openExternal(owner.instagram!),
+                        ),
+                    ],
+                  ),
+                ],
+                if (owner.headline != null) ...[
+                  const SizedBox(height: 10),
+                  Text(owner.headline!, style: const TextStyle(color: goldLight, fontSize: 15.5, fontWeight: FontWeight.w800, height: 1.35)),
+                ],
+                if (owner.summary != null) ...[
+                  const SizedBox(height: 10),
+                  Text(owner.summary!, style: const TextStyle(color: Color(0xFFE9E1F2), fontSize: 15.5, height: 1.55)),
+                ],
+                const SizedBox(height: 6),
+                if (owner.bio != null)
+                  ClubMarkdown(owner.bio!, mediaUrl: api.media, onLink: (href) => openSiteLink(context, href))
+                else
+                  const Padding(padding: EdgeInsets.only(top: 6), child: Text('A full profile is coming soon.', style: TextStyle(color: Color(0xFFCDBFDD)))),
+                if (owner.quote != null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.only(left: 14),
+                    decoration: const BoxDecoration(border: Border(left: BorderSide(color: goldLight, width: 3))),
+                    child: Text(owner.quote!.toUpperCase(), style: displayStyle(22, color: const Color(0xFFF3ECD9), height: 1.15)),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OwnerSocial extends StatelessWidget {
+  const _OwnerSocial({required this.icon, required this.label, required this.gradient, required this.onTap});
+  final FaIconData icon;
+  final String label;
+  final Gradient gradient;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      child: Pressable(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(gradient: gradient, borderRadius: BorderRadius.circular(999)),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FaIcon(icon, size: 14, color: Colors.white),
+              const SizedBox(width: 8),
+              Text(label.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 0.8)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// A post cover with its platform in the top-right corner; tapping opens the post in its app or the browser.
 class _FranchisePostTile extends StatelessWidget {
   const _FranchisePostTile({required this.franchise, required this.post});
