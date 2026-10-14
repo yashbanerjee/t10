@@ -68,6 +68,7 @@ main,
 .site-footer {
   position: relative;
   z-index: 1;
+  overflow-x: clip;
 }
 
 body:has(.admin-shell),
@@ -9967,6 +9968,11 @@ html[data-mood="royal"] {
   grid-column: 1 / -1;
 }
 
+.home-franchises-main,
+.home-partner {
+  min-width: 0;
+}
+
 .home-franchises-main .franchise-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -9978,7 +9984,7 @@ html[data-mood="royal"] {
 
 @media (max-width: 900px) {
   .home-franchises-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .home-partner {
@@ -9988,7 +9994,7 @@ html[data-mood="royal"] {
 
 @media (max-width: 760px) {
   .home-franchises-main .franchise-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

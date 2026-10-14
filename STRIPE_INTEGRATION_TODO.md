@@ -55,7 +55,7 @@ Removed: `customer_email` (the customer now carries the email), `payment_intent_
 
 ### To do
 
-1. **Add the webhook** (recommended). In the Stripe dashboard → Developers → Webhooks, add an endpoint for `https://t10-production.up.railway.app/api/v1/shop/stripe/webhook` with the events `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed` and `checkout.session.expired`. Paste its signing secret (`whsec_…`) into Site settings. Without it, an order is only marked paid when the fan returns to the success page.
+1. **Add the webhook** (recommended). In the Stripe dashboard → Developers → Webhooks, add an endpoint for `https://unitedtigers.ae/api/v1/shop/stripe/webhook` with the events `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed` and `checkout.session.expired`. Paste its signing secret (`whsec_…`) into Site settings. Without it, an order is only marked paid when the fan returns to the success page.
 2. **Optional: switch on payment methods for AED** in the Stripe dashboard (Settings → Payment methods). Once Cards (and any wallets you want) are active, `payment_method_types` can be removed from [src/lib/stripe.ts](src/lib/stripe.ts) so the dashboard controls which methods show.
 3. **Deploy**: commit and push so the live site uses this code.
 

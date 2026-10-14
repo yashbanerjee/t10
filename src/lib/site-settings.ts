@@ -30,7 +30,7 @@ export async function getSiteUrl() {
   } catch {
     /* database unavailable or the saved URL is not usable */
   }
-  return "http://localhost:3000";
+  return "https://unitedtigers.ae";
 }
 
 export async function getLivePollIntervalMs() {

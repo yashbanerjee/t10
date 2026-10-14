@@ -141,8 +141,8 @@ await prisma.siteSetting.upsert({
 });
 await prisma.siteSetting.upsert({
   where: { key: "siteUrl" },
-  create: { key: "siteUrl", value: "https://t10-production.up.railway.app" },
-  update: { value: "https://t10-production.up.railway.app" },
+  create: { key: "siteUrl", value: "https://unitedtigers.ae" },
+  update: { value: "https://unitedtigers.ae" },
 });
 
 const profiles = [
@@ -183,10 +183,10 @@ for (const member of staff) {
 }
 
 const sponsors = [
-  { id: "partner-fmc-dockyard", name: "FMC Dockyard", category: "TITLE PARTNER", logoUrl: files.sponsorTitle, website: "https://t10-production.up.railway.app/partners", displayOrder: 1 },
-  { id: "partner-swift-kit", name: "Swift Kit Co", category: "PRINCIPAL PARTNER", logoUrl: files.sponsorKit, website: "https://t10-production.up.railway.app/partners", displayOrder: 2 },
-  { id: "partner-den-live", name: "Den Live", category: "MEDIA PARTNER", logoUrl: files.sponsorMedia, website: "https://t10-production.up.railway.app/partners", displayOrder: 3 },
-  { id: "partner-harbour-gold", name: "Harbour Gold", category: "OFFICIAL PARTNER", logoUrl: files.sponsorOfficial, website: "https://t10-production.up.railway.app/partners", displayOrder: 4 },
+  { id: "partner-fmc-dockyard", name: "FMC Dockyard", category: "TITLE PARTNER", logoUrl: files.sponsorTitle, website: "https://unitedtigers.ae/partners", displayOrder: 1 },
+  { id: "partner-swift-kit", name: "Swift Kit Co", category: "PRINCIPAL PARTNER", logoUrl: files.sponsorKit, website: "https://unitedtigers.ae/partners", displayOrder: 2 },
+  { id: "partner-den-live", name: "Den Live", category: "MEDIA PARTNER", logoUrl: files.sponsorMedia, website: "https://unitedtigers.ae/partners", displayOrder: 3 },
+  { id: "partner-harbour-gold", name: "Harbour Gold", category: "OFFICIAL PARTNER", logoUrl: files.sponsorOfficial, website: "https://unitedtigers.ae/partners", displayOrder: 4 },
 ];
 for (const sponsor of sponsors) {
   await prisma.sponsor.upsert({ where: { id: sponsor.id }, update: { ...sponsor, isDemo: false, isPublished: true, teamId: team.id }, create: { ...sponsor, isDemo: false, isPublished: true, teamId: team.id } });
