@@ -5,9 +5,10 @@ import 'package:united_tigers/pages/fan_pages.dart';
 import 'package:united_tigers/pages/more_pages.dart';
 import 'package:united_tigers/scope.dart';
 import 'package:united_tigers/services/notice_inbox.dart';
+import 'package:united_tigers/services/push.dart';
 import 'package:united_tigers/widgets.dart';
 
-/// Contests, polls and news the club has published, newest first.
+/// Club alerts, contests, polls and news the club has published, newest first.
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
 
@@ -48,7 +49,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   const EmptyPanel(
                     title: 'You are all caught up.',
                     message:
-                        'New contests, polls and club news will appear here.',
+                        'Club alerts, new contests, polls and club news will appear here.',
                   )
                 else
                   for (final notice in notices)
@@ -74,11 +75,13 @@ class _NoticeCard extends StatelessWidget {
   final bool fresh;
 
   static const _labels = {
+    NoticeKind.alert: 'CLUB ALERT',
     NoticeKind.contest: 'FAN CONTEST',
     NoticeKind.poll: 'POLL',
     NoticeKind.news: 'NEWS',
   };
   static const _icons = {
+    NoticeKind.alert: Icons.notifications_active_rounded,
     NoticeKind.contest: Icons.emoji_events_rounded,
     NoticeKind.poll: Icons.how_to_vote_rounded,
     NoticeKind.news: Icons.article_rounded,
@@ -86,6 +89,8 @@ class _NoticeCard extends StatelessWidget {
 
   void _open(BuildContext context) {
     switch (notice.source) {
+      case final ClubAlert alert:
+        ClubPush.openLink(context, alert.link);
       case final Contest contest:
         openContest(context, contest);
       case final Poll poll:

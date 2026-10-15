@@ -114,6 +114,12 @@ export async function getSponsors() {
   catch { return []; }
 }
 
+/** Push notifications the club has sent, newest first, for the in-app and website Notifications lists. */
+export async function getSentNotifications(limit = 20) {
+  try { return await prisma.pushNotification.findMany({ where: { status: "SENT" }, orderBy: { sentAt: "desc" }, take: limit, select: { id: true, title: true, body: true, imageUrl: true, link: true, sentAt: true } }); }
+  catch { return []; }
+}
+
 export async function getFranchises() {
   try { return await prisma.franchise.findMany({ where: { isPublished: true }, orderBy: [{ displayOrder: "asc" }, { name: "asc" }], include: { posts: { orderBy: { displayOrder: "asc" }, select: { id: true, url: true, platform: true, imageUrl: true, caption: true } } } }); }
   catch { return []; }

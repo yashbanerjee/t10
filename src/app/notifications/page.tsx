@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowUpRight, Newspaper, Trophy, Vote } from "lucide-react";
-import { getContests, getNews, getPolls } from "@/lib/data";
+import { ArrowUpRight, BellRing, Newspaper, Trophy, Vote } from "lucide-react";
+import { getContests, getNews, getPolls, getSentNotifications } from "@/lib/data";
 
 export const metadata: Metadata = { title: "Notifications", description: "New United Tigers fan contests, polls and club news." };
 
@@ -10,16 +10,17 @@ export const metadata: Metadata = { title: "Notifications", description: "New Un
 const isOpen = (closesAt: Date | null) => !closesAt || closesAt.getTime() > Date.now();
 const day = (date: Date | null) => date ? new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Dubai" }).format(date) : "";
 
-type Notice = { key: string; kind: "FAN CONTEST" | "POLL" | "NEWS"; title: string; body: string; href: string; date: Date | null; image: string | null };
+type Notice = { key: string; kind: "CLUB ALERT" | "FAN CONTEST" | "POLL" | "NEWS"; title: string; body: string; href: string; date: Date | null; image: string | null };
 
 export default async function NotificationsPage() {
-  const [contests, polls, news] = await Promise.all([getContests(), getPolls(), getNews()]);
+  const [contests, polls, news, alerts] = await Promise.all([getContests(), getPolls(), getNews(), getSentNotifications()]);
   const notices: Notice[] = [
+    ...alerts.map((alert): Notice => ({ key: `alert-${alert.id}`, kind: "CLUB ALERT", title: alert.title, body: alert.body, href: alert.link || "/", date: alert.sentAt, image: alert.imageUrl })),
     ...contests.filter((contest) => isOpen(contest.closesAt)).map((contest): Notice => ({ key: `contest-${contest.id}`, kind: "FAN CONTEST", title: contest.title, body: contest.prize ? `Prize: ${contest.prize}. ${contest.description}` : contest.description, href: `/contests/${contest.slug}`, date: contest.createdAt, image: contest.image })),
     ...polls.filter((poll) => isOpen(poll.closesAt)).map((poll): Notice => ({ key: `poll-${poll.id}`, kind: "POLL", title: poll.question, body: poll.description || "Cast your vote.", href: `/polls/${poll.slug}`, date: poll.createdAt, image: null })),
     ...news.slice(0, 10).map((story): Notice => ({ key: `news-${story.id}`, kind: "NEWS", title: story.title, body: story.excerpt, href: `/news/${story.slug}`, date: story.publishedAt, image: story.coverImage })),
   ].sort((left, right) => (right.date?.getTime() ?? 0) - (left.date?.getTime() ?? 0));
-  const icons = { "FAN CONTEST": Trophy, POLL: Vote, NEWS: Newspaper };
+  const icons = { "CLUB ALERT": BellRing, "FAN CONTEST": Trophy, POLL: Vote, NEWS: Newspaper };
   return <div className="inner-page">
     <section className="inner-hero"><div className="wrap"><span className="eyebrow"><i className="eyebrow-dot" />STAY IN THE LOOP</span><h1>NOTIFI&shy;CATIONS</h1><p>New fan contests, polls and club news, newest first.</p></div></section>
     <section className="section"><div className="wrap">

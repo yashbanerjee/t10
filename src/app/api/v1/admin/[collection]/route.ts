@@ -12,6 +12,7 @@ import { getPointsTable } from "@/lib/data";
 import { PARTNER_REQUEST_SUBJECT } from "@/lib/partner-brochure";
 import { MAX_FRANCHISE_POSTS, parsePostLines, syncFranchisePosts } from "@/lib/franchise-posts";
 import { STAFF_AREA_KEYS } from "@/lib/staff";
+import { PUSH_TOPICS, sendPush, type PushTopic } from "@/lib/push";
 
 const permissions: Record<string, { read: string; write: string }> = {
   players: { read: "TEAM_READ", write: "TEAM_WRITE" }, staff: { read: "TEAM_READ", write: "TEAM_WRITE" }, teams: { read: "TEAM_READ", write: "TEAM_WRITE" }, matches: { read: "MATCH_READ", write: "MATCH_WRITE" },
@@ -23,7 +24,7 @@ const permissions: Record<string, { read: string; write: string }> = {
   pollVotes: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, contestEntries: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
   settings: { read: "SETTINGS_WRITE", write: "SETTINGS_WRITE" }, audit: { read: "AUDIT_READ", write: "AUDIT_READ" }, appErrors: { read: "AUDIT_READ", write: "AUDIT_READ" },
   franchises: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, countries: { read: "CONTENT_READ", write: "SETTINGS_WRITE" },
-  owners: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
+  owners: { read: "CONTENT_READ", write: "CONTENT_WRITE" }, notifications: { read: "CONTENT_READ", write: "CONTENT_WRITE" },
 };
 const assetUrl = z.string().trim().max(1000).regex(/^(https?:\/\/|\/)/).nullable().optional();
 const optionalInt = (min: number, max: number) => z.union([z.null(), z.coerce.number().int().min(min).max(max)]).optional();
@@ -50,6 +51,8 @@ const productInput = z.object({ name: z.string().trim().min(2).max(120), slug: z
 const pollInput = z.object({ title: z.string().trim().min(2).max(160), slug: z.string().trim().max(160).optional(), question: z.string().trim().min(3).max(240), description: z.string().trim().max(1000).nullable().optional(), closesAt: z.string().datetime().nullable().optional(), isPublished: z.boolean().optional(), options: z.array(z.object({ label: z.string().trim().min(1).max(80) })).min(2).max(8) });
 const contestInput = z.object({ title: z.string().trim().min(2).max(160), slug: z.string().trim().max(160).optional(), description: z.string().trim().min(3).max(4000), prize: z.string().trim().max(160).nullable().optional(), prompt: z.string().trim().min(3).max(240), image: assetUrl, closesAt: z.string().datetime().nullable().optional(), isPublished: z.boolean().optional() });
 const settingInput = z.object({ key: z.string().trim().min(2).max(100), value: z.unknown() });
+const pushLink = z.union([z.null(), z.literal(""), z.string().trim().max(500).regex(/^(\/[^\s]*|https:\/\/\S+)$/, "Use a site path such as /news/story or a full https link")]).optional();
+const notificationInput = z.object({ title: z.string().trim().min(2).max(65), body: z.string().trim().min(2).max(240), imageUrl: assetUrl, link: pushLink, topic: z.union([z.literal(""), z.enum(PUSH_TOPICS)]).optional() });
 const slugify = (value: string) => value.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 async function list(collection: string) {
@@ -77,10 +80,10 @@ async function list(collection: string) {
     orders: { include: { items: true }, orderBy: { createdAt: "desc" } },
     settings: { orderBy: { key: "asc" } }, audit: { include: { user: { select: { email: true, name: true } } }, orderBy: { createdAt: "desc" }, take: 100 },
     appErrors: { orderBy: { createdAt: "desc" }, take: 500 }, countries: { orderBy: [{ displayOrder: "asc" }, { name: "asc" }] },
-    owners: { orderBy: [{ displayOrder: "asc" }, { name: "asc" }] },
+    owners: { orderBy: [{ displayOrder: "asc" }, { name: "asc" }] }, notifications: { orderBy: { createdAt: "desc" }, take: 200 },
   };
   if (!(collection in args)) throw new Error("NOT_FOUND");
-  const model = collection === "contacts" || collection === "partnerRequests" ? "contactSubmission" : collection === "updates" ? "teamUpdate" : collection === "news" ? "newsArticle" : collection === "gallery" ? "gallery" : collection === "sponsors" ? "sponsor" : collection === "franchises" ? "franchise" : collection === "records" ? "teamRecord" : collection === "settings" ? "siteSetting" : collection === "audit" ? "auditLog" : collection === "appErrors" ? "appErrorLog" : collection === "countries" ? "country" : collection === "owners" ? "owner" : collection === "matches" ? "match" : collection === "staff" ? "staffMember" : collection === "products" ? "product" : collection === "polls" ? "poll" : collection === "contests" ? "contest" : collection === "orders" ? "order" : "player";
+  const model = collection === "contacts" || collection === "partnerRequests" ? "contactSubmission" : collection === "updates" ? "teamUpdate" : collection === "news" ? "newsArticle" : collection === "gallery" ? "gallery" : collection === "sponsors" ? "sponsor" : collection === "franchises" ? "franchise" : collection === "records" ? "teamRecord" : collection === "settings" ? "siteSetting" : collection === "audit" ? "auditLog" : collection === "appErrors" ? "appErrorLog" : collection === "countries" ? "country" : collection === "owners" ? "owner" : collection === "notifications" ? "pushNotification" : collection === "matches" ? "match" : collection === "staff" ? "staffMember" : collection === "products" ? "product" : collection === "polls" ? "poll" : collection === "contests" ? "contest" : collection === "orders" ? "order" : "player";
   const rows = await db[model].findMany(args[collection]) as Array<Record<string, unknown>>;
   return rows.map((row) => {
     const count = row._count as { variants?: number; votes?: number; options?: number; entries?: number } | undefined;
@@ -182,6 +185,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const parsed = contestInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
       const data = parsed.data;
       result = await prisma.contest.create({ data: { title: data.title, slug: slugify(data.slug || data.title), description: data.description, prize: data.prize || null, prompt: data.prompt, image: data.image || null, closesAt: data.closesAt ? new Date(data.closesAt) : null, isPublished: data.isPublished ?? true } });
+    } else if (collection === "notifications") {
+      const parsed = notificationInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
+      const data = parsed.data;
+      const created = await prisma.pushNotification.create({ data: { title: data.title, body: data.body, imageUrl: data.imageUrl || null, link: data.link || null, topic: data.topic || "all", sentById: session.sub } });
+      const sent = await sendPush({ id: created.id, title: created.title, body: created.body, imageUrl: created.imageUrl, link: created.link, topic: created.topic as PushTopic });
+      result = await prisma.pushNotification.update({ where: { id: created.id }, data: sent.ok ? { status: "SENT", messageId: sent.messageId, sentAt: new Date() } : { status: "FAILED", error: sent.message.slice(0, 500) } });
+      if (!sent.ok) {
+        await recordAudit(session.sub, "CREATE", collection, created.id, undefined, auditBody, request.headers.get("x-forwarded-for")?.split(",")[0]);
+        return failure(`The notification was not sent: ${sent.message}`, 502);
+      }
     } else if (collection === "settings") {
       const parsed = settingInput.safeParse(body); if (!parsed.success) return failure("Validation failed", 400, parsed.error.issues);
       const existing = SECRET_SETTING_KEYS.has(parsed.data.key) ? await prisma.siteSetting.findUnique({ where: { key: parsed.data.key } }) : null;

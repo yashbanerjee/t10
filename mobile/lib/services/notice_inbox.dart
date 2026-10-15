@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:united_tigers/models.dart';
 
-enum NoticeKind { contest, poll, news }
+enum NoticeKind { alert, contest, poll, news }
 
 /// One entry in the in-app Notifications list, built from content the club has published.
 class ClubNotice {
@@ -17,7 +17,7 @@ class ClubNotice {
   final Object source;
 }
 
-/// Lists open contests, open polls and news, and remembers on the device which ones the fan has already seen.
+/// Lists club push notifications, open contests, open polls and news, and remembers on the device which ones the fan has already seen.
 class NoticeInbox extends ChangeNotifier {
   NoticeInbox._();
   static final instance = NoticeInbox._();
@@ -41,6 +41,8 @@ class NoticeInbox extends ChangeNotifier {
     final now = DateTime.now();
     bool open(DateTime? closesAt) => closesAt == null || closesAt.isAfter(now);
     final items = <ClubNotice>[
+      for (final alert in catalog.alerts)
+        ClubNotice(kind: NoticeKind.alert, key: 'alert:${alert.id}', title: alert.title, body: alert.body, date: alert.sentAt, image: alert.imageUrl, source: alert),
       for (final contest in catalog.contests.where((item) => open(item.closesAt)))
         ClubNotice(
           kind: NoticeKind.contest,

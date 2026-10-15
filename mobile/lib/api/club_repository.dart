@@ -20,6 +20,8 @@ class ClubRepository {
       client.get('/api/v1/contests'),
       client.get('/api/v1/gallery'),
       client.get('/api/v1/sponsors'),
+      // Older servers have no notifications endpoint; the rest of the app still loads without it.
+      client.get('/api/v1/notifications').catchError((_) => const <dynamic>[]),
     ]);
     return ClubCatalog(
       players: Player.list(results[0]),
@@ -32,8 +34,11 @@ class ClubRepository {
       contests: Contest.list(results[7]),
       gallery: GalleryItem.list(results[8]),
       sponsors: Sponsor.list(results[9]),
+      alerts: ClubAlert.list(results[10]),
     );
   }
+
+  Future<List<ClubAlert>> alerts() async => ClubAlert.list(await client.get('/api/v1/notifications'));
 
   Future<SiteContent> loadSettings() async {
     final data = await client.get('/api/v1/settings');

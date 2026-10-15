@@ -511,6 +511,29 @@ class Sponsor {
   static List<Sponsor> list(dynamic value) => asList(value).map(Sponsor.fromJson).toList();
 }
 
+/// A push notification the club sent from the admin, kept for the in-app Notifications list.
+class ClubAlert {
+  const ClubAlert({required this.id, required this.title, required this.body, this.imageUrl, this.link, this.sentAt});
+
+  final String id;
+  final String title;
+  final String body;
+  final String? imageUrl;
+  final String? link;
+  final DateTime? sentAt;
+
+  factory ClubAlert.fromJson(Map<String, dynamic> json) => ClubAlert(
+        id: json['id']?.toString() ?? '',
+        title: json['title']?.toString() ?? '',
+        body: json['body']?.toString() ?? '',
+        imageUrl: asText(json['imageUrl']),
+        link: asText(json['link']),
+        sentAt: asDate(json['sentAt']),
+      );
+
+  static List<ClubAlert> list(dynamic value) => asList(value).map(ClubAlert.fromJson).where((alert) => alert.id.isNotEmpty).toList();
+}
+
 class ClubRecord {
   const ClubRecord({required this.title, required this.value, this.category, this.playerName, this.seasonYear});
 
@@ -909,6 +932,7 @@ class ClubCatalog {
     this.contests = const [],
     this.gallery = const [],
     this.sponsors = const [],
+    this.alerts = const [],
   });
 
   final List<Player> players;
@@ -921,6 +945,7 @@ class ClubCatalog {
   final List<Contest> contests;
   final List<GalleryItem> gallery;
   final List<Sponsor> sponsors;
+  final List<ClubAlert> alerts;
 
   static const empty = ClubCatalog();
 
@@ -952,6 +977,20 @@ class ClubCatalog {
     return withUpdates(live);
   }
 
+  ClubCatalog withAlerts(List<ClubAlert> alerts) => ClubCatalog(
+        players: players,
+        staff: staff,
+        matches: matches,
+        news: news,
+        updates: updates,
+        products: products,
+        polls: polls,
+        contests: contests,
+        gallery: gallery,
+        sponsors: sponsors,
+        alerts: alerts,
+      );
+
   ClubCatalog withUpdates(List<TeamUpdate> updates) => ClubCatalog(
         players: players,
         staff: staff,
@@ -963,6 +1002,7 @@ class ClubCatalog {
         contests: contests,
         gallery: gallery,
         sponsors: sponsors,
+        alerts: alerts,
       );
 }
 

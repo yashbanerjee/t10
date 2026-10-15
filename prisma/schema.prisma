@@ -767,3 +767,20 @@ model AuditLog {
   @@index([userId, createdAt])
   @@index([entity, entityId])
 }
+
+model PushNotification {
+  id        String    @id @default(cuid())
+  title     String
+  body      String
+  imageUrl  String?
+  link      String?
+  topic     String    @default("all")
+  status    String    @default("PENDING")
+  messageId String?
+  error     String?
+  sentById  String?
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([status, sentAt])
+}

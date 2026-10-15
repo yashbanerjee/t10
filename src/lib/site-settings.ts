@@ -4,7 +4,7 @@ import { readBrochureUrl } from "@/lib/partner-brochure";
 import { LEGAL_SETTING_KEYS, legalPageSchema } from "@/lib/legal-pages";
 
 /** Settings that must never be sent to public pages. */
-export const PRIVATE_SETTING_KEYS = new Set(["storage", "smtp", "stripe"]);
+export const PRIVATE_SETTING_KEYS = new Set(["storage", "smtp", "stripe", "firebase"]);
 
 /** Settings whose saved secrets are kept when the admin form leaves them blank. */
 export const SECRET_SETTING_KEYS = new Set(["storage", "smtp", "stripe"]);
@@ -217,6 +217,7 @@ const stripeSchema = z.object({
 });
 
 export function redactSettingValue(key: string, value: unknown) {
+  if (key === "firebase") return { connected: Boolean(value) };
   if (!value || typeof value !== "object" || Array.isArray(value)) return value;
   const source = value as Record<string, unknown>;
   if (key === "storage") {

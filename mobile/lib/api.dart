@@ -114,6 +114,14 @@ class ClubApi extends ChangeNotifier {
     }
   }
 
+  /// Reloads only the club alerts, so a push that just arrived shows in Notifications without a full reload.
+  Future<void> refreshAlerts() async {
+    try {
+      catalog = catalog.withAlerts(await repository.alerts());
+      notifyListeners();
+    } catch (_) {}
+  }
+
   Poll? get featuredPoll {
     if (catalog.polls.isEmpty) return null;
     int matches(Poll poll) => poll.options.where((option) => _matchesPlayer(option.label)).length;
