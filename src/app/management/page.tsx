@@ -4,7 +4,7 @@ import { StaffCard } from "@/components/StaffCard";
 import { EmptyState } from "@/components/EmptyState";
 import { STAFF_AREAS } from "@/lib/staff";
 
-export const metadata: Metadata = { title: "Team management", description: "Meet the leadership, coaches, support and media staff behind United Tigers." };
+export const metadata: Metadata = { alternates: { canonical: "/management" }, title: "Team management", description: "Meet the leadership, coaches, support and media staff behind United Tigers." };
 export const dynamic = "force-dynamic";
 
 export default async function ManagementPage() {

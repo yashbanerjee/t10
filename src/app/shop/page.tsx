@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getProducts } from "@/lib/data";
 import { ProductCard } from "@/components/ProductCard";
 
-export const metadata: Metadata = { title: "Shop", description: "Official United Tigers kit. Choose your size, then book it with your email and phone." };
+export const metadata: Metadata = { alternates: { canonical: "/shop" }, title: "Shop", description: "Official United Tigers kit. Choose your size, then book it with your email and phone." };
 
 export default async function ShopPage() {
   const products = await getProducts();

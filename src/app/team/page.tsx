@@ -5,7 +5,7 @@ import { getPlayers } from "@/lib/data";
 import { PlayerCard } from "@/components/PlayerCard";
 import { EmptyState } from "@/components/EmptyState";
 
-export const metadata: Metadata = { title: "The Team", description: "Meet the United Tigers squad for the 2026 Abu Dhabi T10 season." };
+export const metadata: Metadata = { alternates: { canonical: "/team" }, title: "The Team", description: "Meet the United Tigers squad for the 2026 Abu Dhabi T10 season." };
 
 export default async function TeamPage() {
   const players = await getPlayers();

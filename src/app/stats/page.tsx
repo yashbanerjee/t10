@@ -5,7 +5,7 @@ import { getCurrentSeason } from "@/lib/data";
 import { getStatsLeaderboard } from "@/lib/stats";
 import { StatsExplorer } from "@/components/StatsExplorer";
 
-export const metadata: Metadata = { title: "Stats Centre", description: "United Tigers batting, bowling and fielding leaderboards, calculated from official match scorecards." };
+export const metadata: Metadata = { alternates: { canonical: "/stats" }, title: "Stats Centre", description: "United Tigers batting, bowling and fielding leaderboards, calculated from official match scorecards." };
 export default async function StatsPage() {
   const [season, initialRows] = await Promise.all([getCurrentSeason(), getStatsLeaderboard()]);
   const year = season.year;

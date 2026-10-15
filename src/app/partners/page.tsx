@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { getSponsors } from "@/lib/data";
 
-export const metadata: Metadata = { title: "Partners", description: "Meet the United Tigers partners and learn about partnership opportunities." };
+export const metadata: Metadata = { alternates: { canonical: "/partners" }, title: "Partners", description: "Meet the United Tigers partners and learn about partnership opportunities." };
 export default async function PartnersPage() {
   const sponsors = await getSponsors();
   const tiers = ["TITLE PARTNER", "PRINCIPAL PARTNER", "OFFICIAL PARTNER", "FASHION PARTNER", "MEDIA PARTNER"];

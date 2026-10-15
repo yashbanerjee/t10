@@ -3,7 +3,7 @@ import { Facebook, Instagram } from "lucide-react";
 import { SafeMarkdown } from "@/components/SafeMarkdown";
 import { getOwners } from "@/lib/owners";
 
-export const metadata: Metadata = { title: "Meet the owners", description: "The people who own United Tigers, the club’s franchise in the Abu Dhabi T10 League." };
+export const metadata: Metadata = { alternates: { canonical: "/owners" }, title: "Meet the owners", description: "The people who own United Tigers, the club’s franchise in the Abu Dhabi T10 League." };
 export const dynamic = "force-dynamic";
 
 /* eslint-disable @next/next/no-img-element */

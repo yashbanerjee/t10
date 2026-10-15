@@ -16,7 +16,7 @@ import { VideoPoster } from "@/components/VideoPoster";
 import { kickoffTime, knockoutSides, teamLogo, teamShortName } from "@/lib/league";
 import { getLivePollIntervalMs, homepageDefaults, readHomepageBanner } from "@/lib/site-settings";
 
-export const metadata: Metadata = { title: "United Tigers | The Next Game Starts Here", description: "The official home of United Tigers. Fixtures, the squad, the vote and the Abu Dhabi T10." };
+export const metadata: Metadata = { alternates: { canonical: "/" }, title: { absolute: "United Tigers | The Next Game Starts Here" }, description: "The official home of United Tigers. Fixtures, the squad, the vote and the Abu Dhabi T10." };
 
 function splitName(fullName: string) {
   const parts = fullName.trim().split(/\s+/);

@@ -7,7 +7,7 @@ import { ArrowUpRight } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 
 type Props = { params: Promise<{ year: string }> };
-export async function generateMetadata({ params }: Props): Promise<Metadata> { const { year } = await params; return { title: `${year} Season`, description: `United Tigers ${year} season overview, fixtures and statistics.` }; }
+export async function generateMetadata({ params }: Props): Promise<Metadata> { const { year } = await params; return { alternates: { canonical: `/season/${year}` }, title: `${year} Season`, description: `United Tigers ${year} season overview, fixtures and statistics.` }; }
 
 export default async function SeasonPage({ params }: Props) {
   const { year: raw } = await params; const year = Number(raw); const current = await getCurrentSeason();

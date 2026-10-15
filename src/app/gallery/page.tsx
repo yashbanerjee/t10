@@ -4,7 +4,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { PhotoFrame } from "@/components/PhotoFrame";
 import { VideoPoster } from "@/components/VideoPoster";
 
-export const metadata: Metadata = { title: "Gallery", description: "Photo albums from United Tigers events: the draft, training, match days, travel and the fans." };
+export const metadata: Metadata = { alternates: { canonical: "/gallery" }, title: "Gallery", description: "Photo albums from United Tigers events: the draft, training, match days, travel and the fans." };
 
 type GalleryItem = Awaited<ReturnType<typeof getGallery>>[number];
 type Album = { name: string; slug: string; items: GalleryItem[] };

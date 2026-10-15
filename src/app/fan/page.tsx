@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
-export const metadata: Metadata = { title: "Fan zone", description: "The United Tigers Fan Zone is coming soon." };
+export const metadata: Metadata = { alternates: { canonical: "/fan" }, title: "Fan zone", description: "The United Tigers Fan Zone is coming soon." };
 
 export default function FanPage() {
   return <div className="inner-page">

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { getContests, getPolls } from "@/lib/data";
 
-export const metadata: Metadata = { title: "Vote", description: "Vote in United Tigers fan polls, including player of the match, and enter club contests." };
+export const metadata: Metadata = { alternates: { canonical: "/vote" }, title: "Vote", description: "Vote in United Tigers fan polls, including player of the match, and enter club contests." };
 
 /* eslint-disable @next/next/no-img-element */
 
