@@ -12,6 +12,7 @@ const FEATURED_PLAYER_LIMIT = 5;
 const empty = { siteUrl: "http://localhost:3000", livePollIntervalMs: "15000", endpoint: "", bucket: "", region: "auto", publicUrl: "", accessKey: "", secretKey: "" };
 const smtpEmpty = { host: "", port: "587", secure: false, user: "", password: "", fromEmail: "", fromName: "United Tigers", adminEmail: "" };
 const stripeEmpty = { enabled: false, publishableKey: "", secretKey: "", webhookSecret: "", currency: "AED", removeKeys: false };
+type FirebaseValue = { connected?: boolean; projectId?: string; clientEmail?: string };
 type StripeValue = { enabled?: boolean; publishableKey?: string; currency?: string; hasSecretKey?: boolean; hasWebhookSecret?: boolean; mode?: string };
 const bannerEmpty = { mode: "static", title: "THE NEXT GAME", accent: "STARTS HERE", tagline: "BIGGER BOLDER TOGETHER", ctaLabel: "BACK OUR TIGERS", ctaHref: "/team", image: "", roar: "LET’S GO HUNT", showPlayers: true, players: [] as string[] };
 
@@ -29,6 +30,40 @@ export function SiteSettingsPanel() {
   const [stripeSaved, setStripeSaved] = useState({ secret: false, webhook: false, mode: "" });
   const [stripeCheck, setStripeCheck] = useState<{ ok: boolean; message: string } | null>(null);
   const [checkingStripe, setCheckingStripe] = useState(false);
+  const [firebaseSaved, setFirebaseSaved] = useState<FirebaseValue>({});
+  const [firebaseUpload, setFirebaseUpload] = useState<{ text: string; projectId: string; clientEmail: string; fileName: string } | null>(null);
+  const [firebaseRemove, setFirebaseRemove] = useState(false);
+  const [firebaseInput, setFirebaseInput] = useState(0);
+  const [firebaseCheck, setFirebaseCheck] = useState<{ ok: boolean; message: string } | null>(null);
+  const [checkingFirebase, setCheckingFirebase] = useState(false);
+
+  async function checkFirebase() {
+    setCheckingFirebase(true); setFirebaseCheck(null);
+    try {
+      const response = await fetch("/api/v1/admin/firebase/test", { method: "POST" });
+      const result = await response.json().catch(() => null);
+      setFirebaseCheck({ ok: response.ok, message: result?.message || (response.ok ? "Firebase is connected." : "Firebase check failed.") });
+    } catch {
+      setFirebaseCheck({ ok: false, message: "Firebase check failed: the server could not be reached." });
+    } finally {
+      setCheckingFirebase(false);
+    }
+  }
+
+  async function chooseFirebaseFile(file: File | undefined) {
+    setFirebaseCheck(null);
+    if (!file) { setFirebaseUpload(null); return; }
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text) as Record<string, unknown>;
+      if (parsed.type !== "service_account" || typeof parsed.project_id !== "string" || typeof parsed.client_email !== "string" || typeof parsed.private_key !== "string") throw new Error();
+      setFirebaseUpload({ text, projectId: parsed.project_id, clientEmail: parsed.client_email, fileName: file.name });
+      setFirebaseRemove(false);
+    } catch {
+      setFirebaseUpload(null);
+      setFirebaseCheck({ ok: false, message: "This file is not a Firebase service account key. Use Firebase → Project settings → Service accounts → Generate new private key." });
+    }
+  }
 
   async function checkStripe() {
     setCheckingStripe(true); setStripeCheck(null);
@@ -94,6 +129,8 @@ export function SiteSettingsPanel() {
       const stripeValue = stripeRow?.value && typeof stripeRow.value === "object" && !Array.isArray(stripeRow.value) ? stripeRow.value as StripeValue : {};
       setStripe({ ...stripeEmpty, enabled: Boolean(stripeValue.enabled), publishableKey: stripeValue.publishableKey ?? "", currency: (stripeValue.currency || "aed").toUpperCase() });
       setStripeSaved({ secret: Boolean(stripeValue.hasSecretKey), webhook: Boolean(stripeValue.hasWebhookSecret), mode: stripeValue.mode ?? "" });
+      const firebaseRow = rows.find((row) => row.key === "firebase");
+      setFirebaseSaved(firebaseRow?.value && typeof firebaseRow.value === "object" && !Array.isArray(firebaseRow.value) ? firebaseRow.value as FirebaseValue : {});
       const mail = rows.find((row) => row.key === "smtp");
       const mailValue = mail?.value && typeof mail.value === "object" && !Array.isArray(mail.value) ? mail.value as SmtpValue : {};
       const storageValue = storage?.value && typeof storage.value === "object" ? storage.value as StorageValue : {};
@@ -136,7 +173,7 @@ export function SiteSettingsPanel() {
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true); setError(""); setNotice("");
-    const payloads = [
+    const payloads: { key: string; value: unknown }[] = [
       { key: "siteUrl", value: form.siteUrl.trim() },
       { key: "livePollIntervalMs", value: Number(form.livePollIntervalMs) },
       { key: "storage", value: { endpoint: form.endpoint.trim(), bucket: form.bucket.trim(), region: form.region.trim() || "auto", publicUrl: form.publicUrl.trim(), accessKey: form.accessKey, secretKey: form.secretKey } },
@@ -145,6 +182,8 @@ export function SiteSettingsPanel() {
       { key: "smtp", value: { host: smtp.host.trim(), port: Number(smtp.port), secure: smtp.secure, user: smtp.user.trim(), password: smtp.password, fromEmail: smtp.fromEmail.trim(), fromName: smtp.fromName.trim(), adminEmail: smtp.adminEmail.trim() } },
       { key: "stripe", value: { enabled: stripe.removeKeys ? false : stripe.enabled, publishableKey: stripe.publishableKey.trim(), secretKey: stripe.secretKey.trim(), webhookSecret: stripe.webhookSecret.trim(), currency: stripe.currency.trim() || "AED", removeKeys: stripe.removeKeys } },
     ];
+    const firebaseChanged = Boolean(firebaseUpload) || (firebaseRemove && firebaseSaved.connected);
+    if (firebaseChanged) payloads.push({ key: "firebase", value: firebaseRemove ? { remove: true } : { serviceAccount: firebaseUpload!.text } });
     try {
       for (const payload of payloads) {
         const response = await fetch("/api/v1/admin/settings", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
@@ -157,6 +196,14 @@ export function SiteSettingsPanel() {
       setStripeSaved((current) => stripe.removeKeys ? { secret: false, webhook: false, mode: "" } : { secret: current.secret || Boolean(stripe.secretKey.trim()), webhook: current.webhook || Boolean(stripe.webhookSecret.trim()), mode: stripe.secretKey.trim() ? (stripe.secretKey.includes("_live_") ? "live" : "test") : current.mode });
       setStripe((current) => current.removeKeys ? { ...stripeEmpty } : { ...current, secretKey: "", webhookSecret: "" });
       setNotice("Site settings saved. Public pages use these values on the next request.");
+      if (firebaseChanged) {
+        setFirebaseSaved(firebaseRemove ? {} : { connected: true, projectId: firebaseUpload!.projectId, clientEmail: firebaseUpload!.clientEmail });
+        setFirebaseUpload(null);
+        setFirebaseRemove(false);
+        setFirebaseInput((current) => current + 1);
+        if (!firebaseRemove) void checkFirebase();
+        else setFirebaseCheck(null);
+      }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Could not save site settings.");
     } finally {
@@ -219,6 +266,13 @@ export function SiteSettingsPanel() {
       <label className="admin-field"><span className="admin-field-label">Webhook signing secret</span><span className="admin-field-control"><input type="password" value={stripe.webhookSecret} onChange={(event) => setStripe((current) => ({ ...current, webhookSecret: event.target.value, removeKeys: false }))} placeholder={stripeSaved.webhook && !stripe.removeKeys ? "Saved — leave blank to keep" : "whsec_…"} autoComplete="new-password" /></span><span className="admin-field-note">Recommended. In Stripe → Developers → Webhooks, add the endpoint <code>{`${form.siteUrl.replace(/\/$/, "")}/api/v1/shop/stripe/webhook`}</code> with the events checkout.session.completed, checkout.session.expired, checkout.session.async_payment_succeeded and checkout.session.async_payment_failed, then paste its signing secret here.</span></label>
       <label className="admin-field"><span className="admin-field-label">Currency</span><span className="admin-field-control"><input value={stripe.currency} maxLength={3} onChange={(event) => setStripe((current) => ({ ...current, currency: event.target.value.toUpperCase() }))} /></span><span className="admin-field-note">Three-letter code. Shop prices are in AED.</span></label>
       <div className="admin-field"><span className="admin-field-label">Check keys</span><span className="admin-field-control"><button className="admin-primary-btn" type="button" onClick={checkStripe} disabled={checkingStripe || busy}>{checkingStripe ? "CHECKING…" : "CHECK STRIPE KEYS"}</button></span><span className="admin-field-note">{stripeCheck ? <span className={stripeCheck.ok ? "admin-notice" : "form-status form-status-error"}>{stripeCheck.ok ? <Check size={13} /> : null} {stripeCheck.message}</span> : "Uses the saved keys, so save first."}{stripeSaved.secret ? <> <label><input type="checkbox" checked={stripe.removeKeys} onChange={(event) => setStripe((current) => ({ ...current, removeKeys: event.target.checked, enabled: event.target.checked ? false : current.enabled }))} /> Remove saved Stripe keys</label></> : null}</span></div>
+    </div>
+    <div className="admin-panel-header"><h2>Push notifications (Firebase)</h2></div>
+    <p className="admin-storage-note">Notifications from Fans → Push notifications are sent to the app through Firebase. In the Firebase console open the <strong>united-tigers</strong> project, go to Project settings → Service accounts, choose Generate new private key and upload the downloaded JSON file here, then save site settings. The connection is checked straight after saving. The key is stored privately and is never shown again.</p>
+    <div className="admin-editor-grid">
+      <div className="admin-field"><span className="admin-field-label">Status</span><span className="admin-field-control">{firebaseSaved.connected ? <span className="admin-notice"><Check size={13} /> Key saved for project {firebaseSaved.projectId}</span> : <span className="form-status form-status-error">No key saved. Notifications cannot be sent yet.</span>}</span><span className="admin-field-note">{firebaseSaved.clientEmail ? `Service account: ${firebaseSaved.clientEmail}` : ""}</span></div>
+      <label className="admin-field"><span className="admin-field-label">{firebaseSaved.connected ? "Replace service account key" : "Service account key"}</span><span className="admin-field-control"><input key={firebaseInput} type="file" accept="application/json,.json" onChange={(event) => void chooseFirebaseFile(event.target.files?.[0])} /></span><span className="admin-field-note">{firebaseUpload ? <strong>{firebaseUpload.fileName}: project {firebaseUpload.projectId}. Save site settings to use it.</strong> : "The .json file from Firebase."}</span></label>
+      <div className="admin-field"><span className="admin-field-label">Check connection</span><span className="admin-field-control"><button className="admin-primary-btn" type="button" onClick={checkFirebase} disabled={checkingFirebase || busy}>{checkingFirebase ? "CHECKING…" : "CHECK FIREBASE"}</button></span><span className="admin-field-note">{firebaseCheck ? <span className={firebaseCheck.ok ? "admin-notice" : "form-status form-status-error"}>{firebaseCheck.ok ? <Check size={13} /> : null} {firebaseCheck.message}</span> : "Signs in to Firebase with the saved key and validates a test message. Nothing is delivered to phones."}{firebaseSaved.connected ? <> <label><input type="checkbox" checked={firebaseRemove} onChange={(event) => { setFirebaseRemove(event.target.checked); if (event.target.checked) setFirebaseUpload(null); }} /> Remove saved Firebase key</label></> : null}</span></div>
     </div>
     <div className="admin-panel-header"><h2>Homepage banner</h2></div>
     <p className="admin-storage-note">The homepage hero uses one wide picture as its background. The headline sits on the left. Upload a new image here to replace the built-in stadium.</p>

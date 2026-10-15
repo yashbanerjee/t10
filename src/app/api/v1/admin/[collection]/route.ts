@@ -200,7 +200,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const existing = SECRET_SETTING_KEYS.has(parsed.data.key) ? await prisma.siteSetting.findUnique({ where: { key: parsed.data.key } }) : null;
       const normalized = normalizeSiteSetting(parsed.data.key, parsed.data.value, existing?.value);
       if (!normalized.ok) return failure(normalized.message, 400);
-      result = await prisma.siteSetting.upsert({ where: { key: parsed.data.key }, create: { key: parsed.data.key, value: normalized.value as never }, update: { value: normalized.value as never } });
+      result = redactSettingRow(await prisma.siteSetting.upsert({ where: { key: parsed.data.key }, create: { key: parsed.data.key, value: normalized.value as never }, update: { value: normalized.value as never } }));
       auditBody = { key: parsed.data.key, value: redactSettingValue(parsed.data.key, normalized.value) };
     } else return failure("This collection is read-only", 405);
     const entityId = result && typeof result === "object" && "id" in result ? String(result.id) : undefined;

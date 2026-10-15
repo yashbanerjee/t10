@@ -7,7 +7,35 @@ import { LEGAL_SETTING_KEYS, legalPageSchema } from "@/lib/legal-pages";
 export const PRIVATE_SETTING_KEYS = new Set(["storage", "smtp", "stripe", "firebase"]);
 
 /** Settings whose saved secrets are kept when the admin form leaves them blank. */
-export const SECRET_SETTING_KEYS = new Set(["storage", "smtp", "stripe"]);
+export const SECRET_SETTING_KEYS = new Set(["storage", "smtp", "stripe", "firebase"]);
+
+export type FirebaseServiceAccount = { type: "service_account"; project_id: string; client_email: string; private_key: string; [field: string]: unknown };
+
+const firebaseSchema = z.object({
+  serviceAccount: z.union([z.string().max(20_000), z.record(z.string(), z.unknown())]).optional(),
+  remove: z.boolean().optional().default(false),
+});
+
+/** Accepts the downloaded service-account JSON as an object, JSON text or base64 JSON, or a `{ serviceAccount }` wrapper. */
+export function readFirebaseServiceAccount(raw: unknown): FirebaseServiceAccount | null {
+  let value = raw;
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (!text) return null;
+    try {
+      value = JSON.parse(text.startsWith("{") ? text : Buffer.from(text, "base64").toString("utf8"));
+    } catch {
+      return null;
+    }
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const row = value as Record<string, unknown>;
+  if (row.serviceAccount) return readFirebaseServiceAccount(row.serviceAccount);
+  const { type, project_id, client_email, private_key } = row;
+  if (type !== undefined && type !== "service_account") return null;
+  if (typeof project_id !== "string" || !project_id.trim() || typeof client_email !== "string" || !client_email.includes("@") || typeof private_key !== "string" || !private_key.includes("PRIVATE KEY")) return null;
+  return { ...row, type: "service_account", project_id: project_id.trim(), client_email: client_email.trim(), private_key: private_key.replace(/\\n/g, "\n") };
+}
 
 const siteUrlSchema = z.string().trim().url().refine((value) => {
   const url = new URL(value);
@@ -98,6 +126,15 @@ export function normalizeSiteSetting(key: string, value: unknown, previous?: unk
         adminEmail: parsed.data.adminEmail,
         password: parsed.data.password || (clearing ? "" : typeof prior.password === "string" ? prior.password : ""),      },
     };
+  }
+  if (key === "firebase") {
+    const parsed = firebaseSchema.safeParse(value ?? {});
+    if (!parsed.success) return { ok: false, message: "Firebase settings are invalid." };
+    if (parsed.data.remove) return { ok: true, value: {} };
+    if (!parsed.data.serviceAccount) return { ok: true, value: previous && typeof previous === "object" && !Array.isArray(previous) ? previous : {} };
+    const account = readFirebaseServiceAccount(parsed.data.serviceAccount);
+    if (!account) return { ok: false, message: "This is not a Firebase service account key. In Firebase → Project settings → Service accounts, choose Generate new private key and upload that JSON file." };
+    return { ok: true, value: { serviceAccount: account } };
   }
   if (key === "stripe") {
     const parsed = stripeSchema.safeParse(value ?? {});
@@ -217,7 +254,10 @@ const stripeSchema = z.object({
 });
 
 export function redactSettingValue(key: string, value: unknown) {
-  if (key === "firebase") return { connected: Boolean(value) };
+  if (key === "firebase") {
+    const account = readFirebaseServiceAccount(value);
+    return account ? { connected: true, projectId: account.project_id, clientEmail: account.client_email } : { connected: false };
+  }
   if (!value || typeof value !== "object" || Array.isArray(value)) return value;
   const source = value as Record<string, unknown>;
   if (key === "storage") {
