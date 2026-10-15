@@ -10568,6 +10568,20 @@ html[data-mood="royal"] {
   }
 }
 
+@media (min-width: 1181px) and (max-width: 1380px) {
+  .header-slogan {
+    display: none;
+  }
+
+  .desktop-nav {
+    gap: 13px;
+  }
+
+  .desktop-nav a {
+    font-size: 14px;
+  }
+}
+
 @media (max-width: 1180px) {
 
   .desktop-nav,

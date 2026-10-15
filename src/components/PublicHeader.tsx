@@ -19,6 +19,7 @@ const links = [
   ["Fan Zone", "/fan"],
   ["News", "/news"],
   ["Partners", "/partners"],
+  ["Team Management", "/management"],
 ];
 
 const searchPages = [
@@ -33,6 +34,7 @@ const searchPages = [
   ["Tigers Daily", "/updates"],
   ["Player draft", "/draft"],
   ["Partners", "/partners"],
+  ["Team management", "/management"],
   ["Gallery", "/gallery"],
   ["Become a partner", "/become-a-partner"],
   ["About", "/about"],
