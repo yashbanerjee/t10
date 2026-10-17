@@ -1701,7 +1701,7 @@ img {
   height: 34px;
   padding: 3px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, .08);
+  background: radial-gradient(circle at 32% 28%, #8830DB, #460B7D 58%, #310858);
 }
 
 .fixture-crest img {
@@ -3452,7 +3452,8 @@ a.partner-item:hover {
   height: 84px;
   border: 0;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, .16), rgba(255, 255, 255, .04) 60%, transparent 72%);
+  background: radial-gradient(circle at 32% 28%, #8830DB, #460B7D 58%, #310858);
+  box-shadow: 0 0 0 2px #D2A95A, 0 0 24px rgba(201, 23, 126, .45);
 }
 
 .match-centre-score>div>span.team-crest img {
@@ -8984,7 +8985,7 @@ html[data-mood="royal"] {
 }
 
 .crest-row b.has-logo {
-  background: radial-gradient(circle at 32% 28%, #fff, #ebe6f2);
+  background: radial-gradient(circle at 32% 28%, #8830DB, #460B7D 58%, #310858);
 }
 
 .crest-row b.has-logo span {
@@ -9812,7 +9813,11 @@ html[data-mood="royal"] {
   height: 18px;
   margin-right: 6px;
   border-radius: 999px;
-  background: #fff center / 78% no-repeat;
+  background-color: #460B7D;
+  background-image: radial-gradient(circle at 32% 28%, #8830DB, #460B7D 58%, #310858);
+  background-position: center;
+  background-size: 78%;
+  background-repeat: no-repeat;
   vertical-align: -4px;
 }
 
@@ -10025,6 +10030,12 @@ html[data-mood="royal"] {
 .home-partner .partner-form .button {
   justify-content: center;
   width: 100%;
+}
+
+.partner-request {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
 }
 
 .brochure-cover {

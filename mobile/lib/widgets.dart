@@ -545,8 +545,8 @@ class MediaBadge extends StatelessWidget {
   }
 }
 
-/// Team badge as on the website's match cards: our gold tiger on a purple disc, rival crests on white.
-/// [logo] is a full URL; without one the rival shows its short name on purple.
+/// Team badge as on the website's match cards: every crest sits on the same purple disc.
+/// [logo] is a full URL; without one the rival shows its short name on that disc.
 class TeamCrest extends StatelessWidget {
   const TeamCrest({super.key, this.size = 84, this.ours = false, this.logo, this.label = ''});
   final double size;
@@ -561,7 +561,7 @@ class TeamCrest extends StatelessWidget {
     return Container(
       width: box,
       height: box,
-      padding: EdgeInsets.all(box * (ours ? 0.19 : 0.13)),
+      padding: EdgeInsets.all(box * 0.19),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -573,7 +573,7 @@ class TeamCrest extends StatelessWidget {
           ? Image.asset('assets/brand/tiger-gold.png', fit: BoxFit.contain)
           : logo == null
               ? initials
-              : ClipOval(child: Image.network(logo!, fit: BoxFit.contain, errorBuilder: (_, _, _) => initials)),
+              : Image.network(logo!, fit: BoxFit.contain, errorBuilder: (_, _, _) => initials),
     );
   }
 }

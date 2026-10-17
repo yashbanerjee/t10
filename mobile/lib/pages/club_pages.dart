@@ -884,6 +884,25 @@ class _BecomePartnerPageState extends State<BecomePartnerPage> {
                     ),
                   ),
                 const SectionTitle('Get the brochure'),
+                AspectRatio(
+                  aspectRatio: 900 / 506,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        RemoteImage(ClubScope.of(context).api.media('/brand/partner-brochure-cover.webp'), height: double.infinity, radius: 0),
+                        const DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x00000000), Color(0x00000000), Color(0xCC1C0432)], stops: [0, 0.55, 1]),
+                          ),
+                        ),
+                        const Positioned(left: 12, bottom: 12, child: _GetBrochureButton()),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
                 if (sent)
                   ClubCard(
                     highlight: true,

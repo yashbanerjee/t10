@@ -1,4 +1,4 @@
-package com.united.tigers
+package com.vedha.united.tigers
 
 import android.content.ActivityNotFoundException
 import android.content.Intent

@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import Image from "next/image";
+import { Download } from "lucide-react";
 import { PartnerRequestForm } from "@/components/PartnerBrochure";
+import { getPartnerBrochureUrl } from "@/lib/partner-brochure";
 
 export const metadata: Metadata = {
   title: "Become a partner",
@@ -14,7 +17,8 @@ const points = [
   { label: "THE BROCHURE", text: "Send your name, email and mobile number. The brochure downloads here, and a copy of the request goes to your inbox and to the club." },
 ];
 
-export default function BecomeAPartnerPage() {
+export default async function BecomeAPartnerPage() {
+  const brochureUrl = await getPartnerBrochureUrl();
   return <div className="inner-page">
     <section className="inner-hero">
       <div className="wrap">
@@ -33,7 +37,13 @@ export default function BecomeAPartnerPage() {
             {points.map((point) => <li key={point.label}><span>{point.label}</span><strong>{point.text}</strong></li>)}
           </ul>
         </aside>
-        <PartnerRequestForm />
+        <div className="partner-request">
+          {brochureUrl && <a className="brochure-cover" href={brochureUrl} download="United-Tigers-Partnership-Brochure.pdf" aria-label="Download the partnership brochure (PDF)">
+            <Image src="/brand/partner-brochure-cover.webp" alt="" width={900} height={506} sizes="(max-width: 900px) 100vw, 50vw" />
+            <span className="brochure-cover-action"><Download size={18} /> DOWNLOAD BROCHURE</span>
+          </a>}
+          <PartnerRequestForm />
+        </div>
       </div>
     </section>
   </div>;

@@ -1271,7 +1271,7 @@ Player? _faceFor(String label, List<Player> players) {
   return null;
 }
 
-/// Team badge for the next-match card: our gold tiger on a purple disc, rivals' crests on white, as on the website.
+/// Team badge for the next-match card. Both crests sit on the same purple disc.
 class _Crest extends StatelessWidget {
   const _Crest({
     required this.name,
