@@ -337,16 +337,25 @@ class _ClubNavBar extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: goldSurface,
-                      border: Border.all(
-                        color: const Color(0xFF2B074D),
-                        width: 3,
+                      gradient: const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0xFFFFF6D4),
+                          Color(0xFFF4DB96),
+                          Color(0xFFE2B85C),
+                        ],
                       ),
+                      border: Border.all(color: const Color(0xFFFFF8E4), width: 1.5),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFEEC873)
-                              .withValues(alpha: 0.55),
-                          blurRadius: 18,
+                          color: const Color(0xFFF4DB96).withValues(alpha: 0.8),
+                          blurRadius: 16,
+                        ),
+                        BoxShadow(
+                          color: pink.withValues(alpha: 0.5),
+                          blurRadius: 14,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),

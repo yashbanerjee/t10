@@ -210,7 +210,7 @@ class MorePage extends StatelessWidget {
                 crossAxisCount: 2,
                 mainAxisSpacing: 10,
                 crossAxisSpacing: 10,
-                mainAxisExtent: MediaQuery.textScalerOf(context).scale(70),
+                mainAxisExtent: MediaQuery.textScalerOf(context).scale(78),
               ),
               children: [for (final item in club) _MenuTile(item: item)],
             ),
@@ -316,17 +316,15 @@ class _FeatureTile extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          item.title.toUpperCase(),
-                          maxLines: 1,
-                          style: displayStyle(
-                            18,
-                            color: Colors.white,
-                            height: 1.1,
-                          ),
+                      Text(
+                        item.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          height: 1.15,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -336,8 +334,9 @@ class _FeatureTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Color(0xFFFBE3F1),
-                          fontSize: 11,
+                          fontSize: 11.5,
                           height: 1.2,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -365,8 +364,8 @@ class _MenuTile extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 38,
-              height: 38,
+              width: 34,
+              height: 34,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -376,29 +375,36 @@ class _MenuTile extends StatelessWidget {
               child: ShaderMask(
                 blendMode: BlendMode.srcIn,
                 shaderCallback: (bounds) => goldSurface.createShader(bounds),
-                child: FaIcon(item.icon, size: 16),
+                child: FaIcon(item.icon, size: 15),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.title.toUpperCase(),
+                    item.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: displayStyle(15, color: Colors.white, height: 1.1),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      height: 1.15,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     item.subtitle,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: Color(0xFFBDAED0),
-                      fontSize: 11,
+                      color: Color(0xFFD9CCE6),
+                      fontSize: 11.5,
+                      height: 1.2,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],

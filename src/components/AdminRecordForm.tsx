@@ -11,7 +11,23 @@ import { allT20FormKeys, flattenCareer, t20FormKeys } from "@/lib/career-record"
 import { flattenLinks } from "@/lib/player-links";
 import { describeIssues } from "@/lib/admin-validation";
 
-const inputDate = (value: unknown) => { if (!value) return ""; const date = new Date(String(value)); return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 16); };
+/** Match and publish times are Abu Dhabi time (GST, UTC+4, no daylight saving), not the editor's laptop clock. */
+const clubTimeZone = "Asia/Dubai";
+const inputDate = (value: unknown) => {
+  if (!value) return "";
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: clubTimeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(date);
+  const pick = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
+  const hour = pick("hour") === "24" ? "00" : pick("hour");
+  return `${pick("year")}-${pick("month")}-${pick("day")}T${hour}:${pick("minute")}`;
+};
+const clubInstant = (value: string) => {
+  const match = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})/.exec(value);
+  if (!match) return null;
+  const date = new Date(`${match[1]}:00+04:00`);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+};
 const inputDay = (value: unknown) => { if (!value) return ""; const date = new Date(String(value)); return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10); };
 const bound = (value: number | string | undefined) => value === "today" ? new Date().toISOString().slice(0, 10) : value;
 /** Browser-side limits that mirror the API rules, so invalid values are caught before the request is sent. */
@@ -134,7 +150,7 @@ export function AdminRecordForm({ section, recordId }: { section: string; record
       if (field.type === "checkbox") body[field.key] = Boolean(value);
       else if (field.type === "number") body[field.key] = value === "" ? null : Number(value);
       else if (field.type === "day") body[field.key] = value === "" ? null : String(value);
-      else if (field.type === "date") body[field.key] = value ? new Date(String(value)).toISOString() : null;
+      else if (field.type === "date") body[field.key] = value ? clubInstant(String(value)) : null;
       else if (field.type === "select" || field.type === "url" || field.type === "file") body[field.key] = value === "" ? null : value;
       else if (!field.required && value === "") body[field.key] = null;
       else body[field.key] = value;

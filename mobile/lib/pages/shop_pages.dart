@@ -198,8 +198,20 @@ class _ProductPageState extends State<ProductPage> {
             Wrap(spacing: 8, runSpacing: 8, children: [for (final item in sizes) _choice(item.size, item.size == size, () => setState(() => size = item.size))]),
           ],
           if (selected != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text(selected.stock < 1 ? 'Sold out' : '${selected.stock} available', style: const TextStyle(color: goldLight, fontWeight: FontWeight.w700))),
-          const SizedBox(height: 20),
-          FilledButton(
+        ],
+      ),
+      bottomNavigationBar: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0x00390966), Color(0xF2390966), Color(0xFF390966)],
+            stops: [0, 0.28, 1],
+          ),
+        ),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16, 14, 16, 12 + MediaQuery.viewPaddingOf(context).bottom),
+          child: FilledButton(
             style: goldButtonStyle(),
             onPressed: selected == null || selected.stock < 1
                 ? null
@@ -219,7 +231,7 @@ class _ProductPageState extends State<ProductPage> {
                   },
             child: const Text('ADD TO BAG'),
           ),
-        ],
+        ),
       ),
     );
   }

@@ -26,7 +26,7 @@ class TeamPage extends StatelessWidget {
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
                   sliver: SliverGrid(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: MediaQuery.sizeOf(context).shortestSide >= 600 ? 4 : 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.66),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: MediaQuery.sizeOf(context).shortestSide >= 600 ? 4 : 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.62),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => _PlayerCard(player: api.catalog.players[index]),
                       childCount: api.catalog.players.length,
@@ -66,7 +66,7 @@ class _PlayerCard extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF8A1BA6), Color(0xFF4B0C66), Color(0xFF2A0750)]))),
-                  RemoteImage(api.media(player.profileImage), height: 200, radius: 0),
+                  RemoteImage(api.media(player.profileImage), height: double.infinity, radius: 0, alignment: Alignment.topCenter),
                   const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0xE61C0432)], stops: [0.55, 1]))),
                   Positioned(right: 10, top: 6, child: GoldText('${player.jerseyNumber ?? 'UT'}', style: displayStyle(30))),
                   if (special) Positioned(left: 8, top: 8, child: MediaBadge(label: player.badge)),
@@ -75,14 +75,17 @@ class _PlayerCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(player.fullName.toUpperCase(), maxLines: 2, overflow: TextOverflow.ellipsis, style: displayStyle(17, color: Colors.white, height: 1)),
-                const SizedBox(height: 4),
-                Text(roleLabel(player.role), style: const TextStyle(color: goldLight, fontSize: 11.5, fontWeight: FontWeight.w800, letterSpacing: 0.6)),
-              ],
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+            child: SizedBox(
+              height: 52,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(player.fullName.toUpperCase(), maxLines: 2, overflow: TextOverflow.ellipsis, style: displayStyle(15, color: Colors.white, height: 1.05)),
+                  const Spacer(),
+                  Text(roleLabel(player.role), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: goldLight, fontSize: 11.5, fontWeight: FontWeight.w800, letterSpacing: 0.6)),
+                ],
+              ),
             ),
           ),
         ],
