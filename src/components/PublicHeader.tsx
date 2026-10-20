@@ -35,6 +35,7 @@ const searchPages = [
   ["Player draft", "/draft"],
   ["Partners", "/partners"],
   ["Team management", "/management"],
+  ["Know the team", "/know-the-team"],
   ["Gallery", "/gallery"],
   ["Become a partner", "/become-a-partner"],
   ["About", "/about"],

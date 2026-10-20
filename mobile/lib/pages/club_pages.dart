@@ -244,6 +244,173 @@ const _staffAreas = [
   ('MEDIA', 'Media & content'),
 ];
 
+const _knowGroups = [
+  ('Owners', ['Zaffir Yasin Chowdhury', 'Zainab Zehra Rizvi']),
+  ('Coaching', ['Atul Wassan', 'Yasir Arafat', 'Mohsin Sheikh', 'Umar Gul']),
+];
+
+String _personKey(String name) => name.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
+
+class _KnowPerson {
+  const _KnowPerson({required this.name, required this.role, this.headline, this.intro, this.image});
+  final String name;
+  final String role;
+  final String? headline;
+  final String? intro;
+  final String? image;
+}
+
+/// Owners and coaching staff, with the pictures and introductions already published for the club.
+class KnowTeamPage extends StatefulWidget {
+  const KnowTeamPage({super.key});
+
+  @override
+  State<KnowTeamPage> createState() => _KnowTeamPageState();
+}
+
+class _KnowTeamPageState extends State<KnowTeamPage> {
+  Future<List<ClubOwner>>? _owners;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _owners ??= ClubScope.of(context).api.fetchOwners();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final api = ClubScope.of(context).api;
+    return Scaffold(
+      appBar: const ClubAppBar('Know the team'),
+      body: FutureBuilder<List<ClubOwner>>(
+        future: _owners,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: EmptyPanel(title: 'Could not load this page', message: _clean(snapshot.error!), action: 'Try again', onAction: () => setState(() => _owners = api.fetchOwners())),
+            );
+          }
+          if (!snapshot.hasData) return const LoadingView(hero: false, cards: 4);
+          final owners = snapshot.data!;
+          return AnimatedBuilder(
+          animation: api,
+          builder: (context, _) {
+            final ownersByName = {for (final owner in owners) _personKey(owner.name): owner};
+            final staffByName = {for (final member in api.catalog.staff) _personKey(member.fullName): member};
+            final sections = [
+              for (final (title, names) in _knowGroups)
+                (
+                  title,
+                  [
+                    for (final name in names)
+                      if (title == 'Owners' && ownersByName[_personKey(name)] != null)
+                        _KnowPerson(
+                          name: ownersByName[_personKey(name)]!.name,
+                          role: ownersByName[_personKey(name)]!.title,
+                          headline: ownersByName[_personKey(name)]!.headline,
+                          intro: ownersByName[_personKey(name)]!.summary,
+                          image: ownersByName[_personKey(name)]!.image,
+                        )
+                      else if (title != 'Owners' && staffByName[_personKey(name)] != null)
+                        _KnowPerson(
+                          name: staffByName[_personKey(name)]!.fullName,
+                          role: staffByName[_personKey(name)]!.title,
+                          intro: staffByName[_personKey(name)]!.bio,
+                          image: staffByName[_personKey(name)]!.profileImage,
+                        ),
+                  ],
+                ),
+            ].where((section) => section.$2.isNotEmpty).toList();
+            return RefreshIndicator(
+              color: pink,
+              onRefresh: () async {
+                await api.refresh();
+                final next = api.fetchOwners();
+                if (mounted) setState(() => _owners = next);
+                await next;
+              },
+              child: ListView(
+                scrollCacheExtent: pageCacheExtent,
+                padding: EdgeInsets.only(bottom: 28 + navClearance(context)),
+                children: [
+                  const PageHero(eyebrow: 'The club', title: 'Know the\nteam.', intro: 'The owners and coaching staff of United Tigers.'),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                    child: sections.isEmpty
+                        ? const Padding(padding: EdgeInsets.only(top: 14), child: EmptyPanel(title: 'The team will appear here soon.'))
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              for (final (title, people) in sections) ...[
+                                SectionTitle(title),
+                                for (final person in people) Padding(padding: const EdgeInsets.only(bottom: 12), child: _KnowCard(person: person)),
+                              ],
+                            ],
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    ),
+    );
+  }
+}
+
+class _KnowCard extends StatelessWidget {
+  const _KnowCard({required this.person});
+  final _KnowPerson person;
+
+  @override
+  Widget build(BuildContext context) {
+    final api = ClubScope.of(context).api;
+    final photo = 118 * clubScale(context);
+    return ClubCard(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: SizedBox(
+              width: photo,
+              height: photo * 1.25,
+              child: person.image == null
+                  ? DecoratedBox(
+                      decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF460B7D), Color(0xFF2B074D)])),
+                      child: Padding(padding: const EdgeInsets.all(22), child: Opacity(opacity: 0.75, child: Image.asset('assets/brand/tiger-gold.png', fit: BoxFit.contain))),
+                    )
+                  : Image.network(api.media(person.image), fit: BoxFit.cover, alignment: Alignment.topCenter, errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFF2B074D))),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(person.role.toUpperCase(), style: const TextStyle(color: goldLight, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                const SizedBox(height: 4),
+                Text(person.name.toUpperCase(), style: displayStyle(22, color: Colors.white, height: 1)),
+                if (person.headline != null) ...[
+                  const SizedBox(height: 8),
+                  Text(person.headline!, style: const TextStyle(color: goldLight, fontSize: 14, fontWeight: FontWeight.w800, height: 1.35)),
+                ],
+                if (person.intro != null) ...[
+                  const SizedBox(height: 8),
+                  Text(person.intro!, style: const TextStyle(color: Color(0xFFE9E1F2), fontSize: 14.5, height: 1.5)),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class ManagementPage extends StatelessWidget {
   const ManagementPage({super.key});
 

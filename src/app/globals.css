@@ -4278,6 +4278,89 @@ body:has(.login-page) .site-footer {
   text-transform: uppercase;
 }
 
+.know-section {
+  margin-top: 56px;
+}
+
+.know-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.know-card {
+  display: grid;
+  grid-template-columns: 148px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(70, 11, 125, .55), rgba(43, 7, 77, .78));
+}
+
+.know-photo {
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  border-radius: 14px;
+  background: radial-gradient(circle at 30% 20%, rgba(201, 23, 126, .35), transparent 50%), linear-gradient(160deg, #460B7D, #2B074D);
+}
+
+.know-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.know-photo span {
+  display: grid;
+  height: 100%;
+  place-items: center;
+}
+
+.know-photo span img {
+  width: 52%;
+  height: auto;
+  object-fit: contain;
+  opacity: .85;
+}
+
+.know-copy {
+  min-width: 0;
+}
+
+.know-copy h3 {
+  margin: 8px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(24px, 2.2vw, 34px);
+  line-height: .95;
+  overflow-wrap: break-word;
+  text-transform: uppercase;
+}
+
+.know-headline {
+  margin: 10px 0 0;
+  color: var(--primary);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.know-intro {
+  margin: 10px 0 0;
+  color: #ddd4e6;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+@media (max-width: 720px) {
+  .know-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 860px) {
   .owner-profile {
     grid-template-columns: 1fr;
