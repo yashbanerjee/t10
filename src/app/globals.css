@@ -3209,23 +3209,6 @@ a.partner-item:hover {
   color: var(--text);
 }
 
-.team-roster-note {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 25px;
-  margin-bottom: 30px;
-  padding: 17px 20px;
-  border: 1px solid var(--border);
-  background: #2B074D;
-}
-
-.team-roster-note p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-}
-
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -6019,12 +6002,6 @@ body:has(.login-page) .site-footer {
   .record-grid,
   .about-pillars {
     grid-template-columns: 1fr;
-  }
-
-  .team-roster-note {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
   }
 
   .admin-field-control>input[type="file"] {
@@ -11345,11 +11322,6 @@ html[data-mood="royal"] {
 
   .page-intro {
     margin-bottom: 28px;
-  }
-
-  .team-roster-note {
-    margin-bottom: 20px;
-    padding: 14px 16px;
   }
 
   .inner-hero,

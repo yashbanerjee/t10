@@ -12,7 +12,6 @@ export default async function TeamPage() {
   return <div className="inner-page">
     <section className="inner-hero"><div className="wrap"><span className="eyebrow"><i className="eyebrow-dot" />UNITED TIGERS · 2026</span><h1>THE SQUAD</h1><p>Meet the names announced for the Tigers’ first season. Player roles, numbers and biographies will be added as confirmed by the club.</p></div></section>
     <section className="section"><div className="wrap">
-      <div className="team-roster-note"><span className="eyebrow"><i className="eyebrow-dot" />ANNOUNCED NAMES</span><p>Player profile details are being completed. Each profile is ready for official photography, roles and statistics from the CMS.</p></div>
       {players.length ? <div className="player-grid">{players.map((player) => <PlayerCard key={player.id} player={player} />)}</div> : <EmptyState title="Squad updates are coming" description="The official squad will be shared here as it is confirmed." />}
       <div className="staff-section"><Link className="button button-outline" href="/management">MEET THE TEAM MANAGEMENT <ArrowUpRight size={15} /></Link></div>
     </div></section>
