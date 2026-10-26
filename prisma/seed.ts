@@ -3,6 +3,38 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+const mirHamzaStory = `Abu Dhabi, UAE: United Tigers have officially secured the services of Pakistan international left-arm fast bowler Mir Hamza for the upcoming 2026 Abu Dhabi T10 League, adding valuable international experience, quality and firepower to their bowling department.
+
+The experienced Pakistani pacer, known for his exceptional control, ability to swing the ball and disciplined bowling, is set to bring a new dimension to the United Tigers' pace attack in the fast-paced T10 format.
+
+Having represented Pakistan at the international level and established himself as a reliable performer in domestic cricket, Mir Hamza arrives with a strong reputation for troubling batters through his accuracy, movement and intelligent variations.
+
+His inclusion is expected to provide United Tigers with an important bowling option, particularly during the crucial powerplay overs, where early breakthroughs can significantly influence the outcome of a T10 contest.
+
+The signing also underlines United Tigers' ambition to assemble a competitive and well-balanced squad capable of challenging the strongest franchises in the tournament.
+
+With Pakistan star Fakhar Zaman leading the side, the addition of Mir Hamza further strengthens the franchise's Pakistani contingent and adds another experienced campaigner to its ranks.
+
+United Tigers will be looking to make a strong impression in the 2026 Abu Dhabi T10 League, combining international talent, emerging players and an aggressive brand of cricket.
+
+A new challenge awaits. A new Tiger joins the hunt.
+
+**Welcome to United Tigers, Mir Hamza!** 🐅🇵🇰
+
+The journey starts now. The roar begins in Abu Dhabi. Let's Go Hunt!`;
+
+const joeClarkeStory = `United Tigers have officially secured the services of explosive English batter Joe Clarke for the upcoming Abu Dhabi T10 League 2026.
+
+Renowned for his fearless stroke play, aggressive intent and match-winning ability, Clarke brings international franchise cricket experience and serious firepower to the Tigers' batting line-up.
+
+United Tigers Head Coach Yasir Arafat expressed his excitement over the signing, stating:
+
+> "Joe Clarke is exactly the kind of explosive batter we want in our squad. His aggressive approach, experience and ability to dominate bowling attacks make him a valuable addition. We believe he will play a crucial role in our campaign this season."
+
+**English firepower. Fearless cricket. The Tigers are ready to roar!** 🐅🏏
+
+#UnitedTigers #JoeClarke #AbuDhabiT10 #LetsGoHunt`;
+
 const roster = [
   { fullName: "Fakhar Zaman", slug: "fakhar-zaman", country: "Pakistan", isIconPlayer: true, displayOrder: 1 },
   { fullName: "Iftikhar Ahmed", slug: "iftikhar-ahmed", displayOrder: 2 },
@@ -69,6 +101,76 @@ async function main() {
   await prisma.bowlingPerformance.create({ data: { inningsId: inningsTwo.id, playerId: demoPlayer.id, overs: 2, runs: 15, wickets: 2 } });
   await prisma.fieldingPerformance.create({ data: { playerId: demoPlayer.id, matchId: firstDemoMatch.id, catches: 1 } });
 
+  await prisma.newsArticle.upsert({
+    where: { slug: "mir-hamza-joins-united-tigers" },
+    update: {
+      title: "United Tigers Strengthen Bowling Attack with Signing of Pakistan International Mir Hamza for Abu Dhabi T10 2026",
+      excerpt: "United Tigers have officially secured the services of Pakistan international left-arm fast bowler Mir Hamza for the upcoming 2026 Abu Dhabi T10 League, adding valuable international experience, quality and firepower to their bowling department.",
+      content: mirHamzaStory,
+      category: "TEAM NEWS",
+      authorName: "United Tigers",
+      coverImage: "/news/mir-hamza-signing.jpg",
+      ogImage: "/news/mir-hamza-signing.jpg",
+      seoTitle: "Mir Hamza joins United Tigers for Abu Dhabi T10 2026",
+      seoDescription: "Pakistan international Mir Hamza joins United Tigers for the 2026 Abu Dhabi T10, adding control, swing and powerplay firepower to the pace attack.",
+      status: "PUBLISHED",
+      publishedAt: new Date("2026-10-26T06:00:00.000Z"),
+      isFeatured: true,
+      isDemo: false,
+    },
+    create: {
+      id: "news_mir_hamza_signing",
+      title: "United Tigers Strengthen Bowling Attack with Signing of Pakistan International Mir Hamza for Abu Dhabi T10 2026",
+      slug: "mir-hamza-joins-united-tigers",
+      excerpt: "United Tigers have officially secured the services of Pakistan international left-arm fast bowler Mir Hamza for the upcoming 2026 Abu Dhabi T10 League, adding valuable international experience, quality and firepower to their bowling department.",
+      content: mirHamzaStory,
+      category: "TEAM NEWS",
+      authorName: "United Tigers",
+      coverImage: "/news/mir-hamza-signing.jpg",
+      ogImage: "/news/mir-hamza-signing.jpg",
+      seoTitle: "Mir Hamza joins United Tigers for Abu Dhabi T10 2026",
+      seoDescription: "Pakistan international Mir Hamza joins United Tigers for the 2026 Abu Dhabi T10, adding control, swing and powerplay firepower to the pace attack.",
+      status: "PUBLISHED",
+      publishedAt: new Date("2026-10-26T06:00:00.000Z"),
+      isFeatured: true,
+      isDemo: false,
+    },
+  });
+  await prisma.newsArticle.upsert({
+    where: { slug: "joe-clarke-joins-united-tigers" },
+    update: {
+      title: "United Tigers Sign English Powerhouse Joe Clarke for Abu Dhabi T10 2026",
+      excerpt: "United Tigers have officially secured the services of explosive English batter Joe Clarke for the upcoming Abu Dhabi T10 League 2026.",
+      content: joeClarkeStory,
+      category: "TEAM NEWS",
+      authorName: "United Tigers",
+      coverImage: "/news/joe-clarke-signing.jpg",
+      ogImage: "/news/joe-clarke-signing.jpg",
+      seoTitle: "Joe Clarke joins United Tigers for Abu Dhabi T10 2026",
+      seoDescription: "Explosive English batter Joe Clarke joins United Tigers for the 2026 Abu Dhabi T10, adding fearless stroke play to the batting line-up.",
+      status: "PUBLISHED",
+      publishedAt: new Date("2026-10-26T07:30:00.000Z"),
+      isFeatured: true,
+      isDemo: false,
+    },
+    create: {
+      id: "news_joe_clarke_signing",
+      title: "United Tigers Sign English Powerhouse Joe Clarke for Abu Dhabi T10 2026",
+      slug: "joe-clarke-joins-united-tigers",
+      excerpt: "United Tigers have officially secured the services of explosive English batter Joe Clarke for the upcoming Abu Dhabi T10 League 2026.",
+      content: joeClarkeStory,
+      category: "TEAM NEWS",
+      authorName: "United Tigers",
+      coverImage: "/news/joe-clarke-signing.jpg",
+      ogImage: "/news/joe-clarke-signing.jpg",
+      seoTitle: "Joe Clarke joins United Tigers for Abu Dhabi T10 2026",
+      seoDescription: "Explosive English batter Joe Clarke joins United Tigers for the 2026 Abu Dhabi T10, adding fearless stroke play to the batting line-up.",
+      status: "PUBLISHED",
+      publishedAt: new Date("2026-10-26T07:30:00.000Z"),
+      isFeatured: true,
+      isDemo: false,
+    },
+  });
   await prisma.newsArticle.upsert({ where: { slug: "sample-season-preview" }, update: { isDemo: true }, create: { title: "A new chapter begins", slug: "sample-season-preview", excerpt: "Sample article content. Replace this with approved franchise news before publishing.", content: "This is sample CMS content for development. Editors can replace the copy, category and imagery from the admin panel.", category: "TEAM NEWS", authorName: "United Tigers", status: "PUBLISHED", publishedAt: new Date("2026-10-01T12:00:00Z"), isFeatured: true, isDemo: true } });
   await prisma.newsArticle.upsert({ where: { slug: "sample-matchday-guide" }, update: { isDemo: true }, create: { title: "Match-day guide — sample", slug: "sample-matchday-guide", excerpt: "A sample editorial card for match previews and team stories.", content: "Replace this sample copy with confirmed match-day details.", category: "SAMPLE", authorName: "United Tigers", status: "PUBLISHED", publishedAt: new Date("2026-09-28T12:00:00Z"), isDemo: true } });
   await prisma.teamUpdate.upsert({ where: { slug: "sample-training-note" }, update: { isDemo: true }, create: { title: "Training notes — sample", slug: "sample-training-note", description: "Sample content for daily team updates. Publish real club updates from the admin panel.", content: "Development-only sample update.", category: "TRAINING", publishedAt: new Date("2026-10-01T17:00:00Z"), isPublished: true, isDemo: true } });
