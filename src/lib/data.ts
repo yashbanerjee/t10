@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { mergePublishedNews, publishedNewsBySlug } from "@/lib/published-news";
 import { PRIVATE_SETTING_KEYS } from "@/lib/site-settings";
 import { LEAGUE_TEAMS, findLeagueTeam } from "@/lib/league";
 import { getTeams } from "@/lib/teams";
@@ -45,18 +46,21 @@ function demoAsset(value: unknown) {
 }
 
 export async function getNews() {
+  const now = new Date();
   try {
-    return await prisma.newsArticle.findMany({ where: { status: "PUBLISHED", isDemo: false, publishedAt: { lte: new Date() } }, orderBy: { publishedAt: "desc" }, take: 12 });
+    const rows = await prisma.newsArticle.findMany({ where: { status: "PUBLISHED", isDemo: false, publishedAt: { lte: now } }, orderBy: { publishedAt: "desc" } });
+    return mergePublishedNews(rows, now);
   } catch {
-    return [];
+    return mergePublishedNews([], now);
   }
 }
 
 export async function getNewsBySlug(slug: string) {
   try {
-    return await prisma.newsArticle.findFirst({ where: { slug, status: "PUBLISHED", isDemo: false } });
+    const article = await prisma.newsArticle.findFirst({ where: { slug, status: "PUBLISHED", isDemo: false } });
+    return article ?? publishedNewsBySlug(slug);
   } catch {
-    return null;
+    return publishedNewsBySlug(slug);
   }
 }
 
