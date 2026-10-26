@@ -19,7 +19,7 @@ United Tigers will be looking to make a strong impression in the 2026 Abu Dhabi 
 
 A new challenge awaits. A new Tiger joins the hunt.
 
-**Welcome to United Tigers, Mir Hamza!** 🐅🇵🇰
+Welcome to United Tigers, Mir Hamza! 🐅🇵🇰
 
 The journey starts now. The roar begins in Abu Dhabi. Let's Go Hunt!`;
 
