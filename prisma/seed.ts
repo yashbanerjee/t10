@@ -23,6 +23,18 @@ A new challenge awaits. A new Tiger joins the hunt.
 
 The journey starts now. The roar begins in Abu Dhabi. Let's Go Hunt!`;
 
+const joeClarkeStory = `United Tigers have officially secured the services of explosive English batter Joe Clarke for the upcoming Abu Dhabi T10 League 2026.
+
+Renowned for his fearless stroke play, aggressive intent and match-winning ability, Clarke brings international franchise cricket experience and serious firepower to the Tigers' batting line-up.
+
+United Tigers Head Coach Yasir Arafat expressed his excitement over the signing, stating:
+
+> "Joe Clarke is exactly the kind of explosive batter we want in our squad. His aggressive approach, experience and ability to dominate bowling attacks make him a valuable addition. We believe he will play a crucial role in our campaign this season."
+
+**English firepower. Fearless cricket. The Tigers are ready to roar!** 🐅🏏
+
+#UnitedTigers #JoeClarke #AbuDhabiT10 #LetsGoHunt`;
+
 const roster = [
   { fullName: "Fakhar Zaman", slug: "fakhar-zaman", country: "Pakistan", isIconPlayer: true, displayOrder: 1 },
   { fullName: "Iftikhar Ahmed", slug: "iftikhar-ahmed", displayOrder: 2 },
@@ -120,6 +132,41 @@ async function main() {
       seoDescription: "Pakistan international Mir Hamza joins United Tigers for the 2026 Abu Dhabi T10, adding control, swing and powerplay firepower to the pace attack.",
       status: "PUBLISHED",
       publishedAt: new Date("2026-10-26T06:00:00.000Z"),
+      isFeatured: true,
+      isDemo: false,
+    },
+  });
+  await prisma.newsArticle.upsert({
+    where: { slug: "joe-clarke-joins-united-tigers" },
+    update: {
+      title: "United Tigers Sign English Powerhouse Joe Clarke for Abu Dhabi T10 2026",
+      excerpt: "United Tigers have officially secured the services of explosive English batter Joe Clarke for the upcoming Abu Dhabi T10 League 2026.",
+      content: joeClarkeStory,
+      category: "TEAM NEWS",
+      authorName: "United Tigers",
+      coverImage: "/news/joe-clarke-signing.jpg",
+      ogImage: "/news/joe-clarke-signing.jpg",
+      seoTitle: "Joe Clarke joins United Tigers for Abu Dhabi T10 2026",
+      seoDescription: "Explosive English batter Joe Clarke joins United Tigers for the 2026 Abu Dhabi T10, adding fearless stroke play to the batting line-up.",
+      status: "PUBLISHED",
+      publishedAt: new Date("2026-10-26T07:30:00.000Z"),
+      isFeatured: true,
+      isDemo: false,
+    },
+    create: {
+      id: "news_joe_clarke_signing",
+      title: "United Tigers Sign English Powerhouse Joe Clarke for Abu Dhabi T10 2026",
+      slug: "joe-clarke-joins-united-tigers",
+      excerpt: "United Tigers have officially secured the services of explosive English batter Joe Clarke for the upcoming Abu Dhabi T10 League 2026.",
+      content: joeClarkeStory,
+      category: "TEAM NEWS",
+      authorName: "United Tigers",
+      coverImage: "/news/joe-clarke-signing.jpg",
+      ogImage: "/news/joe-clarke-signing.jpg",
+      seoTitle: "Joe Clarke joins United Tigers for Abu Dhabi T10 2026",
+      seoDescription: "Explosive English batter Joe Clarke joins United Tigers for the 2026 Abu Dhabi T10, adding fearless stroke play to the batting line-up.",
+      status: "PUBLISHED",
+      publishedAt: new Date("2026-10-26T07:30:00.000Z"),
       isFeatured: true,
       isDemo: false,
     },
