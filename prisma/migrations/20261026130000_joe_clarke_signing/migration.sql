@@ -27,11 +27,7 @@ Renowned for his fearless stroke play, aggressive intent and match-winning abili
 
 United Tigers Head Coach Yasir Arafat expressed his excitement over the signing, stating:
 
-> "Joe Clarke is exactly the kind of explosive batter we want in our squad. His aggressive approach, experience and ability to dominate bowling attacks make him a valuable addition. We believe he will play a crucial role in our campaign this season."
-
-**English firepower. Fearless cricket. The Tigers are ready to roar!** 🐅🏏
-
-#UnitedTigers #JoeClarke #AbuDhabiT10 #LetsGoHunt$story$,
+> "Joe Clarke is exactly the kind of explosive batter we want in our squad. His aggressive approach, experience and ability to dominate bowling attacks make him a valuable addition. We believe he will play a crucial role in our campaign this season."$story$,
     '/news/joe-clarke-signing.jpg',
     'United Tigers',
     'TEAM NEWS',
