@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { failure, success } from "@/lib/api";
 import { getCountries } from "@/lib/countries";
+import { getPaymentMethods, paymentMethodsAvailable } from "@/lib/payments";
+import { sendBookingEmails } from "@/lib/order-mail";
 import { activeStripe, createCheckoutSession, createPaymentIntent, releaseUnpaidOrder } from "@/lib/stripe";
 
 const checkoutInput = z.object({
@@ -14,8 +16,8 @@ const checkoutInput = z.object({
   country: z.string().trim().min(2).max(80),
   notes: z.string().trim().max(500).optional(),
   items: z.array(z.object({ variantId: z.string().min(1), quantity: z.number().int().min(1).max(10) })).min(1).max(20),
-  /** "sheet" is the mobile app paying in Stripe's native PaymentSheet; the website uses hosted Checkout. */
-  payment: z.enum(["checkout", "sheet"]).optional(),
+  /** "sheet" is the mobile app paying in Stripe's native PaymentSheet; the website uses hosted Checkout. "cash" is cash on delivery. */
+  payment: z.enum(["checkout", "sheet", "cash"]).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -23,7 +25,14 @@ export async function POST(request: NextRequest) {
   const parsed = checkoutInput.safeParse(body);
   if (!parsed.success) return failure("Check your name, email, phone and delivery details", 400, parsed.error.issues);
   const data = parsed.data;
-  if (!(await activeStripe())) return failure("Online payment is not available right now, so orders cannot be placed. Please try again later.", 503);
+  const methods = await getPaymentMethods();
+  if (!paymentMethodsAvailable(methods)) return failure("Checkout is not available right now. Please try again later.", 503);
+
+  const wantsCash = data.payment === "cash";
+  if (wantsCash && !methods.cashOnDelivery) return failure("Cash on delivery is not available right now.", 400);
+  if (!wantsCash && !methods.stripe) return failure("Card payment is not available right now. Choose cash on delivery or try again later.", 400);
+  if (!wantsCash && !(await activeStripe())) return failure("Online payment is not available right now, so orders cannot be placed. Please try again later.", 503);
+
   const countries = await getCountries();
   if (countries.length && !countries.some((country) => country.name.toLowerCase() === data.country.toLowerCase())) return failure("Choose a delivery country from the list", 400);
   const merged = new Map<string, number>();
@@ -53,18 +62,25 @@ export async function POST(request: NextRequest) {
           country: data.country,
           notes: data.notes || null,
           total,
+          paymentMethod: wantsCash ? "cash" : null,
           items: { create: lines.map((line) => ({ variantId: line.variant.id, productName: line.variant.product.name, color: line.variant.color, size: line.variant.size, quantity: line.quantity, unitPrice: line.unitPrice })) },
         },
         include: { items: true },
       });
     });
+
+    if (wantsCash) {
+      await sendBookingEmails(order.id).catch((error) => console.error("Order mail failed", error instanceof Error ? error.message : "unknown error"));
+      return success({ number: order.number, orderId: order.id, paymentMethod: "cash", total: Number(order.total) }, "Order booked for cash on delivery.", { status: 201 });
+    }
+
     try {
       if (data.payment === "sheet") {
         const intent = await createPaymentIntent(order.id);
-        return success({ number: order.number, orderId: order.id, total: Number(order.total), ...intent }, "Order created. Continue to payment.", { status: 201 });
+        return success({ number: order.number, orderId: order.id, total: Number(order.total), paymentMethod: "stripe", ...intent }, "Order created. Continue to payment.", { status: 201 });
       }
       const checkoutUrl = await createCheckoutSession(order.id);
-      return success({ number: order.number, orderId: order.id, checkoutUrl }, "Order created. Continue to payment.", { status: 201 });
+      return success({ number: order.number, orderId: order.id, checkoutUrl, paymentMethod: "stripe" }, "Order created. Continue to payment.", { status: 201 });
     } catch (error) {
       console.error("Stripe checkout failed", error instanceof Error ? error.message : "unknown error");
       await releaseUnpaidOrder(order.id);

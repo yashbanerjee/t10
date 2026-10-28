@@ -44,7 +44,15 @@ class ClubRepository {
     final data = await client.get('/api/v1/settings');
     final settings = data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
     final legal = settings['legal'] is Map ? Map<String, dynamic>.from(settings['legal'] as Map) : <String, dynamic>{};
-    return SiteContent(banner: HomeBanner.fromJson(settings['homepage']), brochure: asText(settings['brochure']), privacy: LegalPage.fromJson(legal['privacy']), terms: LegalPage.fromJson(legal['terms']));
+    final payments = settings['payments'] is Map ? Map<String, dynamic>.from(settings['payments'] as Map) : <String, dynamic>{};
+    return SiteContent(
+      banner: HomeBanner.fromJson(settings['homepage']),
+      brochure: asText(settings['brochure']),
+      privacy: LegalPage.fromJson(legal['privacy']),
+      terms: LegalPage.fromJson(legal['terms']),
+      stripe: payments['stripe'] == true,
+      cashOnDelivery: payments['cashOnDelivery'] == true,
+    );
   }
 
   Future<Player> player(String slug) async => Player.fromJson(_map(await client.get('/api/v1/players/$slug')));
@@ -86,8 +94,11 @@ class ClubRepository {
 
   Future<List<CheckoutCountry>> countries() async => CheckoutCountry.list(await client.get('/api/v1/countries'));
 
-  /// Reserves the stock and creates a Stripe PaymentIntent; the order only counts once Stripe reports it paid.
-  Future<CheckoutStart> checkout(Map<String, dynamic> payload) async => CheckoutStart.fromJson(_map(await client.postData('/api/v1/shop/checkout', {...payload, 'payment': 'sheet'})));
+  /// Reserves the stock. Card checkout creates a Stripe PaymentIntent; cash on delivery books unpaid.
+  Future<CheckoutStart> checkout(Map<String, dynamic> payload) async {
+    final payment = asText(payload['payment']) ?? 'sheet';
+    return CheckoutStart.fromJson(_map(await client.postData('/api/v1/shop/checkout', {...payload, 'payment': payment})));
+  }
 
   /// Asks the server to check the payment with Stripe. Returns the order's payment status.
   Future<String?> confirmCheckout(String orderId) async => asText(_map(await client.postData('/api/v1/shop/checkout/confirm', {'orderId': orderId}))['paymentStatus']);

@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
       number: order.number,
       status: order.status,
       paymentStatus: order.paymentStatus,
+      paymentMethod: order.paymentMethod,
       paidAt: order.paidAt,
       name: order.name.split(" ")[0],
       createdAt: order.createdAt,

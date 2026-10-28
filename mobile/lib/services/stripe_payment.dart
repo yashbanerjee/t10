@@ -15,15 +15,18 @@ String? _appliedKey;
 /// so changing the keys in admin takes effect on the next payment without an app update.
 /// Throws with a readable message when Stripe itself fails.
 Future<PaymentOutcome> payWithStripe(CheckoutStart start, {required String name, required String email, required String phone}) async {
+  final publishableKey = start.publishableKey;
+  final clientSecret = start.clientSecret;
+  if (publishableKey == null || clientSecret == null) throw Exception('Online payment is not available right now. Please try again shortly.');
   try {
-    if (_appliedKey != start.publishableKey) {
-      Stripe.publishableKey = start.publishableKey;
+    if (_appliedKey != publishableKey) {
+      Stripe.publishableKey = publishableKey;
       await Stripe.instance.applySettings();
-      _appliedKey = start.publishableKey;
+      _appliedKey = publishableKey;
     }
     await Stripe.instance.initPaymentSheet(
       paymentSheetParameters: SetupPaymentSheetParameters(
-        paymentIntentClientSecret: start.clientSecret,
+        paymentIntentClientSecret: clientSecret,
         merchantDisplayName: 'United Tigers',
         style: ThemeMode.light,
         billingDetails: BillingDetails(name: name, email: email, phone: phone),

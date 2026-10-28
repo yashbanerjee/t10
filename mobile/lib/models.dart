@@ -635,11 +635,15 @@ class PlayerStat {
 
 /// Public site settings the app shows: the homepage banner, the partnership brochure and the legal pages.
 class SiteContent {
-  const SiteContent({required this.banner, this.brochure, this.privacy, this.terms});
+  const SiteContent({required this.banner, this.brochure, this.privacy, this.terms, this.stripe = false, this.cashOnDelivery = false});
   final HomeBanner banner;
   final String? brochure;
   final LegalPage? privacy;
   final LegalPage? terms;
+  final bool stripe;
+  final bool cashOnDelivery;
+
+  bool get checkoutOpen => stripe || cashOnDelivery;
 
   static const fallback = SiteContent(banner: HomeBanner.fallback);
 }
@@ -874,30 +878,39 @@ class CheckoutCountry {
       .toList();
 }
 
-/// The server's reply to checkout: the held order and the Stripe PaymentIntent the fan pays in the PaymentSheet.
+/// The server's reply to checkout: a cash booking, or a held order with the Stripe PaymentIntent for the PaymentSheet.
 class CheckoutStart {
-  const CheckoutStart({required this.number, required this.orderId, required this.clientSecret, required this.publishableKey});
+  const CheckoutStart({required this.number, required this.orderId, required this.paymentMethod, this.clientSecret, this.publishableKey});
 
   final String number;
   final String orderId;
-  final String clientSecret;
-  final String publishableKey;
+  final String paymentMethod;
+  final String? clientSecret;
+  final String? publishableKey;
+
+  bool get isCash => paymentMethod == 'cash';
 
   factory CheckoutStart.fromJson(Map<String, dynamic> json) {
     final orderId = asText(json['orderId']);
+    if (orderId == null) throw Exception('Checkout is not available right now. Please try again shortly.');
+    final method = asText(json['paymentMethod']) ?? 'stripe';
+    if (method == 'cash') {
+      return CheckoutStart(number: json['number']?.toString() ?? '', orderId: orderId, paymentMethod: 'cash');
+    }
     final secret = asText(json['clientSecret']);
     final key = asText(json['publishableKey']);
-    if (orderId == null || secret == null || key == null) throw Exception('Online payment is not available right now. Please try again shortly.');
-    return CheckoutStart(number: json['number']?.toString() ?? '', orderId: orderId, clientSecret: secret, publishableKey: key);
+    if (secret == null || key == null) throw Exception('Online payment is not available right now. Please try again shortly.');
+    return CheckoutStart(number: json['number']?.toString() ?? '', orderId: orderId, paymentMethod: 'stripe', clientSecret: secret, publishableKey: key);
   }
 }
 
 class TrackedOrder {
-  const TrackedOrder({required this.number, required this.status, required this.paymentStatus, required this.name, required this.total, this.createdAt, this.paidAt, this.city, this.country, this.items = const []});
+  const TrackedOrder({required this.number, required this.status, required this.paymentStatus, required this.name, required this.total, this.paymentMethod, this.createdAt, this.paidAt, this.city, this.country, this.items = const []});
 
   final String number;
   final String status;
   final String paymentStatus;
+  final String? paymentMethod;
   final String name;
   final double total;
   final DateTime? createdAt;
@@ -910,6 +923,7 @@ class TrackedOrder {
         number: json['number']?.toString() ?? '',
         status: json['status']?.toString() ?? 'PENDING',
         paymentStatus: json['paymentStatus']?.toString() ?? 'UNPAID',
+        paymentMethod: asText(json['paymentMethod']),
         name: json['name']?.toString() ?? '',
         total: asDouble(json['total']),
         createdAt: asDate(json['createdAt']),

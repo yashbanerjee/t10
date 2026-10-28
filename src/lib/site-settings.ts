@@ -136,6 +136,11 @@ export function normalizeSiteSetting(key: string, value: unknown, previous?: unk
     if (!account) return { ok: false, message: "This is not a Firebase service account key. In Firebase → Project settings → Service accounts, choose Generate new private key and upload that JSON file." };
     return { ok: true, value: { serviceAccount: account } };
   }
+  if (key === "cashOnDelivery") {
+    const parsed = cashOnDeliverySchema.safeParse(value ?? {});
+    if (!parsed.success) return { ok: false, message: "Cash on delivery settings are invalid." };
+    return { ok: true, value: { enabled: parsed.data.enabled } };
+  }
   if (key === "stripe") {
     const parsed = stripeSchema.safeParse(value ?? {});
     if (!parsed.success) return { ok: false, message: "Stripe settings are invalid." };
@@ -251,6 +256,10 @@ const stripeSchema = z.object({
   webhookSecret: z.string().trim().max(300).optional().default(""),
   currency: z.string().trim().regex(/^[a-zA-Z]{3}$/).optional().default("aed"),
   removeKeys: z.boolean().optional().default(false),
+});
+
+const cashOnDeliverySchema = z.object({
+  enabled: z.boolean().optional().default(false),
 });
 
 export function redactSettingValue(key: string, value: unknown) {

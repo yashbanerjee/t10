@@ -404,12 +404,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
   /// The phone code follows the chosen country until the fan picks a different one.
   bool dialTouched = false;
   bool started = false;
+  String method = 'stripe';
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (started) return;
     started = true;
+    final site = ClubScope.of(context).api.site;
+    method = site.stripe ? 'stripe' : site.cashOnDelivery ? 'cash' : 'stripe';
     ClubScope.of(context).api.countries().then((list) {
       if (!mounted || list.isEmpty) return;
       setState(() {
@@ -442,13 +445,24 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   @override
   Widget build(BuildContext context) {
+    final site = ClubScope.of(context).api.site;
+    final both = site.stripe && site.cashOnDelivery;
+    final cashOnly = !site.stripe && site.cashOnDelivery;
+    final intro = !site.checkoutOpen
+        ? 'Checkout is not available right now. Please check back soon.'
+        : both
+            ? 'Name, email, phone and a delivery address. Pay by card with Stripe, or choose cash on delivery.'
+            : cashOnly
+                ? 'Name, email, phone and a delivery address. Pay cash when your kit is delivered.'
+                : 'Name, email, phone and a delivery address, then pay securely by card with Stripe. Your items are held while you pay.';
+    final payCash = method == 'cash' || cashOnly;
     return Scaffold(
       appBar: const ClubAppBar('Your details'),
       body: ListView(
         scrollCacheExtent: pageCacheExtent,
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
-          const Text('Name, email, phone and a delivery address, then pay securely by card with Stripe. Your items are held while you pay.', style: TextStyle(color: Color(0xFFE6DDF0), height: 1.5)),
+          Text(intro, style: const TextStyle(color: Color(0xFFE6DDF0), height: 1.5)),
           const SizedBox(height: 14),
           ClubField(label: 'Name', controller: name),
           ClubField(label: 'Email', controller: email, email: true),
@@ -490,13 +504,43 @@ class _CheckoutPageState extends State<CheckoutPage> {
               ),
             ),
           ClubField(label: 'Notes', controller: notes, lines: 3),
+          if (both) ...[
+            const Text('Payment method', style: TextStyle(color: goldLight, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.6)),
+            const SizedBox(height: 6),
+            for (final option in [('stripe', 'Pay by card (Stripe)'), ('cash', 'Cash on delivery')])
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: InkWell(
+                  onTap: busy ? null : () => setState(() => method = option.$1),
+                  child: Row(
+                    children: [
+                      Icon(method == option.$1 ? Icons.radio_button_checked : Icons.radio_button_off, color: goldLight, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(child: Text(option.$2, style: const TextStyle(color: Colors.white))),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 8),
+          ],
           AnimatedBuilder(
             animation: ClubScope.of(context).cart,
-            builder: (context, _) => FilledButton(
-              style: goldButtonStyle(),
-              onPressed: busy || ClubScope.of(context).cart.lines.isEmpty ? null : _submit,
-              child: Text(busy ? 'OPENING PAYMENT…' : 'PAY ${money(ClubScope.of(context).cart.total)} SECURELY'),
-            ),
+            builder: (context, _) {
+              final total = ClubScope.of(context).cart.total;
+              final empty = ClubScope.of(context).cart.lines.isEmpty;
+              final label = !site.checkoutOpen
+                  ? 'PAYMENT UNAVAILABLE'
+                  : busy
+                      ? (payCash ? 'BOOKING…' : 'OPENING PAYMENT…')
+                      : payCash
+                          ? 'BOOK ${money(total)} · CASH ON DELIVERY'
+                          : 'PAY ${money(total)} SECURELY';
+              return FilledButton(
+                style: goldButtonStyle(),
+                onPressed: busy || empty || !site.checkoutOpen ? null : _submit,
+                child: Text(label),
+              );
+            },
           ),
         ],
       ),
@@ -507,7 +551,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final scope = ClubScope.of(context);
     final cart = scope.cart;
     final api = scope.api;
+    final site = api.site;
     final buyer = email.text.trim();
+    final payCash = method == 'cash' || (!site.stripe && site.cashOnDelivery);
     setState(() => busy = true);
     try {
       final start = await api.startCheckout({
@@ -518,8 +564,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
         'city': city.text.trim(),
         'country': _countryName,
         'notes': notes.text.trim(),
+        'payment': payCash ? 'cash' : 'sheet',
         'items': cart.lines.map((line) => {'variantId': line.variantId, 'quantity': line.quantity}).toList(),
       });
+      if (start.isCash) {
+        await cart.clear();
+        ClubAnalytics.event('purchase_completed', {'payment': 'cash'});
+        if (!mounted) return;
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => OrderBookedPage(number: start.number, email: buyer)), (route) => route.isFirst);
+        return;
+      }
       PaymentOutcome outcome;
       String? failure;
       try {
@@ -540,7 +594,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         return;
       }
       await cart.clear();
-      ClubAnalytics.event('purchase_completed');
+      ClubAnalytics.event('purchase_completed', {'payment': 'stripe'});
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => OrderPaidPage(number: start.number, email: buyer, orderId: start.orderId)), (route) => route.isFirst);
     } catch (reason) {
@@ -548,5 +602,58 @@ class _CheckoutPageState extends State<CheckoutPage> {
     } finally {
       if (mounted) setState(() => busy = false);
     }
+  }
+}
+
+class OrderBookedPage extends StatelessWidget {
+  const OrderBookedPage({super.key, required this.number, required this.email});
+
+  final String number;
+  final String email;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: const ClubAppBar('Checkout'),
+      body: ListView(
+        scrollCacheExtent: pageCacheExtent,
+        padding: const EdgeInsets.only(bottom: 32),
+        children: [
+          const PageHero(
+            eyebrow: 'Checkout',
+            title: 'Your kit\nis reserved.',
+            intro: 'Thanks for backing the Tigers. Pay cash when your order is delivered. A confirmation is on its way to your email.',
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: ClubCard(
+              highlight: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Eyebrow('Cash on delivery'),
+                  const SizedBox(height: 8),
+                  SelectableText(number, style: displayStyle(30, color: Colors.white)),
+                  const SizedBox(height: 8),
+                  const Text('Keep this number to track your booking. Have the exact amount ready when the kit arrives.', style: TextStyle(color: Color(0xFFE6DDF0), height: 1.5)),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: FilledButton(
+              style: goldButtonStyle(),
+              onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => TrackOrderPage(number: number, email: email))),
+              child: const Text('TRACK THIS ORDER'),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+            child: OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('BACK TO THE SHOP')),
+          ),
+        ],
+      ),
+    );
   }
 }

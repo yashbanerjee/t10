@@ -28,8 +28,16 @@ class TeamPage extends StatelessWidget {
                   sliver: SliverGrid(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: MediaQuery.sizeOf(context).shortestSide >= 600 ? 4 : 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.62),
                     delegate: SliverChildBuilderDelegate(
-                      (context, index) => _PlayerCard(player: api.catalog.players[index]),
+                      (context, index) {
+                        final player = api.catalog.players[index];
+                        return _PlayerCard(key: ValueKey(player.slug), player: player);
+                      },
                       childCount: api.catalog.players.length,
+                      findChildIndexCallback: (key) {
+                        if (key is! ValueKey<String>) return null;
+                        final index = api.catalog.players.indexWhere((player) => player.slug == key.value);
+                        return index < 0 ? null : index;
+                      },
                     ),
                   ),
                 ),
@@ -45,7 +53,7 @@ class TeamPage extends StatelessWidget {
 }
 
 class _PlayerCard extends StatelessWidget {
-  const _PlayerCard({required this.player});
+  const _PlayerCard({super.key, required this.player});
   final Player player;
 
   @override

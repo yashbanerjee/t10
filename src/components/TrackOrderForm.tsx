@@ -9,6 +9,7 @@ type TrackedOrder = {
   number: string;
   status: "PENDING" | "CONFIRMED" | "CANCELLED";
   paymentStatus: "UNPAID" | "PAID" | "FAILED";
+  paymentMethod: string | null;
   paidAt: string | null;
   name: string;
   createdAt: string;
@@ -19,7 +20,7 @@ type TrackedOrder = {
 };
 
 const statusCopy: Record<TrackedOrder["status"], { label: string; text: string }> = {
-  PENDING: { label: "BOOKED", text: "Your items are held while the payment is completed. If you have paid, this updates shortly." },
+  PENDING: { label: "BOOKED", text: "Your items are reserved. Pay cash on delivery, or complete card payment if that was your choice." },
   CONFIRMED: { label: "CONFIRMED", text: "Payment received. The club will be in touch to hand over or deliver your kit." },
   CANCELLED: { label: "CANCELLED", text: "This booking was cancelled. Get in touch with the club if you think this is a mistake." },
 };
@@ -83,7 +84,7 @@ export function TrackOrderForm({ initialNumber = "", initialEmail = "" }: { init
       <dl className="track-meta">
         <div><dt>Booked on</dt><dd>{new Date(order.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</dd></div>
         <div><dt>Deliver to</dt><dd>{order.city}, {order.country}</dd></div>
-        <div><dt>Payment</dt><dd>{order.paymentStatus === "PAID" ? `Paid${order.paidAt ? ` on ${new Date(order.paidAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}` : ""}` : order.paymentStatus === "FAILED" ? "Not completed" : "Awaiting payment"}</dd></div>
+        <div><dt>Payment</dt><dd>{order.paymentStatus === "PAID" ? `Paid${order.paidAt ? ` on ${new Date(order.paidAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}` : ""}` : order.paymentStatus === "FAILED" ? "Not completed" : order.paymentMethod === "cash" ? "Cash on delivery" : "Awaiting payment"}</dd></div>
       </dl>
       <div className="checkout-summary">
         {order.items.map((item, index) => <p key={`${item.productName}-${index}`}><span>{item.productName}<small> {[item.color, item.size].filter(Boolean).join(" · ")} · {item.quantity}</small></span><strong>{formatMoney(item.unitPrice * item.quantity)}</strong></p>)}

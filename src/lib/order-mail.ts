@@ -14,7 +14,15 @@ export async function sendBookingEmails(orderId: string) {
   }));
   const total = { label: paid ? "Paid" : "Total", value: formatMoney(Number(order.total)) };
   const delivery = { label: "Delivery", value: `${order.address}\n${order.city}, ${order.country}` };
-  const payment = { label: "Payment", value: paid ? `Paid online${order.paidAt ? ` on ${order.paidAt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}` : ""}` : "To be confirmed by the club" };
+  const cash = order.paymentMethod === "cash";
+  const payment = {
+    label: "Payment",
+    value: paid
+      ? `Paid online${order.paidAt ? ` on ${order.paidAt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}` : ""}`
+      : cash
+        ? "Cash on delivery"
+        : "To be confirmed by the club",
+  };
   const trackHref = `/track-order?number=${encodeURIComponent(order.number)}&email=${encodeURIComponent(order.email)}`;
   await notifyAdminAndUser({
     admin: await renderEmail({
@@ -22,7 +30,11 @@ export async function sendBookingEmails(orderId: string) {
       preheader: `${order.name} ${paid ? "paid" : "booked"} ${formatMoney(Number(order.total))} for ${order.items.length} item${order.items.length === 1 ? "" : "s"}.`,
       eyebrow: paid ? "Paid online" : "Shop booking",
       title: `${paid ? "Order" : "Booking"} ${order.number}`,
-      intro: paid ? "A fan has paid for merchandise online. Prepare the kit and arrange delivery." : "A fan has booked merchandise. Contact them to confirm payment and delivery.",
+      intro: paid
+        ? "A fan has paid for merchandise online. Prepare the kit and arrange delivery."
+        : cash
+          ? "A fan has booked merchandise for cash on delivery. Prepare the kit and collect payment when it is delivered."
+          : "A fan has booked merchandise. Contact them to confirm payment and delivery.",
       details: [{ label: "Tracking number", value: order.number }, payment, { label: "Name", value: order.name }, { label: "Email", value: order.email }, { label: "Phone", value: order.phone }, delivery, ...(order.notes ? [{ label: "Notes", value: order.notes }] : [])],
       items,
       total,
@@ -31,13 +43,15 @@ export async function sendBookingEmails(orderId: string) {
     userEmail: order.email,
     user: await renderEmail({
       subject: paid ? `Payment received — United Tigers order ${order.number}` : `Your United Tigers booking ${order.number}`,
-      preheader: `Your tracking number is ${order.number}.${paid ? " Your payment was successful." : " The club will confirm payment with you."}`,
-      eyebrow: paid ? "Payment received" : "Booking received",
+      preheader: `Your tracking number is ${order.number}.${paid ? " Your payment was successful." : cash ? " Pay cash when your order is delivered." : " The club will confirm payment with you."}`,
+      eyebrow: paid ? "Payment received" : cash ? "Cash on delivery" : "Booking received",
       title: paid ? "Your kit is paid for" : "Your kit is reserved",
       greeting: `Hello ${order.name},`,
       intro: paid
         ? "Thanks for backing the Tigers. Your payment was successful and your order is confirmed. The club will be in touch about delivery."
-        : "Thanks for backing the Tigers. We have reserved your items, and the club will contact you by phone or email to confirm payment and delivery.",
+        : cash
+          ? "Thanks for backing the Tigers. We have reserved your items for cash on delivery. Please have the exact amount ready when your order arrives."
+          : "Thanks for backing the Tigers. We have reserved your items, and the club will contact you by phone or email to confirm payment and delivery.",
       details: [{ label: "Tracking number", value: order.number }, payment, delivery, ...(order.notes ? [{ label: "Your notes", value: order.notes }] : [])],
       items,
       total,

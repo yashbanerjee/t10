@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
 import { formatMoney } from "@/lib/money";
 import type { CheckoutCountry } from "@/lib/countries";
+import type { PaymentMethods } from "@/lib/payments";
 
 const fields = [
   ["name", "Full name", "text"],
@@ -13,10 +14,12 @@ const fields = [
   ["city", "City", "text"],
 ] as const;
 
-export function CheckoutForm({ onlinePayment = false, cancelledOrderId = "", countries = [] }: { onlinePayment?: boolean; cancelledOrderId?: string; countries?: CheckoutCountry[] }) {
+export function CheckoutForm({ payments, cancelledOrderId = "", countries = [] }: { payments: PaymentMethods; cancelledOrderId?: string; countries?: CheckoutCountry[] }) {
   const cart = useCart();
   const [notice, setNotice] = useState("");
   const cancelHandled = useRef(false);
+  const defaultMethod = payments.stripe ? "stripe" : payments.cashOnDelivery ? "cash" : "stripe";
+  const [method, setMethod] = useState<"stripe" | "cash">(defaultMethod);
 
   useEffect(() => {
     if (!cancelledOrderId || cancelHandled.current) return;
@@ -43,14 +46,18 @@ export function CheckoutForm({ onlinePayment = false, cancelledOrderId = "", cou
   const [error, setError] = useState("");
   const [number, setNumber] = useState("");
   const [bookedEmail, setBookedEmail] = useState("");
+  const [bookedCash, setBookedCash] = useState(false);
   const [saving, setSaving] = useState(false);
   const total = cart.lines.reduce((sum, line) => sum + line.price * line.quantity, 0);
+  const checkoutOpen = payments.stripe || payments.cashOnDelivery;
+  const bothMethods = payments.stripe && payments.cashOnDelivery;
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     setSaving(true); setError("");
     try {
-      const response = await fetch("/api/v1/shop/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...form, phone: dial ? `${dial.dialCode} ${form.phone.trim()}` : form.phone, items: cart.lines.map((line) => ({ variantId: line.variantId, quantity: line.quantity })) }) });
+      const payment = method === "cash" ? "cash" : "checkout";
+      const response = await fetch("/api/v1/shop/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...form, phone: dial ? `${dial.dialCode} ${form.phone.trim()}` : form.phone, payment, items: cart.lines.map((line) => ({ variantId: line.variantId, quantity: line.quantity })) }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "The order could not be booked.");
       if (typeof result.data.checkoutUrl === "string") {
@@ -58,6 +65,7 @@ export function CheckoutForm({ onlinePayment = false, cancelledOrderId = "", cou
         return;
       }
       setBookedEmail(form.email.trim());
+      setBookedCash(result.data.paymentMethod === "cash" || method === "cash");
       setNumber(result.data.number);
       cart.clear();
     } catch (reason) {
@@ -70,7 +78,9 @@ export function CheckoutForm({ onlinePayment = false, cancelledOrderId = "", cou
     <span className="eyebrow"><i className="eyebrow-dot" />BOOKED</span>
     <h2>YOUR KIT IS RESERVED</h2>
     <div className="booking-tracking"><small>TRACKING NUMBER</small><strong>{number}</strong></div>
-    <p>Keep this number. It is also in the confirmation email sent to {bookedEmail || "you"}. The club will confirm the kit and arrange payment.</p>
+    <p>{bookedCash
+      ? <>Keep this number. It is also in the confirmation email sent to {bookedEmail || "you"}. Pay cash when your order is delivered.</>
+      : <>Keep this number. It is also in the confirmation email sent to {bookedEmail || "you"}. The club will confirm the kit and arrange payment.</>}</p>
     <div className="booking-actions">
       <Link className="button button-accent" href={`/track-order?number=${encodeURIComponent(number)}${bookedEmail ? `&email=${encodeURIComponent(bookedEmail)}` : ""}`}>TRACK THIS BOOKING</Link>
       <Link className="button button-outline" href="/shop">BACK TO THE SHOP</Link>
@@ -98,10 +108,25 @@ export function CheckoutForm({ onlinePayment = false, cancelledOrderId = "", cou
     <aside className="checkout-summary">
       {cart.lines.map((line) => <p key={line.variantId}><span>{line.name}<small>{[line.color, line.size].filter(Boolean).join(" · ")} · {line.quantity}</small></span><strong>{formatMoney(line.price * line.quantity)}</strong></p>)}
       <p className="checkout-total"><span>Total</span><strong>{formatMoney(total)}</strong></p>
-      <p>{onlinePayment ? "You will pay securely by card on Stripe. Your items are held while you pay." : "Online payment is unavailable right now, so orders cannot be placed. Please check back soon."}</p>
+      {bothMethods && <fieldset className="checkout-methods">
+        <legend>Payment method</legend>
+        <label><input type="radio" name="payment" checked={method === "stripe"} onChange={() => setMethod("stripe")} /> Pay by card (Stripe)</label>
+        <label><input type="radio" name="payment" checked={method === "cash"} onChange={() => setMethod("cash")} /> Cash on delivery</label>
+      </fieldset>}
+      <p>{!checkoutOpen
+        ? "No payment method is available right now, so orders cannot be placed. Please check back soon."
+        : method === "cash" || (!payments.stripe && payments.cashOnDelivery)
+          ? "Your items are reserved now. Pay cash when the kit is delivered."
+          : "You will pay securely by card on Stripe. Your items are held while you pay."}</p>
       {notice && <p className="form-status">{notice}</p>}
       {error && <p className="form-error">{error}</p>}
-      <button className="button button-primary" type="submit" disabled={saving || !onlinePayment}>{saving ? "OPENING PAYMENT…" : onlinePayment ? `PAY ${formatMoney(total)} SECURELY` : "PAYMENT UNAVAILABLE"}</button>
+      <button className="button button-primary" type="submit" disabled={saving || !checkoutOpen}>{saving
+        ? (method === "cash" || (!payments.stripe && payments.cashOnDelivery) ? "BOOKING…" : "OPENING PAYMENT…")
+        : !checkoutOpen
+          ? "PAYMENT UNAVAILABLE"
+          : method === "cash" || (!payments.stripe && payments.cashOnDelivery)
+            ? `BOOK ${formatMoney(total)} · CASH ON DELIVERY`
+            : `PAY ${formatMoney(total)} SECURELY`}</button>
     </aside>
   </form>;
 }

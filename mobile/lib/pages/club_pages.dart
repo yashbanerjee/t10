@@ -1376,7 +1376,7 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
   bool busy = false;
 
   static const _copy = {
-    'PENDING': ('Booked', 'Your items are held while the payment is completed. If you have paid, this updates shortly.'),
+    'PENDING': ('Booked', 'Your items are reserved. Pay cash on delivery, or complete card payment if that was your choice.'),
     'CONFIRMED': ('Confirmed', 'Payment received. The club will be in touch to hand over or deliver your kit.'),
     'CANCELLED': ('Cancelled', 'This booking was cancelled. Get in touch with the club if you think this is a mistake.'),
   };
@@ -1467,7 +1467,7 @@ class _TrackedCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [Expanded(child: Eyebrow(order.number)), StatusChip(order.paymentStatus == 'PAID' ? 'PAID' : order.paymentStatus)]),
+          Row(children: [Expanded(child: Eyebrow(order.number)), StatusChip(order.paymentStatus == 'PAID' ? 'PAID' : order.paymentMethod == 'cash' ? 'CASH ON DELIVERY' : order.paymentStatus)]),
           const SizedBox(height: 8),
           GoldText(copy.$1.toUpperCase(), style: displayStyle(34)),
           const SizedBox(height: 4),

@@ -713,17 +713,23 @@ class RemoteImage extends StatelessWidget {
           child: Image.asset('assets/brand/tiger-gold.png', height: (resolved.isFinite ? resolved : 140) * 0.45, fit: BoxFit.contain, opacity: const AlwaysStoppedAnimation(0.35)),
         );
         final ratio = MediaQuery.devicePixelRatioOf(context);
+        final layoutWidth = constraints.maxWidth.isFinite && constraints.maxWidth > 0
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width / 2;
+        final decodeWidth = (layoutWidth * ratio).round().clamp(1, 900);
         return ClipRRect(
           borderRadius: BorderRadius.circular(radius),
           child: url.isEmpty
               ? placeholder
               : Image.network(
                   url,
+                  key: ValueKey(url),
                   height: resolved.isFinite ? resolved : null,
                   width: double.infinity,
-                  cacheWidth: (MediaQuery.sizeOf(context).width * ratio).round(),
+                  cacheWidth: decodeWidth,
                   fit: BoxFit.cover,
                   alignment: alignment,
+                  gaplessPlayback: false,
                   errorBuilder: (_, _, _) => placeholder,
                   frameBuilder: (context, child, frame, synchronous) => synchronous
                       ? child
