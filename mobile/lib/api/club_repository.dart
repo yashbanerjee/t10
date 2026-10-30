@@ -50,6 +50,7 @@ class ClubRepository {
       brochure: asText(settings['brochure']),
       privacy: LegalPage.fromJson(legal['privacy']),
       terms: LegalPage.fromJson(legal['terms']),
+      themeSong: ThemeSong.fromJson(settings['themeSong']),
       stripe: payments['stripe'] == true,
       cashOnDelivery: payments['cashOnDelivery'] == true,
     );

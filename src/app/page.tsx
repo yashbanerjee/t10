@@ -15,6 +15,8 @@ import { ProductCard } from "@/components/ProductCard";
 import { VideoPoster } from "@/components/VideoPoster";
 import { kickoffTime, knockoutSides, teamLogo, teamShortName } from "@/lib/league";
 import { getLivePollIntervalMs, homepageDefaults, readHomepageBanner } from "@/lib/site-settings";
+import { publicThemeSong } from "@/lib/theme-song";
+import { ThemeSongCard } from "@/components/ThemeSongCard";
 
 export const metadata: Metadata = { alternates: { canonical: "/" }, title: { absolute: "United Tigers | The Next Game Starts Here" }, description: "The official home of United Tigers. Fixtures, the squad, the vote and the Abu Dhabi T10." };
 
@@ -42,6 +44,7 @@ export default async function HomePage() {
   const brochureUrl = await getPartnerBrochureUrl();
   const franchisePosts = franchisePostFeed(franchises);
   const banner = readHomepageBanner(settings.homepage ?? homepageDefaults);
+  const themeSong = publicThemeSong(settings.themeSong);
   const daily = updates.filter((update) => !update.isDemo).slice(0, 3);
   const pastMatches = gallery.filter((item) => /past match/i.test(item.category));
   const pastPhotos = pastMatches.filter((item) => item.type !== "VIDEO");
@@ -159,6 +162,8 @@ export default async function HomePage() {
         </article>
       </div>
     </section>
+
+    {themeSong ? <ThemeSongCard song={themeSong} /> : null}
 
     <section className="home-board">
       <div className="wrap board-grid">

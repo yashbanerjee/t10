@@ -15,6 +15,7 @@ import 'package:united_tigers/pages/team_page.dart';
 import 'package:united_tigers/scope.dart';
 import 'package:united_tigers/video.dart';
 import 'package:united_tigers/widgets.dart';
+import 'package:united_tigers/widgets/theme_song_card.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -101,6 +102,10 @@ class HomePage extends StatelessWidget {
                     child: HomeHero(banner: api.banner),
                   ),
                 ),
+                if (api.site.themeSong != null) ...[
+                  const SizedBox(height: 18),
+                  ThemeSongCard(song: api.site.themeSong!),
+                ],
                 if (upcoming == null) ...[
                   const SectionTitle('NEXT MATCH'),
                   const ClubCard(

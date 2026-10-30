@@ -15,6 +15,7 @@ const stripeEmpty = { enabled: false, publishableKey: "", secretKey: "", webhook
 type FirebaseValue = { connected?: boolean; projectId?: string; clientEmail?: string };
 type StripeValue = { enabled?: boolean; publishableKey?: string; currency?: string; hasSecretKey?: boolean; hasWebhookSecret?: boolean; mode?: string };
 const bannerEmpty = { mode: "static", title: "THE NEXT GAME", accent: "STARTS HERE", tagline: "BIGGER BOLDER TOGETHER", ctaLabel: "BACK OUR TIGERS", ctaHref: "/team", image: "", roar: "LET’S GO HUNT", showPlayers: true, players: [] as string[] };
+const themeSongEmpty = { enabled: false, title: "Official theme song", kind: "audio" as "audio" | "video" | "youtube", source: "", downloadUrl: "", fileName: "", poster: "" };
 
 export function SiteSettingsPanel() {
   const [form, setForm] = useState(empty);
@@ -22,6 +23,7 @@ export function SiteSettingsPanel() {
   const [banner, setBanner] = useState(bannerEmpty);
   const [roster, setRoster] = useState<PlayerOption[]>([]);
   const [brochure, setBrochure] = useState("");
+  const [themeSong, setThemeSong] = useState(themeSongEmpty);
   const [savedSecrets, setSavedSecrets] = useState({ access: false, secret: false, mail: false });
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -126,6 +128,18 @@ export function SiteSettingsPanel() {
       });
       const savedBrochure = rows.find((row) => row.key === "partnerBrochure");
       setBrochure(typeof savedBrochure?.value === "string" ? savedBrochure.value : "");
+      const themeRow = rows.find((row) => row.key === "themeSong");
+      const themeValue = themeRow?.value && typeof themeRow.value === "object" && !Array.isArray(themeRow.value) ? themeRow.value as Partial<typeof themeSongEmpty> : {};
+      setThemeSong({
+        ...themeSongEmpty,
+        enabled: Boolean(themeValue.enabled),
+        title: typeof themeValue.title === "string" && themeValue.title ? themeValue.title : themeSongEmpty.title,
+        kind: themeValue.kind === "video" || themeValue.kind === "youtube" ? themeValue.kind : "audio",
+        source: typeof themeValue.source === "string" ? themeValue.source : "",
+        downloadUrl: typeof themeValue.downloadUrl === "string" ? themeValue.downloadUrl : "",
+        fileName: typeof themeValue.fileName === "string" ? themeValue.fileName : "",
+        poster: typeof themeValue.poster === "string" ? themeValue.poster : "",
+      });
       const stripeRow = rows.find((row) => row.key === "stripe");
       const stripeValue = stripeRow?.value && typeof stripeRow.value === "object" && !Array.isArray(stripeRow.value) ? stripeRow.value as StripeValue : {};
       setStripe({ ...stripeEmpty, enabled: Boolean(stripeValue.enabled), publishableKey: stripeValue.publishableKey ?? "", currency: (stripeValue.currency || "aed").toUpperCase() });
@@ -183,6 +197,7 @@ export function SiteSettingsPanel() {
       { key: "storage", value: { endpoint: form.endpoint.trim(), bucket: form.bucket.trim(), region: form.region.trim() || "auto", publicUrl: form.publicUrl.trim(), accessKey: form.accessKey, secretKey: form.secretKey } },
       { key: "homepage", value: banner },
       { key: "partnerBrochure", value: brochure.trim() },
+      { key: "themeSong", value: themeSong },
       { key: "smtp", value: { host: smtp.host.trim(), port: Number(smtp.port), secure: smtp.secure, user: smtp.user.trim(), password: smtp.password, fromEmail: smtp.fromEmail.trim(), fromName: smtp.fromName.trim(), adminEmail: smtp.adminEmail.trim() } },
       { key: "stripe", value: { enabled: stripe.removeKeys ? false : stripe.enabled, publishableKey: stripe.publishableKey.trim(), secretKey: stripe.secretKey.trim(), webhookSecret: stripe.webhookSecret.trim(), currency: stripe.currency.trim() || "AED", removeKeys: stripe.removeKeys } },
       { key: "cashOnDelivery", value: { enabled: cashOnDelivery } },
@@ -279,6 +294,44 @@ export function SiteSettingsPanel() {
       <div className="admin-field"><span className="admin-field-label">Status</span><span className="admin-field-control">{firebaseSaved.connected ? <span className="admin-notice"><Check size={13} /> Key saved for project {firebaseSaved.projectId}</span> : <span className="form-status form-status-error">No key saved. Notifications cannot be sent yet.</span>}</span><span className="admin-field-note">{firebaseSaved.clientEmail ? `Service account: ${firebaseSaved.clientEmail}` : ""}</span></div>
       <label className="admin-field"><span className="admin-field-label">{firebaseSaved.connected ? "Replace service account key" : "Service account key"}</span><span className="admin-field-control"><input key={firebaseInput} type="file" accept="application/json,.json" onChange={(event) => void chooseFirebaseFile(event.target.files?.[0])} /></span><span className="admin-field-note">{firebaseUpload ? <strong>{firebaseUpload.fileName}: project {firebaseUpload.projectId}. Save site settings to use it.</strong> : "The .json file from Firebase."}</span></label>
       <div className="admin-field"><span className="admin-field-label">Check connection</span><span className="admin-field-control"><button className="admin-primary-btn" type="button" onClick={checkFirebase} disabled={checkingFirebase || busy}>{checkingFirebase ? "CHECKING…" : "CHECK FIREBASE"}</button></span><span className="admin-field-note">{firebaseCheck ? <span className={firebaseCheck.ok ? "admin-notice" : "form-status form-status-error"}>{firebaseCheck.ok ? <Check size={13} /> : null} {firebaseCheck.message}</span> : "Signs in to Firebase with the saved key and validates a test message. Nothing is delivered to phones."}{firebaseSaved.connected ? <> <label><input type="checkbox" checked={firebaseRemove} onChange={(event) => { setFirebaseRemove(event.target.checked); if (event.target.checked) setFirebaseUpload(null); }} /> Remove saved Firebase key</label></> : null}</span></div>
+    </div>
+    <div className="admin-panel-header"><h2>Homepage theme song</h2></div>
+    <p className="admin-storage-note">Shown on the website homepage and in the app. Choose audio, a hosted video, or a YouTube link. Fans can listen or watch in place. Hosted audio and video can be downloaded to their device; YouTube opens on YouTube instead.</p>
+    <div className="admin-editor-grid">
+      <label className="admin-field"><span className="admin-field-label">Show theme song</span><span className="admin-field-control"><input type="checkbox" checked={themeSong.enabled} onChange={(event) => setThemeSong((current) => ({ ...current, enabled: event.target.checked }))} /></span><span className="admin-field-note">{themeSong.enabled ? "Visible on the homepage and in the app." : "Hidden until this is on and a source is set."}</span></label>
+      <label className="admin-field"><span className="admin-field-label">Title</span><span className="admin-field-control"><input value={themeSong.title} onChange={(event) => setThemeSong((current) => ({ ...current, title: event.target.value }))} placeholder="Official theme song" /></span><span className="admin-field-note" /></label>
+      <label className="admin-field"><span className="admin-field-label">Type</span><span className="admin-field-control"><select value={themeSong.kind} onChange={(event) => setThemeSong((current) => ({ ...current, kind: event.target.value === "video" || event.target.value === "youtube" ? event.target.value : "audio" }))}><option value="audio">Audio file</option><option value="video">Video file</option><option value="youtube">YouTube video</option></select></span><span className="admin-field-note">Pick the format that matches the source below.</span></label>
+      <label className="admin-field"><span className="admin-field-label">{themeSong.kind === "youtube" ? "YouTube link" : "Media file"}</span><span className="admin-field-control"><input value={themeSong.source} onChange={(event) => setThemeSong((current) => ({ ...current, source: event.target.value }))} placeholder={themeSong.kind === "youtube" ? "https://www.youtube.com/watch?v=…" : "/media/uploads/…/theme.mp3"} /></span><span className="admin-field-note">{themeSong.source ? <a href={themeSong.source} target="_blank" rel="noreferrer">Open current source</a> : themeSong.kind === "youtube" ? "Paste a YouTube watch, share or Shorts URL." : "Upload below, or paste a site path / URL."}</span></label>
+      {themeSong.kind !== "youtube" && <>
+        <label className="admin-field"><span className="admin-field-label">Upload media</span><span className="admin-field-control"><input type="file" accept={themeSong.kind === "video" ? "video/mp4,video/webm,.mp4,.webm" : "audio/mpeg,audio/mp3,audio/wav,audio/wave,audio/x-wav,audio/mp4,audio/aac,audio/ogg,.mp3,.wav,.m4a,.aac,.ogg"} onChange={async (event) => {
+          const file = event.target.files?.[0];
+          if (!file) return;
+          const body = new FormData();
+          body.set("file", file);
+          body.set("folder", "theme-song");
+          const response = await fetch("/api/v1/admin/media/upload", { method: "POST", body });
+          const result = await response.json();
+          if (!response.ok) { setError(result.message || "Upload failed. Paste a media link instead."); return; }
+          const url = String(result.data.url || "");
+          setThemeSong((current) => ({ ...current, source: url, downloadUrl: url, fileName: current.fileName || file.name, kind: file.type.startsWith("video/") || /\.(mp4|webm)$/i.test(file.name) ? "video" : "audio", enabled: true }));
+          setNotice("Theme song uploaded. Save site settings to publish it.");
+        }} /></span><span className="admin-field-note">MP3, WAV, M4A or MP4/WebM, up to 30 MB.</span></label>
+        <label className="admin-field"><span className="admin-field-label">Download file name</span><span className="admin-field-control"><input value={themeSong.fileName} onChange={(event) => setThemeSong((current) => ({ ...current, fileName: event.target.value }))} placeholder="united-tigers-theme.wav" /></span><span className="admin-field-note">Suggested name when fans save the file.</span></label>
+        <label className="admin-field"><span className="admin-field-label">Download URL</span><span className="admin-field-control"><input value={themeSong.downloadUrl} onChange={(event) => setThemeSong((current) => ({ ...current, downloadUrl: event.target.value }))} placeholder="Leave blank to use the media file" /></span><span className="admin-field-note">Optional. Use when the downloadable file differs from the streamed source.</span></label>
+      </>}
+      <label className="admin-field"><span className="admin-field-label">Cover image</span><span className="admin-field-control"><input value={themeSong.poster} onChange={(event) => setThemeSong((current) => ({ ...current, poster: event.target.value }))} placeholder="/media/uploads/…/cover.jpg" /></span><span className="admin-field-note">Optional art shown beside the audio player or as the video poster.</span></label>
+      <label className="admin-field"><span className="admin-field-label">Upload cover</span><span className="admin-field-control"><input type="file" accept="image/jpeg,image/png,image/webp" onChange={async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const body = new FormData();
+        body.set("file", file);
+        body.set("folder", "theme-song");
+        const response = await fetch("/api/v1/admin/media/upload", { method: "POST", body });
+        const result = await response.json();
+        if (!response.ok) { setError(result.message || "Cover upload failed."); return; }
+        setThemeSong((current) => ({ ...current, poster: result.data.url }));
+        setNotice("Theme song cover uploaded. Save site settings to publish it.");
+      }} /></span><span className="admin-field-note" /></label>
     </div>
     <div className="admin-panel-header"><h2>Homepage banner</h2></div>
     <p className="admin-storage-note">The homepage hero uses one wide picture as its background. The headline sits on the left. Upload a new image here to replace the built-in stadium.</p>

@@ -635,17 +635,78 @@ class PlayerStat {
 
 /// Public site settings the app shows: the homepage banner, the partnership brochure and the legal pages.
 class SiteContent {
-  const SiteContent({required this.banner, this.brochure, this.privacy, this.terms, this.stripe = false, this.cashOnDelivery = false});
+  const SiteContent({required this.banner, this.brochure, this.privacy, this.terms, this.themeSong, this.stripe = false, this.cashOnDelivery = false});
   final HomeBanner banner;
   final String? brochure;
   final LegalPage? privacy;
   final LegalPage? terms;
+  final ThemeSong? themeSong;
   final bool stripe;
   final bool cashOnDelivery;
 
   bool get checkoutOpen => stripe || cashOnDelivery;
 
   static const fallback = SiteContent(banner: HomeBanner.fallback);
+}
+
+/// Homepage theme song: hosted audio, hosted video, or a YouTube link. Admin can change it in Site settings.
+class ThemeSong {
+  const ThemeSong({
+    required this.title,
+    required this.kind,
+    required this.source,
+    this.downloadUrl,
+    this.fileName,
+    this.poster,
+  });
+
+  final String title;
+  final String kind;
+  final String source;
+  final String? downloadUrl;
+  final String? fileName;
+  final String? poster;
+
+  bool get isYoutube => kind == 'youtube';
+  bool get isVideo => kind == 'video';
+  bool get isAudio => kind == 'audio' || (!isYoutube && !isVideo);
+  bool get canDownload => !isYoutube && ((downloadUrl != null && downloadUrl!.isNotEmpty) || source.isNotEmpty);
+  String get downloadSource => (downloadUrl != null && downloadUrl!.isNotEmpty) ? downloadUrl! : source;
+  String get saveAs => (fileName != null && fileName!.trim().isNotEmpty) ? fileName!.trim() : 'united-tigers-theme';
+
+  String? get youtubeId {
+    final text = source.trim();
+    final patterns = [
+      RegExp(r'(?:youtube\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})', caseSensitive: false),
+      RegExp(r'^([\w-]{11})$'),
+    ];
+    for (final pattern in patterns) {
+      final match = pattern.firstMatch(text);
+      if (match != null) return match.group(1);
+    }
+    return null;
+  }
+
+  String? get youtubeWatchUrl {
+    final id = youtubeId;
+    return id == null ? null : 'https://www.youtube.com/watch?v=$id';
+  }
+
+  static ThemeSong? fromJson(dynamic value) {
+    final json = asMap(value);
+    if (json.isEmpty) return null;
+    final source = asText(json['source']);
+    if (source == null) return null;
+    final kind = asText(json['kind']) ?? 'audio';
+    return ThemeSong(
+      title: asText(json['title']) ?? 'Official theme song',
+      kind: kind == 'video' || kind == 'youtube' ? kind : 'audio',
+      source: source,
+      downloadUrl: asText(json['downloadUrl']),
+      fileName: asText(json['fileName']),
+      poster: asText(json['poster']),
+    );
+  }
 }
 
 /// Privacy or Terms text, edited in Admin → Legal pages.

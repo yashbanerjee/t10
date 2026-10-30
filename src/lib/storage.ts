@@ -10,7 +10,7 @@ export interface StorageProvider {
 
 /** Same-origin route that streams uploads when the bucket itself is not publicly readable. */
 export const MEDIA_ROUTE = "/media";
-const MANAGED_KEY = /^uploads\/\d{4}\/\d{2}\/[a-f0-9-]{36}\.(jpg|png|webp|mp4|pdf)$/;
+const MANAGED_KEY = /^uploads\/\d{4}\/\d{2}\/[a-f0-9-]{36}\.(jpg|png|webp|mp4|webm|pdf|mp3|wav|m4a|aac|ogg)$/;
 export const isManagedMediaKey = (key: string) => MANAGED_KEY.test(key);
 export const encodeMediaKey = (key: string) => key.split("/").map(encodeURIComponent).join("/");
 

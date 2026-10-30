@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { readBrochureUrl } from "@/lib/partner-brochure";
 import { LEGAL_SETTING_KEYS, legalPageSchema } from "@/lib/legal-pages";
+import { normalizeThemeSong, readThemeSong } from "@/lib/theme-song";
 
 /** Settings that must never be sent to public pages. */
 export const PRIVATE_SETTING_KEYS = new Set(["storage", "smtp", "stripe", "firebase"]);
@@ -162,6 +163,9 @@ export function normalizeSiteSetting(key: string, value: unknown, previous?: unk
     if (typeof value === "string" && value.trim() && !url) return { ok: false, message: "Partner brochure must be a site path or an http(s) URL." };
     return { ok: true, value: url };
   }
+  if (key === "themeSong") {
+    return normalizeThemeSong(value);
+  }
   if (key === LEGAL_SETTING_KEYS.privacy || key === LEGAL_SETTING_KEYS.terms) {
     const parsed = legalPageSchema.safeParse(value ?? {});
     if (!parsed.success) return { ok: false, message: "Legal page needs a title, a date and at least a few lines of content." };
@@ -283,6 +287,7 @@ export function redactSettingValue(key: string, value: unknown) {
   }
   // The admin form shows exactly what the homepage renders, so saving never changes copy by surprise.
   if (key === "homepage") return readHomepageBanner(value);
+  if (key === "themeSong") return readThemeSong(value);
   return value;
 }
 
