@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:united_tigers/models.dart';
 import 'package:united_tigers/scope.dart';
 import 'package:united_tigers/services/file_download.dart';
@@ -111,6 +112,22 @@ class _ThemeSongCardState extends State<ThemeSongCard> {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
+  String get _shareLink {
+    final api = ClubScope.of(context).api;
+    if (song.isYoutube) return song.youtubeWatchUrl ?? song.source;
+    return api.media(song.downloadSource);
+  }
+
+  Future<void> _share() async {
+    final link = _shareLink;
+    if (link.isEmpty) return;
+    try {
+      await SharePlus.instance.share(ShareParams(text: 'United Tigers theme song — ${song.title}\n$link', subject: song.title));
+    } catch (reason) {
+      if (mounted) await showClubMessage(context, '$reason'.replaceFirst('Exception: ', ''));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final api = ClubScope.of(context).api;
@@ -142,26 +159,29 @@ class _ThemeSongCardState extends State<ThemeSongCard> {
           else
             _HostedPlayer(player: _player!, isVideo: song.isVideo || (_player!.value.size.height > 0 && _player!.value.aspectRatio > 0.2), poster: poster, onToggle: _toggle),
           const SizedBox(height: 12),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               if (song.isYoutube)
-                Expanded(
-                  child: FilledButton.icon(
-                    style: goldButtonStyle(),
-                    onPressed: _openYoutube,
-                    icon: const FaIcon(FontAwesomeIcons.youtube, size: 14),
-                    label: const Text('OPEN ON YOUTUBE'),
-                  ),
+                FilledButton.icon(
+                  style: goldButtonStyle(),
+                  onPressed: _openYoutube,
+                  icon: const FaIcon(FontAwesomeIcons.youtube, size: 14),
+                  label: const Text('OPEN ON YOUTUBE'),
                 )
               else if (song.canDownload)
-                Expanded(
-                  child: FilledButton.icon(
-                    style: goldButtonStyle(),
-                    onPressed: _downloading ? null : _download,
-                    icon: FaIcon(_downloading ? FontAwesomeIcons.spinner : FontAwesomeIcons.download, size: 14),
-                    label: Text(_downloading ? 'SAVING…' : 'DOWNLOAD'),
-                  ),
+                FilledButton.icon(
+                  style: goldButtonStyle(),
+                  onPressed: _downloading ? null : _download,
+                  icon: FaIcon(_downloading ? FontAwesomeIcons.spinner : FontAwesomeIcons.download, size: 14),
+                  label: Text(_downloading ? 'SAVING…' : 'DOWNLOAD'),
                 ),
+              OutlinedButton.icon(
+                onPressed: _share,
+                icon: const FaIcon(FontAwesomeIcons.shareNodes, size: 14),
+                label: const Text('SHARE'),
+              ),
             ],
           ),
         ],
