@@ -102,10 +102,6 @@ class HomePage extends StatelessWidget {
                     child: HomeHero(banner: api.banner),
                   ),
                 ),
-                if (api.site.themeSong != null) ...[
-                  const SizedBox(height: 18),
-                  ThemeSongCard(song: api.site.themeSong!),
-                ],
                 if (upcoming == null) ...[
                   const SectionTitle('NEXT MATCH'),
                   const ClubCard(
@@ -475,6 +471,11 @@ class HomePage extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (api.site.themeSong != null) ...[
+                  const SizedBox(height: 8),
+                  ThemeSongCard(song: api.site.themeSong!),
+                  const SizedBox(height: 10),
+                ],
                 if (catalog.updates.isNotEmpty) ...[
                   SectionTitle(
                     'TIGERS DAILY',
