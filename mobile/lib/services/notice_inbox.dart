@@ -23,7 +23,7 @@ class NoticeInbox extends ChangeNotifier {
   static final instance = NoticeInbox._();
 
   static const _prefsKey = 'seen_notices';
-  static const _newsLimit = 10;
+  static const _newsLimit = 50;
 
   Set<String> _seen = {};
   bool _loaded = false;

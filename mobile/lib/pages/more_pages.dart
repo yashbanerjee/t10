@@ -554,8 +554,9 @@ class _StoryCard extends StatelessWidget {
             children: [
               RemoteImage(
                 api.media(story.coverImage),
-                height: lead ? 200 : 150,
+                height: lead ? 220 : 170,
                 radius: 15,
+                fit: BoxFit.contain,
               ),
               Positioned(
                 left: 12,
@@ -669,8 +670,14 @@ class _StoryPageState extends State<StoryPage> {
                 if (current.coverImage != null) ...[
                   RemoteImage(
                     api.media(current.coverImage),
-                    height: 220,
+                    height: 280,
                     radius: 16,
+                    fit: BoxFit.contain,
+                    onTap: () {
+                      final url = api.media(current.coverImage);
+                      if (url.isEmpty) return;
+                      openMediaViewer(context, [MediaEntry(url: url, isVideo: false, title: current.title)]);
+                    },
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -678,6 +685,7 @@ class _StoryPageState extends State<StoryPage> {
                   current.content.isEmpty ? current.excerpt : current.content,
                   mediaUrl: api.media,
                   onLink: (href) => openSiteLink(context, href),
+                  onImage: (url) => openMediaViewer(context, [MediaEntry(url: url, isVideo: false, title: current.title)]),
                 ),
                 const SizedBox(height: 10),
                 Text(

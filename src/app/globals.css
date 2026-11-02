@@ -1394,7 +1394,7 @@ img {
 }
 
 .news-image img {
-  object-fit: cover;
+  object-fit: contain;
   transition: transform .5s;
 }
 
@@ -3319,15 +3319,118 @@ a.partner-item:hover {
 
 .article-image {
   position: relative;
+  display: block;
   width: 100%;
-  aspect-ratio: 1.9;
+  aspect-ratio: 16 / 9;
+  min-height: 220px;
+  max-height: min(78vh, 820px);
   margin-bottom: 34px;
   overflow: hidden;
+  padding: 0;
+  border: 0;
   background: #2B074D;
+  cursor: zoom-in;
+}
+
+.article-image.is-zoomable {
+  width: 100%;
 }
 
 .article-image img {
-  object-fit: cover;
+  object-fit: contain;
+}
+
+.article-image .zoomable-hint,
+.content-block-zoom .zoomable-hint,
+.content-inline-zoom .zoomable-hint {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  color: #2b074d;
+  background: rgba(244, 219, 150, 0.92);
+  pointer-events: none;
+}
+
+.content-block-zoom,
+.content-inline-zoom {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: min(80vh, 720px);
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  background: #1b0533;
+  cursor: zoom-in;
+}
+
+.content-block-zoom img,
+.content-inline-zoom img {
+  object-fit: contain;
+}
+
+.image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: rgba(12, 2, 24, 0.96);
+}
+
+.image-lightbox-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 16px;
+}
+
+.image-lightbox-toolbar button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(210, 169, 90, 0.4);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(43, 7, 77, 0.9);
+  cursor: pointer;
+}
+
+.image-lightbox-stage {
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  padding: 12px 16px 24px;
+  touch-action: pan-x pan-y pinch-zoom;
+  cursor: zoom-out;
+}
+
+.image-lightbox-stage img {
+  max-width: min(100%, 1400px);
+  max-height: 82vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  transform-origin: center center;
+  transition: transform 0.15s ease;
+  user-select: none;
+}
+
+.image-lightbox-help {
+  margin: 0;
+  padding: 0 16px 16px;
+  color: rgba(230, 221, 240, 0.75);
+  font-size: 12px;
+  text-align: center;
 }
 
 .article-byline {

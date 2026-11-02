@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ZoomableImage } from "@/components/ZoomableImage";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -12,7 +13,7 @@ function inline(text: string, keySeed: string): ReactNode[] {
     if (start > cursor) pieces.push(text.slice(cursor, start));
     const key = `${keySeed}-${index++}`;
     if (match[1]?.startsWith("![")) {
-      const src = match[3]!; pieces.push(safeUrl(src) ? <span className="content-inline-image" key={key}><img src={src} alt={match[2] || ""} /></span> : match[2]);
+      const src = match[3]!; pieces.push(safeUrl(src) ? <span className="content-inline-image" key={key}><ZoomableImage src={src} alt={match[2] || ""} className="content-inline-zoom" sizes="(max-width: 900px) 100vw, 720px" /></span> : match[2]);
     } else if (match[4]) {
       const href = match[5]!; pieces.push(safeUrl(href) ? <a key={key} href={href} target={href.startsWith("http") ? "_blank" : undefined} rel="noreferrer">{match[4]}</a> : match[4]);
     } else if (match[6]) pieces.push(<strong key={key}>{match[6]}</strong>);
@@ -45,7 +46,7 @@ export function SafeMarkdown({ content }: { content: string }) {
     const line = lines[index]?.trim() ?? ""; if (!line) { index++; continue; }
     const image = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(line);
     if (image && safeUrl(image[2]) && /\.(mp4|webm)(\?|#|$)/i.test(image[2])) { blocks.push(<figure className="content-image content-video" key={key++}><video src={image[2]} controls playsInline preload="metadata" aria-label={image[1]} />{image[1] && <figcaption>{image[1]}</figcaption>}</figure>); index++; continue; }
-    if (image) { blocks.push(safeUrl(image[2]) ? <figure className="content-image" key={key++}><img src={image[2]} alt={image[1]} /><figcaption>{image[1]}</figcaption></figure> : null); index++; continue; }
+    if (image) { blocks.push(safeUrl(image[2]) ? <figure className="content-image" key={key++}><ZoomableImage src={image[2]} alt={image[1]} className="content-block-zoom" sizes="(max-width: 900px) 100vw, 900px" />{image[1] ? <figcaption>{image[1]}</figcaption> : null}</figure> : null); index++; continue; }
     const head = heading(line);
     if (head) { blocks.push(head.level === 3 ? <h3 key={key++}>{inline(head.text, `h3-${index}`)}</h3> : <h2 key={key++}>{inline(head.text, `h2-${index}`)}</h2>); index++; continue; }
     if (/^>/.test(line)) {

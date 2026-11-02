@@ -694,11 +694,13 @@ class _UpdatePhotoState extends State<UpdatePhoto> {
 }
 
 class RemoteImage extends StatelessWidget {
-  const RemoteImage(this.url, {super.key, this.height = 140, this.radius = 14, this.alignment = Alignment.center});
+  const RemoteImage(this.url, {super.key, this.height = 140, this.radius = 14, this.alignment = Alignment.center, this.fit = BoxFit.cover, this.onTap});
   final String url;
   final double height;
   final double radius;
   final Alignment alignment;
+  final BoxFit fit;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -716,31 +718,35 @@ class RemoteImage extends StatelessWidget {
         final layoutWidth = constraints.maxWidth.isFinite && constraints.maxWidth > 0
             ? constraints.maxWidth
             : MediaQuery.sizeOf(context).width / 2;
-        final decodeWidth = (layoutWidth * ratio).round().clamp(1, 900);
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(radius),
-          child: url.isEmpty
-              ? placeholder
-              : Image.network(
-                  url,
-                  key: ValueKey(url),
-                  height: resolved.isFinite ? resolved : null,
-                  width: double.infinity,
-                  cacheWidth: decodeWidth,
-                  fit: BoxFit.cover,
-                  alignment: alignment,
-                  gaplessPlayback: false,
-                  errorBuilder: (_, _, _) => placeholder,
-                  frameBuilder: (context, child, frame, synchronous) => synchronous
-                      ? child
-                      : Stack(
-                          fit: StackFit.passthrough,
-                          children: [
-                            if (frame == null) placeholder,
-                            AnimatedOpacity(opacity: frame == null ? 0 : 1, duration: const Duration(milliseconds: 420), curve: Curves.easeOut, child: child),
-                          ],
-                        ),
-                ),
+        // Contain needs a sharper decode so dense posters (maps, schedules) stay readable.
+        final decodeWidth = (layoutWidth * ratio).round().clamp(1, fit == BoxFit.contain ? 1600 : 900);
+        final image = url.isEmpty
+            ? placeholder
+            : Image.network(
+                url,
+                key: ValueKey(url),
+                height: resolved.isFinite ? resolved : null,
+                width: double.infinity,
+                cacheWidth: decodeWidth,
+                fit: fit,
+                alignment: alignment,
+                gaplessPlayback: false,
+                errorBuilder: (_, _, _) => placeholder,
+                frameBuilder: (context, child, frame, synchronous) => synchronous
+                    ? child
+                    : Stack(
+                        fit: StackFit.passthrough,
+                        children: [
+                          if (frame == null) placeholder,
+                          AnimatedOpacity(opacity: frame == null ? 0 : 1, duration: const Duration(milliseconds: 420), curve: Curves.easeOut, child: child),
+                        ],
+                      ),
+              );
+        final clipped = ClipRRect(borderRadius: BorderRadius.circular(radius), child: image);
+        if (onTap == null) return clipped;
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(radius), child: clipped),
         );
       },
     );
@@ -1046,7 +1052,7 @@ class MessageView extends StatelessWidget {
 
 /// Renders the same safe Markdown subset as the website: headings, lists, quotes, images, bold, italic and links.
 class ClubMarkdown extends StatelessWidget {
-  const ClubMarkdown(this.content, {super.key, this.onLink, this.mediaUrl});
+  const ClubMarkdown(this.content, {super.key, this.onLink, this.mediaUrl, this.onImage});
   final String content;
 
   /// Receives every tapped link; site paths start with `/`.
@@ -1054,6 +1060,9 @@ class ClubMarkdown extends StatelessWidget {
 
   /// Turns a site path such as `/media/...` into a full image address.
   final String Function(String path)? mediaUrl;
+
+  /// Opens a full-screen zoom viewer when a markdown image is tapped.
+  final ValueChanged<String>? onImage;
 
   static final _heading = RegExp(r'^(?:\*\*)?(#{1,6})(?:\s+#{1,6})*\s+(.*?)(?:\*\*)?$');
   static final _bullet = RegExp(r'^[-*]\s+');
@@ -1079,17 +1088,24 @@ class ClubMarkdown extends StatelessWidget {
         final src = image.group(2)!;
         final url = src.startsWith('/') && mediaUrl != null ? mediaUrl!(src) : src;
         final caption = image.group(1)!.trim();
+        final picture = ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 460),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Image.network(url, fit: BoxFit.contain, errorBuilder: (_, _, _) => const SizedBox.shrink()),
+          ),
+        );
         blocks.add(Padding(
           padding: const EdgeInsets.symmetric(vertical: 10),
           child: Column(
             children: [
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 460),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: Image.network(url, fit: BoxFit.contain, errorBuilder: (_, _, _) => const SizedBox.shrink()),
-                ),
-              ),
+              if (onImage != null)
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(onTap: () => onImage!(url), borderRadius: BorderRadius.circular(14), child: picture),
+                )
+              else
+                picture,
               if (caption.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(caption, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFFB9AAC6), fontSize: 12.5)),

@@ -78,15 +78,14 @@ function isLive(article: PublishedNewsSeed, now: Date) {
 }
 
 /** Merge CMS rows with bundled announcements. Database rows win when the slug exists in both. */
-export function mergePublishedNews(dbArticles: NewsArticle[], now = new Date(), limit = 12) {
+export function mergePublishedNews(dbArticles: NewsArticle[], now = new Date()) {
   const bySlug = new Map(dbArticles.map((article) => [article.slug, article]));
   for (const seed of publishedNewsCatalog) {
     if (!bySlug.has(seed.slug) && isLive(seed, now)) bySlug.set(seed.slug, materialize(seed));
   }
   return [...bySlug.values()]
     .filter((article) => isLive(article, now))
-    .sort((left, right) => +new Date(right.publishedAt!) - +new Date(left.publishedAt!))
-    .slice(0, limit);
+    .sort((left, right) => +new Date(right.publishedAt!) - +new Date(left.publishedAt!));
 }
 
 export function publishedNewsBySlug(slug: string, now = new Date()) {

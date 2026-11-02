@@ -18,7 +18,7 @@ export default async function NotificationsPage() {
     ...alerts.map((alert): Notice => ({ key: `alert-${alert.id}`, kind: "CLUB ALERT", title: alert.title, body: alert.body, href: alert.link || "/", date: alert.sentAt, image: alert.imageUrl })),
     ...contests.filter((contest) => isOpen(contest.closesAt)).map((contest): Notice => ({ key: `contest-${contest.id}`, kind: "FAN CONTEST", title: contest.title, body: contest.prize ? `Prize: ${contest.prize}. ${contest.description}` : contest.description, href: `/contests/${contest.slug}`, date: contest.createdAt, image: contest.image })),
     ...polls.filter((poll) => isOpen(poll.closesAt)).map((poll): Notice => ({ key: `poll-${poll.id}`, kind: "POLL", title: poll.question, body: poll.description || "Cast your vote.", href: `/polls/${poll.slug}`, date: poll.createdAt, image: null })),
-    ...news.slice(0, 10).map((story): Notice => ({ key: `news-${story.id}`, kind: "NEWS", title: story.title, body: story.excerpt, href: `/news/${story.slug}`, date: story.publishedAt, image: story.coverImage })),
+    ...news.map((story): Notice => ({ key: `news-${story.id}`, kind: "NEWS", title: story.title, body: story.excerpt, href: `/news/${story.slug}`, date: story.publishedAt, image: story.coverImage })),
   ].sort((left, right) => (right.date?.getTime() ?? 0) - (left.date?.getTime() ?? 0));
   const icons = { "CLUB ALERT": BellRing, "FAN CONTEST": Trophy, POLL: Vote, NEWS: Newspaper };
   return <div className="inner-page">
