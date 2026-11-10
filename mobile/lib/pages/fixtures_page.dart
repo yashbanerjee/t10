@@ -212,6 +212,13 @@ class _MatchPageState extends State<MatchPage> {
                     child: Text(current.result!.toUpperCase(), style: displayStyle(17, color: current.won ? ink : Colors.white)),
                   ),
                 ],
+                if (current.playerOfMatchName != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    'Player of the Match · ${current.playerOfMatchName} · United Tigers',
+                    style: const TextStyle(color: Color(0xFFF2C14E), fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                ],
               ],
             ),
           ),

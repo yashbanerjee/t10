@@ -3590,6 +3590,25 @@ a.partner-item:hover {
   text-transform: uppercase;
 }
 
+.match-centre-award {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  color: #f2c14e;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+.match-centre-award a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .match-centre-details {
   display: flex;
   justify-content: center;

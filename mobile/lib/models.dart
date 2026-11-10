@@ -199,6 +199,8 @@ class ClubMatch {
     this.venueCity,
     this.toss,
     this.result,
+    this.playerOfMatchName,
+    this.playerOfMatchSlug,
     this.innings = const [],
   });
 
@@ -215,6 +217,8 @@ class ClubMatch {
   final String? venueCity;
   final String? toss;
   final String? result;
+  final String? playerOfMatchName;
+  final String? playerOfMatchSlug;
   final List<InningsCard> innings;
 
   bool get isCompleted => status == 'COMPLETED';
@@ -245,6 +249,7 @@ class ClubMatch {
 
   factory ClubMatch.fromJson(Map<String, dynamic> json) {
     final venue = asMap(json['venue']);
+    final award = asMap(json['playerOfMatch']);
     return ClubMatch(
       slug: json['slug']?.toString() ?? '',
       date: asDate(json['date']),
@@ -257,6 +262,8 @@ class ClubMatch {
       venueCity: asText(venue['city']),
       toss: asText(json['toss']),
       result: asText(json['result']),
+      playerOfMatchName: asText(award['fullName']),
+      playerOfMatchSlug: asText(award['slug']),
       innings: asList(json['innings']).map(InningsCard.fromJson).toList(),
     );
   }

@@ -37,8 +37,23 @@ export async function getMatches() {
 }
 
 export async function getMatchBySlug(slug: string) {
-  try { return await prisma.match.findFirst({ where: { slug, isDemo: false }, include: { venue: true, tournament: true, innings: { orderBy: { number: "asc" }, include: { batting: { include: { player: true } }, bowling: { include: { player: true } } } } } }); }
-  catch { return null; }
+  try {
+    const match = await prisma.match.findFirst({
+      where: { slug, isDemo: false },
+      include: {
+        venue: true,
+        tournament: true,
+        innings: { orderBy: { number: "asc" }, include: { batting: { include: { player: true } }, bowling: { include: { player: true } } } },
+      },
+    });
+    if (!match) return null;
+    const playerOfMatch = match.playerOfMatchId
+      ? await prisma.player.findUnique({ where: { id: match.playerOfMatchId }, select: { id: true, fullName: true, slug: true, profileImage: true } })
+      : null;
+    return { ...match, playerOfMatch };
+  } catch {
+    return null;
+  }
 }
 
 function demoAsset(value: unknown) {
