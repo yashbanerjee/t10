@@ -358,6 +358,16 @@ class _PlayerPageState extends State<PlayerPage> {
                 ),
                 const SizedBox(height: 16),
                 Text(current.bio ?? 'Player profile details are being completed.', style: const TextStyle(color: Color(0xFFE6DDF0), fontSize: 15, height: 1.55)),
+                if (current.kitPhotos.isNotEmpty) ...[
+                  const SectionTitle('Kit photos'),
+                  const SizedBox(height: 4),
+                  Text('Official United Tigers match-day kit portraits.', style: TextStyle(color: Color(0xFFBDAED0), fontSize: 13, height: 1.4)),
+                  const SizedBox(height: 12),
+                  ...current.kitPhotos.map((photo) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: RemoteImage(api.media(photo), height: 420, radius: 16, alignment: Alignment.topCenter, fit: BoxFit.cover),
+                      )),
+                ],
                 if (report?.currentSeason != null) _StatsBlock('This season', report!.currentSeason!),
                 if (report?.career != null) _StatsBlock('Career', report!.career!),
                 const SectionTitle('Beyond the Tigers'),

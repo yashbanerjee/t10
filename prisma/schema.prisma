@@ -160,6 +160,8 @@ model Player {
   slug          String                @unique
   profileImage  String?
   coverImage    String?
+  /// Extra match-day / kit portraits shown in a gallery on the player profile (not the main card photo).
+  kitPhotos     Json?
   jerseyNumber  Int?
   country       String?
   nationality   String?

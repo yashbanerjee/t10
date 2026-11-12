@@ -1,5 +1,15 @@
 import 'package:united_tigers/format.dart';
 
+List<String> _kitPhotos(dynamic value) {
+  if (value is! List) return const [];
+  final urls = <String>[];
+  for (final item in value) {
+    final url = asText(item);
+    if (url != null && !urls.contains(url)) urls.add(url);
+  }
+  return urls;
+}
+
 class Player {
   const Player({
     required this.id,
@@ -9,6 +19,7 @@ class Player {
     this.displayName,
     this.profileImage,
     this.coverImage,
+    this.kitPhotos = const [],
     this.jerseyNumber,
     this.country,
     this.nationality,
@@ -32,6 +43,7 @@ class Player {
   final String? displayName;
   final String? profileImage;
   final String? coverImage;
+  final List<String> kitPhotos;
   final int? jerseyNumber;
   final String? country;
   final String? nationality;
@@ -67,6 +79,7 @@ class Player {
         displayName: asText(json['displayName']),
         profileImage: asText(json['profileImage']),
         coverImage: asText(json['coverImage']),
+        kitPhotos: _kitPhotos(json['kitPhotos']),
         jerseyNumber: json['jerseyNumber'] == null ? null : asInt(json['jerseyNumber']),
         country: asText(json['country']),
         nationality: asText(json['nationality']),
