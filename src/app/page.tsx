@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -13,7 +14,7 @@ import { LightTrail } from "@/components/LightTrail";
 import { PhotoFrame } from "@/components/PhotoFrame";
 import { ProductCard } from "@/components/ProductCard";
 import { VideoPoster } from "@/components/VideoPoster";
-import { kickoffTime, knockoutSides, teamLogo, teamShortName } from "@/lib/league";
+import { kickoffTime, knockoutLogo, knockoutSides, teamLogo, teamShortName } from "@/lib/league";
 import { getLivePollIntervalMs, homepageDefaults, readHomepageBanner } from "@/lib/site-settings";
 import { publicThemeSong } from "@/lib/theme-song";
 import { ThemeSongCard } from "@/components/ThemeSongCard";
@@ -68,10 +69,13 @@ export default async function HomePage() {
   const cast = banner.showPlayers ? <span className="banner-cast" aria-hidden="true">
     {heroCast.map((src, index) => <i key={src} className={`rank-${Math.floor(Math.abs(index - (heroCast.length - 1) / 2))}`} style={{ "--cast-i": index } as React.CSSProperties}><Image src={src} alt="" fill sizes="(max-width: 760px) 120px, 200px" quality={85} /></i>)}
   </span> : null;
-  // The card pictures the Tigers against a crest, so knockouts with undecided teams are left to the board below.
-  const upcoming = matches.find((match) => (match.status === "UPCOMING" || match.status === "LIVE") && !knockoutSides(match));
+  // Prefer a Tigers group fixture for the next-match card; otherwise any upcoming/live match.
+  const upcoming = matches.find((match) => (match.status === "UPCOMING" || match.status === "LIVE") && !knockoutSides(match))
+    ?? matches.find((match) => match.status === "UPCOMING" || match.status === "LIVE");
   const kickoff = upcoming ? when(upcoming.date) : null;
-  const opponentLogo = upcoming ? teamLogo(upcoming.opponent, upcoming.opponentLogoUrl) : null;
+  const upcomingKnockout = upcoming ? knockoutSides(upcoming) : null;
+  const opponentLogo = upcoming && !upcomingKnockout ? teamLogo(upcoming.opponent, upcoming.opponentLogoUrl) : null;
+  const seasonOver = !upcoming && matches.some((match) => match.status === "COMPLETED");
   const poll = [...polls].sort((left, right) => right.options.filter((option) => playerForLabel(option.label, players)).length - left.options.filter((option) => playerForLabel(option.label, players)).length)[0] ?? polls[0];
   // The board shows the most recent result and the next fixture, one row each.
   const listed = [...matches.filter((match) => match.status === "COMPLETED").slice(-1), ...matches.filter((match) => match.status === "UPCOMING" || match.status === "LIVE").slice(0, 1)];
@@ -107,19 +111,37 @@ export default async function HomePage() {
       {customBanner ? <h1 className="sr-only">United Tigers: {banner.title} {banner.accent}. {banner.tagline}. {banner.roar}</h1> : null}
       <div className="wrap dash-grid">
         <article className="dash-card next-match-card">
-          <header><span className="is-gold">NEXT MATCH</span><small><LeagueMark height={11} /></small></header>
+          <header><span className="is-gold">{seasonOver ? "SEASON OVER" : "NEXT MATCH"}</span><small><LeagueMark height={11} /></small></header>
           {upcoming && kickoff ? <>
-            <div className="crest-row">
-              <div><b className="has-crest"><Image src="/brand/tiger-gold.png" alt="" width={822} height={688} /></b><strong>United Tigers</strong><em>Abu Dhabi</em></div>
-              <span>VS</span>
-              <div>{opponentLogo ? <b className="has-logo"><span><Image src={opponentLogo} alt="" fill sizes="64px" /></span></b> : <b>{teamShortName(upcoming.opponent, upcoming.opponentShort)}</b>}<strong>{upcoming.opponent}</strong><em>{upcoming.venue?.city || "Away"}</em></div>
-            </div>
+            {upcomingKnockout ? (
+              <div className="crest-row">
+                {upcomingKnockout.map((side, index) => {
+                  const crest = knockoutLogo(side);
+                  return (
+                    <Fragment key={side}>
+                      {index ? <span>VS</span> : null}
+                      <div>
+                        {crest ? <b className="has-logo"><span><Image src={crest} alt="" fill sizes="64px" /></span></b> : <b>{teamShortName(side)}</b>}
+                        <strong>{side}</strong>
+                        <em>{upcoming.competition || "Knockout"}</em>
+                      </div>
+                    </Fragment>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="crest-row">
+                <div><b className="has-crest"><Image src="/brand/tiger-gold.png" alt="" width={822} height={688} /></b><strong>United Tigers</strong><em>Abu Dhabi</em></div>
+                <span>VS</span>
+                <div>{opponentLogo ? <b className="has-logo"><span><Image src={opponentLogo} alt="" fill sizes="64px" /></span></b> : <b>{teamShortName(upcoming.opponent, upcoming.opponentShort)}</b>}<strong>{upcoming.opponent}</strong><em>{upcoming.venue?.city || "Away"}</em></div>
+              </div>
+            )}
             <p className="match-meta"><span><Calendar size={12} aria-hidden="true" /> {kickoff.day} · {kickoff.time}</span><span><MapPin size={12} aria-hidden="true" /> Abu Dhabi</span></p>
             {upcoming.status === "LIVE" && <LiveScore slug={upcoming.slug} pollIntervalMs={pollIntervalMs} initial={{ status: upcoming.status, liveState: upcoming.liveState as never, innings: upcoming.innings.map((entry) => ({ runs: entry.runs, wickets: entry.wickets, overs: entry.overs.toString() })) }} />}
           </> : <>
-            <div className="crest-row"><div><b className="has-crest"><Image src="/brand/tiger-gold.png" alt="" width={822} height={688} /></b><strong>United Tigers</strong><em>Abu Dhabi</em></div><span>VS</span><div><b>T10</b><strong>The field</strong><em>Abu Dhabi</em></div></div>
-            <p className="dash-empty">The next fixture will appear here as soon as it is confirmed.</p>
-            <Link className="button button-orange" href="/fixtures">ALL FIXTURES <ArrowUpRight size={16} aria-hidden="true" /></Link>
+            <div className="crest-row"><div><b className="has-crest"><Image src="/brand/tiger-gold.png" alt="" width={822} height={688} /></b><strong>United Tigers</strong><em>Abu Dhabi</em></div><span>VS</span><div><b>T10</b><strong>{seasonOver ? "2026 done" : "The field"}</strong><em>Abu Dhabi</em></div></div>
+            <p className="dash-empty">{seasonOver ? "This season’s matches are over. Fixtures for the next season will appear here when it starts." : "The next fixture will appear here as soon as it is confirmed."}</p>
+            <Link className="button button-orange" href="/fixtures">{seasonOver ? "VIEW RESULTS" : "ALL FIXTURES"} <ArrowUpRight size={16} aria-hidden="true" /></Link>
           </>}
         </article>
 
@@ -187,14 +209,15 @@ export default async function HomePage() {
               const label = match.status === "LIVE" ? "LIVE" : match.status === "COMPLETED" ? (won ? "WIN" : "RESULT") : "UP NEXT";
               const score = match.innings.length ? match.innings.map((innings) => `${innings.runs}/${innings.wickets} (${innings.overs})`).join(" – ") : "";
               const logo = teamLogo(match.opponent, match.opponentLogoUrl);
+              const knockout = knockoutSides(match);
               return <Link href={`/matches/${match.slug}`} key={match.id}>
-                <span>{knockoutSides(match) ? `${match.competition}: ${match.opponent}` : <>{logo ? <i style={{ backgroundImage: `url('${logo}')` }} aria-hidden="true" /> : null}vs {match.opponent}</>}</span>
+                <span>{knockout ? <>{knockout.map((side, index) => { const crest = knockoutLogo(side); return <Fragment key={side}>{index ? " vs " : null}{crest ? <i style={{ backgroundImage: `url('${crest}')` }} aria-hidden="true" /> : null}{side}</Fragment>; })}</> : <>{logo ? <i style={{ backgroundImage: `url('${logo}')` }} aria-hidden="true" /> : null}vs {match.opponent}</>}</span>
                 <small>{when(match.date).day}</small>
                 <em>{score || (match.status === "UPCOMING" || match.status === "LIVE" ? when(match.date).time : match.result || match.competition || "Abu Dhabi T10")}</em>
                 <b className={label === "WIN" ? "is-win" : label === "UP NEXT" || label === "LIVE" ? "is-next" : ""}>{label}</b>
                 <ChevronRight className="result-go" size={14} aria-hidden="true" />
               </Link>;
-            }) : <p className="dash-empty">Fixtures will be listed here.</p>}
+            }) : <p className="dash-empty">{seasonOver ? "This season’s matches are over. New fixtures will appear when the next season starts." : "Fixtures will be listed here."}</p>}
           </div>
         </div>
         <aside className="stay-card">

@@ -62,6 +62,16 @@ export function knockoutSides(match: { opponent: string; competition?: string | 
 /** Badge text for an undecided knockout side: the ordinal of a league position, otherwise TBC. */
 export const knockoutMark = (side: string) => /^\d+(st|nd|rd|th)\b/i.exec(side)?.[0].toUpperCase() ?? "TBC";
 
+/** Crest for a knockout side — real franchise logo when known, otherwise null (caller shows TBC). */
+export function knockoutLogo(side: string): string | null {
+  return findLeagueTeam(side)?.logo ?? null;
+}
+
+/** True when the side is still a league-position placeholder (e.g. "2nd Position"). */
+export function isKnockoutPlaceholder(side: string): boolean {
+  return /^\d+(st|nd|rd|th)\b/i.test(side) || /position|qualifier winner|tbc/i.test(side);
+}
+
 /** Kick-off time in Abu Dhabi, 12-hour clock, for example "8:00 PM". */
 export const kickoffTime = (date: Date | string) => new Date(date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Dubai" });
 
